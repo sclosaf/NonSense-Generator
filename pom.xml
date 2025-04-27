@@ -9,8 +9,8 @@
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<maven.compiler.source>17</maven.compiler.source>
-		<maven.compiler.target>17</maven.compiler.target>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
 		<junit.version>5.9.2</junit.version>
 		<google.cloud.language.version>2.28.0</google.cloud.language.version>
 	</properties>
@@ -18,7 +18,7 @@
 	<repositories>
 		<repository>
 			<id>project-local-repo</id>
-			<url>file://${project.basedir}/lib/m2/repository</url>
+			<url>file://${project.basedir}/lib</url>
 		</repository>
 
 		<repository>
@@ -30,7 +30,7 @@
 	<pluginRepositories>
 		<pluginRepository>
 			<id>project-local-repo</id>
-			<url>file://${project.basedir}/lib/m2/repository</url>
+			<url>file://${project.basedir}/lib</url>
 		</pluginRepository>
 
 		<pluginRepository>
@@ -98,7 +98,8 @@
 				<version>3.6.0</version>
 				<configuration>
 					<doclint>none</doclint>
-					<show>public</show>
+					<show>all</show>
+					<access>all</access>
 				</configuration>
 				<executions>
 					<execution>
