@@ -21,9 +21,13 @@ execute_maven()
 			mvn -s settings.xml javadoc:javadoc
 			;;
 
+		"clean")
+			mvn -s settings.xml clean
+			;;
+
 		*)
 			echo "Invalid option: $1"
-			echo "Available options: compile, test, package, javadoc"
+			echo "Available options: compile, test, package, javadoc, clean"
 			exit 1
 			;;
 	esac
@@ -32,7 +36,7 @@ execute_maven()
 main()
 {
 	if [ $# -ne 1 ]; then
-		echo "Usage: $0 [compile|test|package|javadoc]"
+		echo "Usage: $0 [compile|test|package|javadoc|clean]"
 		exit 1
 	fi
 
