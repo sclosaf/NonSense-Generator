@@ -2,7 +2,7 @@
 SETLOCAL
 
 if "%~1"=="" (
-	echo Usage: %~nx0 [compile^|test^|package^|javadoc^|clean]
+	echo Usage: %~nx0 [compile^|test^|package^|javadoc^|clean^|execute]
 	exit /b 1
 )
 
@@ -23,9 +23,11 @@ if /i "%COMMAND%"=="compile" (
 	mvn -s settings.xml javadoc:javadoc
 ) else if /i "%COMMAND%"=="clean" (
 	mvn -s settings.xml clean
-) else (
+) else if /i "%COMMAND%"=="execute" (
+	java -jar target/nonsense-generator-1.0.jar
+)else (
 	echo Invalid option: %COMMAND%
-	echo Available options: compile, test, package, javadoc, clean
+	echo Available options: compile, test, package, javadoc, clean, execute
 	exit /b 1
 )
 

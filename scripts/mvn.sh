@@ -25,9 +25,13 @@ execute_maven()
 			mvn -s settings.xml clean
 			;;
 
+		"execute")
+			java -jar target/nonsense-generator-1.0.jar
+			;;
+
 		*)
 			echo "Invalid option: $1"
-			echo "Available options: compile, test, package, javadoc, clean"
+			echo "Available options: compile, test, package, javadoc, clean, execute"
 			exit 1
 			;;
 	esac
@@ -36,7 +40,7 @@ execute_maven()
 main()
 {
 	if [ $# -ne 1 ]; then
-		echo "Usage: $0 [compile|test|package|javadoc|clean]"
+		echo "Usage: $0 [compile|test|package|javadoc|clean|execute]"
 		exit 1
 	fi
 

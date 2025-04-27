@@ -117,9 +117,7 @@
 			<resource>
 				<directory>src/main/resources</directory>
 				<includes>
-					<include>**/*.txt</include>
 					<include>**/*.json</include>
-					<include>**/*.xml</include>
 				</includes>
 			</resource>
 		</resources>
@@ -128,9 +126,7 @@
 			<testResource>
 				<directory>src/test/resources</directory>
 				<includes>
-					<include>**/*.txt</include>
 					<include>**/*.json</include>
-					<include>**/*.xml</include>
 				</includes>
 			</testResource>
 		</testResources>
