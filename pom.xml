@@ -72,13 +72,6 @@
 			<type>jar</type>
 		</dependency>
 
-		<dependency>
-			<groupId>com.google.cloud</groupId>
-			<artifactId>google-cloud-storage</artifactId>
-			<version>${google.cloud.language.version}</version>
-			<type>jar</type>
-		</dependency>
-
 		<!-- JSON formatting-->
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
