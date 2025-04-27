@@ -1,5 +1,5 @@
 @echo off
-SETLOCAL ENABLEDELAYEDEXPANSION
+SETLOCAL
 
 if "%~1"=="" (
 	echo Usage: %~nx0 [compile^|test^|package^|javadoc^|clean]
