@@ -1,0 +1,144 @@
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>unipd.software.engineering</groupId>
+	<artifactId>nonsense-generator</artifactId>
+	<version>1.0</version>
+	<packaging>jar</packaging>
+
+	<properties>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+		<maven.compiler.source>17</maven.compiler.source>
+		<maven.compiler.target>17</maven.compiler.target>
+		<junit.version>5.9.2</junit.version>
+		<google.cloud.language.version>2.28.0</google.cloud.language.version>
+	</properties>
+
+	<repositories>
+		<repository>
+			<id>project-local-repo</id>
+			<url>file://${project.basedir}/lib/m2/repository</url>
+		</repository>
+
+		<repository>
+			<id>central</id>
+			<url>https://repo.maven.apache.org/maven2</url>
+		</repository>
+	</repositories>
+
+	<pluginRepositories>
+		<pluginRepository>
+			<id>project-local-repo</id>
+			<url>file://${project.basedir}/lib/m2/repository</url>
+		</pluginRepository>
+
+		<pluginRepository>
+			<id>central</id>
+			<url>https://repo.maven.apache.org/maven2</url>
+		</pluginRepository>
+	</pluginRepositories>
+
+	<dependencies>
+		<!-- JUnit - Testing  -->
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-api</artifactId>
+			<version>${junit.version}</version>
+			<type>jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<dependency>
+			<groupId>org.junit.jupiter</groupId>
+			<artifactId>junit-jupiter-engine</artifactId>
+			<version>${junit.version}</version>
+			<type>jar</type>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Google Cloud - Natural language -->
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-language</artifactId>
+			<version>${google.cloud.language.version}</version>
+			<type>jar</type>
+		</dependency>
+
+		<dependency>
+			<groupId>com.google.cloud</groupId>
+			<artifactId>google-cloud-storage</artifactId>
+			<version>2.28.0</version>
+			<type>jar</type>
+		</dependency>
+
+		<!-- JSON formatting-->
+		<dependency>
+			<groupId>com.google.code.gson</groupId>
+			<artifactId>gson</artifactId>
+			<version>2.10.1</version>
+			<type>jar</type>
+		</dependency>
+
+		<!-- Logging -->
+		<dependency>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-core</artifactId>
+			<version>2.20.0</version>
+			<type>jar</type>
+		</dependency>
+	</dependencies>
+
+	<!-- Settings for building -->
+	<build>
+	<plugins>
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-javadoc-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<doclint>none</doclint>
+					<show>public</show>
+				</configuration>
+				<executions>
+					<execution>
+						<id>generate-javadoc</id>
+						<phase>package</phase>
+						<goals>
+							<goal>javadoc</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+
+		<resources>
+			<resource>
+				<directory>src/main/resources</directory>
+				<includes>
+					<include>**/*.txt</include>
+					<include>**/*.json</include>
+					<include>**/*.xml</include>
+				</includes>
+			</resource>
+		</resources>
+
+		<testResources>
+			<testResource>
+				<directory>src/test/resources</directory>
+				<includes>
+					<include>**/*.txt</include>
+					<include>**/*.json</include>
+					<include>**/*.xml</include>
+				</includes>
+			</testResource>
+		</testResources>
+
+		<directory>${project.basedir}/target</directory>
+		<outputDirectory>${project.build.directory}/classes</outputDirectory>
+		<testOutputDirectory>${project.build.directory}/test-classes</testOutputDirectory>
+		<sourceDirectory>${project.basedir}/src/main/java</sourceDirectory>
+		<testSourceDirectory>${project.basedir}/src/test/java</testSourceDirectory>
+		<finalName>${project.artifactId}-${project.version}</finalName>
+	</build>
+</project>
