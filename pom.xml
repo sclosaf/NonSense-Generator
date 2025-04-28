@@ -12,7 +12,9 @@
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
 		<junit.version>5.10.0</junit.version>
-		<google.cloud.language.version>2.28.0</google.cloud.language.version>
+		<google.cloud.version>2.28.0</google.cloud.version>
+		<json.version>2.10.1</json.version>
+		<apache.logging.version>2.20.0</apache.logging.version>
 	</properties>
 
 	<repositories>
@@ -68,7 +70,7 @@
 		<dependency>
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-language</artifactId>
-			<version>${google.cloud.language.version}</version>
+			<version>${google.cloud.version}</version>
 			<type>jar</type>
 		</dependency>
 
@@ -76,7 +78,7 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>2.10.1</version>
+			<version>${json.version}</version>
 			<type>jar</type>
 		</dependency>
 
@@ -84,7 +86,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>2.20.0</version>
+			<version>${apache.logging.version}</version>
 			<type>jar</type>
 		</dependency>
 	</dependencies>
