@@ -6,14 +6,13 @@ script che ci sono nella cartella li ho preparati per compilare, fare testing e
 documentazione in modo automatico, così da editare di memorizzare troppe righe di comandi
 
 Classi:
-    Main
-    logging?
-    interfaccia per terminale
-    parser Input
-    elaboratore File JSON
-    compostore di frasi
-    valutatore di tossicità
-    testing
-
-    generatore di template di classi
-    eccezzioni
+    Main,
+    logging?,
+    interfaccia per terminale,
+    parser Input,
+    elaboratore File JSON,
+    compostore di frasi,
+    valutatore di tossicità,
+    testing,
+    generatore di template di classi,
+    eccezzioni,
