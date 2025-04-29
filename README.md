@@ -3,7 +3,7 @@
 Il prof nel powerpoint di introduzione al progetto consigliava di usare maven
 per gestire le librerie, altrimenti bisogna gestire i pacchetti a mano, gli
 script che ci sono nella cartella li ho preparati per compilare, fare testing e
-documentazione in modo automatico, così da editare di memorizzare troppe righe di comandi
+documentazione in modo automatico, così da evitare di memorizzare troppe righe di comandi
 
 Classi:
     Main,
@@ -24,6 +24,4 @@ Classi:
     
     8generatore di template, - Francesco
     
-    eccezzioni,
-    
-    
+    eccezioni,
