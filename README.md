@@ -7,12 +7,23 @@ documentazione in modo automatico, così da editare di memorizzare troppe righe 
 
 Classi:
     Main,
-    logging?,
-    interfaccia per terminale,
-    parser Input,
-    elaboratore File JSON,
-    compostore di frasi,
-    valutatore di tossicità,
-    testing,
-    generatore di template di classi,
+    
+    1logging, - Fabio
+    
+    2interfaccia per terminale, - Davide
+    
+    3parser Input, - Davide
+    
+    4elaboratore File JSON, - Fabrizio
+    
+    5compositore di frasi, - Fabrizio
+    
+    6valutatore di tossicità, - Francesco
+    
+    7testing, - Fabio
+    
+    8generatore di template, - Francesco
+    
     eccezzioni,
+    
+    
