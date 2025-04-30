@@ -6,15 +6,14 @@
 	<version>1.0</version>
 	<packaging>jar</packaging>
 
+	<name>nonsense-generator</name>
+	<description>A project for generating nonsense sentences</description>
+
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
 		<maven.compiler.source>21</maven.compiler.source>
 		<maven.compiler.target>21</maven.compiler.target>
 		<junit.version>5.10.0</junit.version>
-		<google.cloud.version>2.28.0</google.cloud.version>
-		<json.version>2.10.1</json.version>
-		<apache.logging.version>2.20.0</apache.logging.version>
 	</properties>
 
 	<repositories>
@@ -70,7 +69,7 @@
 		<dependency>
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-language</artifactId>
-			<version>${google.cloud.version}</version>
+			<version>2.28.0</version>
 			<type>jar</type>
 		</dependency>
 
@@ -78,7 +77,7 @@
 		<dependency>
 			<groupId>com.google.code.gson</groupId>
 			<artifactId>gson</artifactId>
-			<version>${json.version}</version>
+			<version>2.10.1</version>
 			<type>jar</type>
 		</dependency>
 
@@ -86,7 +85,7 @@
 		<dependency>
 			<groupId>org.apache.logging.log4j</groupId>
 			<artifactId>log4j-core</artifactId>
-			<version>${apache.logging.version}</version>
+			<version>2.20.0</version>
 			<type>jar</type>
 		</dependency>
 	</dependencies>
@@ -112,6 +111,20 @@
 						</goals>
 					</execution>
 				</executions>
+			</plugin>
+
+			<plugin>
+				<groupId>org.apache.maven.plugins</groupId>
+
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>3.2.5</version>
+				<dependencies>
+					<dependency>
+						<groupId>org.junit.jupiter</groupId>
+						<artifactId>junit-jupiter-engine</artifactId>
+						<version>${junit.version}</version>
+					</dependency>
+				</dependencies>
 			</plugin>
 		</plugins>
 
