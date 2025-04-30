@@ -100,11 +100,8 @@
 				<version>3.6.0</version>
 				<configuration>
 					<doclint>none</doclint>
-					<show>all</show>
-					<access>all</access>
+					<show>private</show>
 					<source>21</source>
-					<failOnError>false</failOnError>
-					<additionalJOption>-Xdoclint:none</additionalJOption>
 				</configuration>
 				<executions>
 					<execution>
