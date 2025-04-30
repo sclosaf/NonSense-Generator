@@ -20,8 +20,10 @@ Classi:
 
     6valutatore di tossicità, - Francesco
 
-    7testing, - Fabio
+    7elementi grammaticali atomici, - Fabio
 
     8generatore di template, - Francesco
 
     eccezioni,
+
+    testing (Ognuno il suo)

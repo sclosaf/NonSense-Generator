@@ -102,6 +102,9 @@
 					<doclint>none</doclint>
 					<show>all</show>
 					<access>all</access>
+					<source>21</source>
+					<failOnError>false</failOnError>
+					<additionalJOption>-Xdoclint:none</additionalJOption>
 				</configuration>
 				<executions>
 					<execution>
