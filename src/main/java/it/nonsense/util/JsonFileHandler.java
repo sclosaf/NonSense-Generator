@@ -68,7 +68,7 @@ public class JsonFileHandler
 		validateFileExists(filePath);
 
 		if(index < 0)
-			throw new IllegalArgumentException();
+			throw new IndexOutOfBoundsException();
 
 		lock.readLock().lock();
 

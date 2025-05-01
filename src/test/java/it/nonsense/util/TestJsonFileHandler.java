@@ -60,17 +60,64 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test basic success of appendItemToJson.")
+	@DisplayName("Test success of appendItemToJson.")
 	void testAppendItemToJson_Success() throws IOException
 	{
 		String key = "TestItems1";
-		String str = "ItemX";
+		String str = "itemX";
 
 		handler.appendItemToJson(tempFile.getPath(), key, str);
 
 		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
-		assertTrue(items.contains(str), "New item should have been added to array.");
+		assertTrue(items.contains(str), "New item should have been added to the array.");
 
-		assertEquals(4, items.size(), "Array should have four elements.");
+		assertEquals(4, items.size(), "The array should have four elements.");
+	}
+
+	@Test
+	@DisplayName("Test duplicate case of appendItemToJson.")
+	void testAppendItemToJson_DuplicateItem() throws IOException
+	{
+		String key = "TestItems1";
+		String str = "item2";
+
+		handler.appendItemToJson(tempFile.getPath(), key, str);
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+		assertEquals(3, items.size(), "The array schouldn't grow due to duplicate elements");
+	}
+
+	@Test
+	@DisplayName("Test attempt to add an element to a non existent key.")
+	void testAppentIdemToJson_NonExistentKey()
+	{
+		String key = "WrongTestItem";
+		String str = "itemX";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(tempFile.getPath(), key, str), "Should throw IllegalArgumentException due to non existent key");
+	}
+
+	@Test
+	@DisplayName("Test success of readItemFromJson.")
+	void testReadItemFromJson_Success() throws IOException
+	{
+		String key = "TestItems1";
+		int index = 1;
+
+		String result = handler.readItemFromJson(tempFile.getPath(), key, index);
+		assertEquals("item2", result, "Read element should be 'item2'");
+	}
+
+	@Test
+	@DisplayName("Test attempt to access in element out of bounds.")
+	void testReadItemFromJson_InvalidIndex()
+	{
+		String key = "TestItems1";
+		int index1 = 10;
+		int index2 = -9;
+
+		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to invalid index");
+		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw IndexOutOfBoundsException due to invalid index");
+
 	}
 }
