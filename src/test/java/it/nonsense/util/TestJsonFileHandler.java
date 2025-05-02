@@ -19,6 +19,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -62,7 +63,14 @@ class TestJsonFileHandler
 	void tearDown()
 	{
 		if(tempFile != null && tempFile.exists())
-			tempFile.delete();
+			try
+			{
+				Files.delete(tempFile.toPath());
+			}
+			catch(IOException e)
+			{
+				System.err.println("Failed to delete temp file: " + e.getMessage());
+			}
 	}
 
 	@Test
@@ -100,15 +108,15 @@ class TestJsonFileHandler
 		String key = "WrongTestItem";
 		String str = "itemX";
 
-		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(tempFile.getPath(), key, str), "Should throw IllegalArgumentException due to non existent key");
+		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(tempFile.getPath(), key, str), "Should throw IllegalArgumentException due to non existent key.");
 	}
 
 	@Test
-	@DisplayName("Test concurrency of appendItemToJson.")
-	void testAppenItemToJson_Concurrency() throws Exception
+	@DisplayName("Test writing concurrency.")
+	void testAppenItemToJson_ConcurrencyWriting() throws Exception
 	{
 		String key = "TestItems1";
-		int threads = 100;
+		int threads = 10;
 
 		CountDownLatch latch = new CountDownLatch(threads);
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -143,10 +151,12 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test append to non-array key")
-	void testAppendToNonArrayKey() throws IOException
+	@DisplayName("Test append to non array key.")
+	void testAppendItemToJson_NonArrayKey() throws IOException
 	{
 		File file = Files.createTempFile("nonArray", ".json").toFile();
+		file.deleteOnExit();
+
 		JsonObject json = new JsonObject();
 		json.addProperty("TestKey", "notAnArray");
 
@@ -155,7 +165,33 @@ class TestJsonFileHandler
 			writer.write(json.toString());
 		}
 
-		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(file.getPath(), "TestKey", "itemX"), "Should throw IllegalArgumentException due to non-array key");
+		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(file.getPath(), "TestKey", "itemX"), "Should throw IllegalArgumentException due to non array key.");
+	}
+
+
+	@Test
+	@DisplayName("Test appending to non writable file.")
+	void testAppendItemToJson_NonWritableFile() throws IOException
+	{
+		File nonWritableFile = Files.createTempFile("nonwritable", ".json").toFile();
+		nonWritableFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray arr = new JsonArray();
+
+		arr.add("item1");
+		json.add("TestItems1", arr);
+
+		try(FileWriter writer = new FileWriter(nonWritableFile))
+		{
+			writer.write(json.toString());
+		}
+
+		nonWritableFile.setWritable(false);
+
+		String key = "TestItems1";
+
+		assertThrows(IOException.class, () -> handler.appendItemToJson(nonWritableFile.getPath(), key, "itemX"), "Should throw IOException for non writable file.");
 	}
 
 	@Test
@@ -177,7 +213,7 @@ class TestJsonFileHandler
 		int index1 = 10;
 		int index2 = -9;
 
-		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to invalid index.");
+		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to out of bound index.");
 		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw IndexOutOfBoundsException due to invalid index.");
 	}
 
@@ -189,6 +225,168 @@ class TestJsonFileHandler
 		int index = 0;
 
 		assertThrows(IllegalArgumentException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index), "Should throw IllegalArgumentException due to non existent key.");
+	}
+
+	@Test
+	@DisplayName("Test readItemFromJson with empty JSON file.")
+	void testReadItemFromJson_EmptyFile() throws IOException
+	{
+		File emptyFile = Files.createTempFile("empty", ".json").toFile();
+		emptyFile.deleteOnExit();
+
+		String key = "TestItems1";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readItemFromJson(emptyFile.getPath(), key, 0), "Should throw IllegalArgumentException for empty JSON file.");
+	}
+
+	@Test
+	@DisplayName("Test reading item from non readable file.")
+	void testReadItemFromJson_NonReadableFile() throws IOException
+	{
+		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
+		nonReadableFile.setReadable(false);
+		nonReadableFile.deleteOnExit();
+
+		String key = "TestItems1";
+
+		assertThrows(IOException.class, () -> handler.readItemFromJson(nonReadableFile.getPath(), key, 0), "Should throw IOException due to non readable file.");
+	}
+
+	@Test
+	@DisplayName("Test reading item concurrency.")
+	void testReadItemFromJson_ConcurrencyReading() throws Exception
+	{
+		String key = "TestItems1";
+		int threads = 10;
+
+		CountDownLatch latch = new CountDownLatch(threads);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+		executor.submit(() ->
+			{
+				try
+				{
+					handler.appendItemToJson(tempFile.getPath(), key, "itemX");
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+
+		for(int i = 0; i < threads; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.readItemFromJson(tempFile.getPath(), key, 3);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		String item = handler.readItemFromJson(tempFile.getPath(), key, 3);
+		assertEquals(item, "itemX", "'itemX' should have been appended.");
+	}
+
+
+	@Test
+	@DisplayName("Stress test concurrent read and write.")
+	void testReadItemFromJson_StressConcurrentReadWrite() throws Exception
+	{
+		String key = "TestItems1";
+		int threads = 100;
+
+		CountDownLatch latch = new CountDownLatch(2 * threads);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+		for(int i = 0; i < threads; ++i)
+		{
+			final int itemNum = i + 4;
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.appendItemToJson(tempFile.getPath(), key, "item" + itemNum);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		for(int i = 0; i < threads; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.readListFromJson(tempFile.getPath(), key);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		List<String> items = new ArrayList<String>();
+
+		for(int i = 0; i < 3 + threads; ++i)
+			items.add(handler.readItemFromJson(tempFile.getPath(), key, i));
+
+		assertTrue(items.size() == 3 + threads, "Should contain " + threads + " items plus the initial 3.");
+	}
+
+	@Test
+	@DisplayName("Test file path without JSON extension for ReadItemFromJson.")
+	void testReadItemFromJson_NoJsonExtension() throws IOException
+	{
+		File noExtFile = Files.createTempFile("noext", ".json").toFile();
+		noExtFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray arr = new JsonArray();
+
+		arr.add("item1");
+		json.add("TestKey", arr);
+
+		try (FileWriter writer = new FileWriter(noExtFile))
+		{
+			writer.write(json.toString());
+		}
+
+		String pathWithoutExtension = noExtFile.getPath().replace(".json", "");
+		String item = handler.readItemFromJson(pathWithoutExtension, "TestKey", 0);
+
+		assertEquals("item1", item, "Should contain 'item1'.");
 	}
 
 	@Test
@@ -204,7 +402,7 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test attempt to read a list of a non existent key")
+	@DisplayName("Test attempt to read a list of a non existent key.")
 	void testReadListFromJson_NonExistentKey()
 	{
 		String key = "WrongTestItem";
@@ -213,20 +411,23 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test reading from empty JSON file")
+	@DisplayName("Test reading from empty JSON file.")
 	void testReadListFromJson_EmptyFile() throws IOException
 	{
 		File emptyFile = Files.createTempFile("empty", ".json").toFile();
+		emptyFile.deleteOnExit();
+
 		String key = "TestItems1";
 
 		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw IllegalArgumentException due to empty json file.");
 	}
 
 	@Test
-	@DisplayName("Test reading from malformed JSON file")
+	@DisplayName("Test reading from malformed JSON file.")
 	void testReadListFromJson_MalformedFile() throws IOException
 	{
 		File malformedFile = Files.createTempFile("malformed", ".json").toFile();
+		malformedFile.deleteOnExit();
 
 		try(FileWriter writer = new FileWriter(malformedFile))
 		{
@@ -238,10 +439,12 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test handling large JSON file")
+	@DisplayName("Test handling large JSON file.")
 	void testReadListJsonFile_LargeFile() throws IOException
 	{
 		File largeFile = Files.createTempFile("large", ".json").toFile();
+		largeFile.deleteOnExit();
+
 		JsonObject json = new JsonObject();
 		JsonArray largeArray = new JsonArray();
 
@@ -256,7 +459,7 @@ class TestJsonFileHandler
 		}
 
 		List<String> items = handler.readListFromJson(largeFile.getPath(), "LargeArray");
-		assertEquals(100000, items.size(), "Should read all 100,000 items");
+		assertEquals(100000, items.size(), "Should read all 100,000 items.");
 	}
 
 	@ParameterizedTest
@@ -270,25 +473,159 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test null or empty file path and key")
+	@DisplayName("Test null or empty file path and key.")
 	void testNullOrEmptyInputs()
 	{
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(null, "TestKey"), "Should throw IllegalArgumentException due to null file path");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("", "TestKey"), "Should throw IllegalArgumentException due to empty file path");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), null), "Should throw IllegalArgumentException due to null key");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), ""), "Should throw IllegalArgumentException due to empty key");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(null, "TestKey"), "Should throw IllegalArgumentException due to null file path.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("", "TestKey"), "Should throw IllegalArgumentException due to empty file path.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), null), "Should throw IllegalArgumentException due to null key.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), ""), "Should throw IllegalArgumentException due to empty key.");
 	}
 
 	@Test
-	@DisplayName("Test reading from non-readable file")
-	void testReadFromNonReadableFile() throws IOException
+	@DisplayName("Test reading list concurrency.")
+	void testReadListFromJson_ConcurrencyReading() throws Exception
+	{
+		String key = "TestItems1";
+		int threads = 10;
+
+		CountDownLatch latch = new CountDownLatch(threads);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+		executor.submit(() ->
+			{
+				try
+				{
+					handler.appendItemToJson(tempFile.getPath(), key, "itemX");
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+
+		for(int i = 0; i < threads; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.readListFromJson(tempFile.getPath(), key);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+		assertTrue(items.contains("itemX"), "'itemX' should have been appended.");
+	}
+
+	@Test
+	@DisplayName("Stress test concurrent read and write.")
+	void testReadListFromJson_StressConcurrentReadWrite() throws Exception
+	{
+		String key = "TestItems1";
+		int threads = 100;
+
+		CountDownLatch latch = new CountDownLatch(threads);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+		for(int i = 0; i < threads; ++i)
+		{
+			final int itemNum = i + 4;
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.appendItemToJson(tempFile.getPath(), key, "item" + itemNum);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		for(int i = 0; i < threads; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.readListFromJson(tempFile.getPath(), key);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+		assertTrue(items.size() == 3 + threads, "Should contain " + threads + " items plus the initial 3.");
+	}
+
+	@Test
+	@DisplayName("Test file path without JSON extension for ReadListFromJson.")
+	void testReadListFromJson_NoJsonExtension() throws IOException
+	{
+		File noExtFile = Files.createTempFile("noext", ".json").toFile();
+		noExtFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray arr = new JsonArray();
+
+		arr.add("item1");
+		json.add("TestKey", arr);
+
+		try(FileWriter writer = new FileWriter(noExtFile))
+		{
+			writer.write(json.toString());
+		}
+
+		String pathWithoutExtension = noExtFile.getPath().replace(".json", "");
+		List<String> items = handler.readListFromJson(pathWithoutExtension, "TestKey");
+
+		assertEquals(1, items.size(), "Should read the array correctly.");
+		assertEquals("item1", items.get(0), "Should contain 'item1'.");
+	}
+
+	@Test
+	@DisplayName("Test reading from non readable file.")
+	void testReadListFromJson_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
 		nonReadableFile.setReadable(false);
+		nonReadableFile.deleteOnExit();
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readListFromJson(nonReadableFile.getPath(), key), "Should throw IOException due to non-readable file");
+		assertThrows(IOException.class, () -> handler.readListFromJson(nonReadableFile.getPath(), key), "Should throw IOException due to non readable file.");
 	}
 
 	@Test
@@ -300,7 +637,7 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test success of checking for nested keys")
+	@DisplayName("Test success of checking for nested keys.")
 	void testHasJsonKey_NestedKey() throws IOException
 	{
 		JsonObject json = handler.getJsonObject(tempFile.getPath());
@@ -342,10 +679,24 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test deeply nested key")
+	@DisplayName("Test checking key in non readable file.")
+	void testHasJsonKey_NonReadableFile() throws IOException
+	{
+		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
+		nonReadableFile.setReadable(false);
+		nonReadableFile.deleteOnExit();
+
+		String key = "TestItems1";
+
+		assertThrows(IOException.class, () -> handler.hasJsonKey(nonReadableFile.getPath(), key), "Should throw IOException due to non readable file.");
+	}
+
+	@Test
+	@DisplayName("Test deeply nested key.")
 	void testHasJsonKey_DeeplyNested() throws IOException
 	{
 		File file = Files.createTempFile("nested", ".json").toFile();
+		file.deleteOnExit();
 
 		JsonObject json = new JsonObject();
 		JsonObject level1 = new JsonObject();
@@ -362,8 +713,8 @@ class TestJsonFileHandler
 			writer.write(json.toString());
 		}
 
-		assertTrue(handler.hasJsonKey(file.getPath(), "Level1.Level2.Level3.DeepKey"), "Deeply nested key should exist");
-		assertFalse(handler.hasJsonKey(file.getPath(), "Level1.Level2.NonExistent.DeepKey"), "Non-existent deeply nested key should return false");
+		assertTrue(handler.hasJsonKey(file.getPath(), "Level1.Level2.Level3.DeepKey"), "Deeply nested key should exist.");
+		assertFalse(handler.hasJsonKey(file.getPath(), "Level1.Level2.NonExistent.DeepKey"), "Non-existent deeply nested key should return false.");
 	}
 
 	@Test
@@ -373,7 +724,18 @@ class TestJsonFileHandler
 		JsonObject json = handler.getJsonObject(tempFile.getPath());
 
 		assertTrue(json.has("TestItems1") && json.has("TestItems2"), "The object json should have keys 'TestItem1' and 'TestItems2'.");
-		assertEquals(3, json.getAsJsonArray("TestItems1").size(), "The array should have 3 elements");
-		assertEquals(2, json.getAsJsonArray("TestItems2").size(), "The array should have 2 elements");
+		assertEquals(3, json.getAsJsonArray("TestItems1").size(), "The array should have 3 elements.");
+		assertEquals(2, json.getAsJsonArray("TestItems2").size(), "The array should have 2 elements.");
+	}
+
+	@Test
+	@DisplayName("Test getting JSON object from non readable file.")
+	void testGetJsonObject_NonReadableFile() throws IOException
+	{
+		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
+		nonReadableFile.setReadable(false);
+		nonReadableFile.deleteOnExit();
+
+		assertThrows(IOException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw IOException due to non readable file.");
 	}
 }

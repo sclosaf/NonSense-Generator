@@ -42,7 +42,7 @@ public final class JsonFileHandler
 			throw new IllegalArgumentException();
 
 		filePath = ensureJsonExtension(filePath);
-		validateFileExists(filePath);
+		validateFileExists(filePath, true);
 
 		lock.writeLock().lock();
 
@@ -74,7 +74,7 @@ public final class JsonFileHandler
 			throw new IllegalArgumentException();
 
 		filePath = ensureJsonExtension(filePath);
-		validateFileExists(filePath);
+		validateFileExists(filePath, false);
 
 		if(index < 0)
 			throw new IndexOutOfBoundsException();
@@ -112,7 +112,7 @@ public final class JsonFileHandler
 			throw new IllegalArgumentException();
 
 		filePath = ensureJsonExtension(filePath);
-		validateFileExists(filePath);
+		validateFileExists(filePath, false);
 
 		lock.readLock().lock();
 
@@ -144,7 +144,7 @@ public final class JsonFileHandler
 			throw new IllegalArgumentException();
 
 		filePath = ensureJsonExtension(filePath);
-		validateFileExists(filePath);
+		validateFileExists(filePath, false);
 
 		lock.readLock().lock();
 
@@ -179,7 +179,7 @@ public final class JsonFileHandler
 			throw new IllegalArgumentException();
 
 		filePath = ensureJsonExtension(filePath);
-		validateFileExists(filePath);
+		validateFileExists(filePath, false);
 
 		lock.readLock().lock();
 
@@ -193,12 +193,18 @@ public final class JsonFileHandler
 		}
 	}
 
-	private void validateFileExists(String filePath) throws IllegalArgumentException
+	private void validateFileExists(String filePath, boolean requiresWrite) throws IOException, IllegalArgumentException
 	{
 		File file = new File(filePath);
 
 		if(!file.exists() || !file.isFile())
 			throw new IllegalArgumentException();
+
+		if(!file.canRead())
+			throw new IOException();
+
+		if(requiresWrite && !file.canWrite())
+			throw new IOException();
 	}
 
 	private String ensureJsonExtension(String filePath)
