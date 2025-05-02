@@ -17,6 +17,9 @@ import java.util.ArrayList;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import java.lang.IllegalStateException;
+import com.google.gson.JsonSyntaxException;
+
 public final class JsonFileHandler
 {
 	private static volatile JsonFileHandler instance = new JsonFileHandler();
@@ -35,6 +38,9 @@ public final class JsonFileHandler
 
 	public void appendItemToJson(String filePath, String key, String str) throws IOException, IllegalArgumentException
 	{
+		if(key == null || filePath == null)
+			throw new IllegalArgumentException();
+
 		filePath = ensureJsonExtension(filePath);
 		validateFileExists(filePath);
 
@@ -64,6 +70,9 @@ public final class JsonFileHandler
 
 	public String readItemFromJson(String filePath, String key, int index) throws IOException, IllegalArgumentException, IndexOutOfBoundsException
 	{
+		if(key == null || filePath == null)
+			throw new IllegalArgumentException();
+
 		filePath = ensureJsonExtension(filePath);
 		validateFileExists(filePath);
 
@@ -99,6 +108,9 @@ public final class JsonFileHandler
 
 	public List<String> readListFromJson(String filePath, String key) throws IOException, IllegalArgumentException
 	{
+		if(key == null || filePath == null)
+			throw new IllegalArgumentException();
+
 		filePath = ensureJsonExtension(filePath);
 		validateFileExists(filePath);
 
@@ -128,6 +140,9 @@ public final class JsonFileHandler
 
 	public boolean hasJsonKey(String filePath, String key) throws IOException, IllegalArgumentException
 	{
+		if(key == null || filePath == null)
+			throw new IllegalArgumentException();
+
 		filePath = ensureJsonExtension(filePath);
 		validateFileExists(filePath);
 
@@ -150,7 +165,6 @@ public final class JsonFileHandler
 				else if(k != keys[keys.length - 1])
 					return false;
 			}
-
 			return true;
 		}
 		finally
@@ -159,8 +173,11 @@ public final class JsonFileHandler
 		}
 	}
 
-	public JsonObject getJsonObject(String filePath) throws IOException, IllegalArgumentException
+	public JsonObject getJsonObject(String filePath) throws IOException
 	{
+		if(filePath == null)
+			throw new IllegalArgumentException();
+
 		filePath = ensureJsonExtension(filePath);
 		validateFileExists(filePath);
 
@@ -195,6 +212,10 @@ public final class JsonFileHandler
 		{
 			return JsonParser.parseReader(reader).getAsJsonObject();
 		}
+		catch(IllegalStateException | JsonSyntaxException e)
+		{
+			throw new IllegalArgumentException();
+		}
 	}
 
 	private void writeJsonObject(String filePath, JsonObject json) throws IOException
@@ -202,6 +223,10 @@ public final class JsonFileHandler
 		try(FileWriter writer = new FileWriter(filePath))
 		{
 			gson.toJson(json, writer);
+		}
+		catch(IllegalStateException | JsonSyntaxException e)
+		{
+			throw new IllegalArgumentException();
 		}
 	}
 }

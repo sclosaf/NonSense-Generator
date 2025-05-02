@@ -108,7 +108,7 @@ class TestJsonFileHandler
 	void testAppenItemToJson_Concurrency() throws Exception
 	{
 		String key = "TestItems1";
-		int threads = 25;
+		int threads = 100;
 
 		CountDownLatch latch = new CountDownLatch(threads);
 		ExecutorService executor = Executors.newFixedThreadPool(threads);
@@ -140,6 +140,22 @@ class TestJsonFileHandler
 		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
 
 		assertEquals(threads + 3, items.size(), "Should be contained " + threads + " new elements plus the initial 3.");
+	}
+
+	@Test
+	@DisplayName("Test append to non-array key")
+	void testAppendToNonArrayKey() throws IOException
+	{
+		File file = Files.createTempFile("nonArray", ".json").toFile();
+		JsonObject json = new JsonObject();
+		json.addProperty("TestKey", "notAnArray");
+
+		try(FileWriter writer = new FileWriter(file))
+		{
+			writer.write(json.toString());
+		}
+
+		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(file.getPath(), "TestKey", "itemX"), "Should throw IllegalArgumentException due to non-array key");
 	}
 
 	@Test
@@ -197,6 +213,85 @@ class TestJsonFileHandler
 	}
 
 	@Test
+	@DisplayName("Test reading from empty JSON file")
+	void testReadListFromJson_EmptyFile() throws IOException
+	{
+		File emptyFile = Files.createTempFile("empty", ".json").toFile();
+		String key = "TestItems1";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw IllegalArgumentException due to empty json file.");
+	}
+
+	@Test
+	@DisplayName("Test reading from malformed JSON file")
+	void testReadListFromJson_MalformedFile() throws IOException
+	{
+		File malformedFile = Files.createTempFile("malformed", ".json").toFile();
+
+		try(FileWriter writer = new FileWriter(malformedFile))
+		{
+			writer.write("{ \"key\": [ \"item1\", \"item2\" ");
+		}
+
+		String key = "TestItems1";
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw IllegalArgumentException due to malformed json file.");
+	}
+
+	@Test
+	@DisplayName("Test handling large JSON file")
+	void testReadListJsonFile_LargeFile() throws IOException
+	{
+		File largeFile = Files.createTempFile("large", ".json").toFile();
+		JsonObject json = new JsonObject();
+		JsonArray largeArray = new JsonArray();
+
+		for (int i = 0; i < 100000; ++i)
+			largeArray.add("item" + i);
+
+		json.add("LargeArray", largeArray);
+
+		try (FileWriter writer = new FileWriter(largeFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(largeFile.getPath(), "LargeArray");
+		assertEquals(100000, items.size(), "Should read all 100,000 items");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"invalid.json", "nonexistent.json", "noextension"})
+	@DisplayName("Test invalid file names.")
+	void testValidateFileExists_InvalidFiles(String filePath)
+	{
+		String key = "TestItems1";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(filePath, key), "Should throw IllegalArgumentException due to invalid file name.");
+	}
+
+	@Test
+	@DisplayName("Test null or empty file path and key")
+	void testNullOrEmptyInputs()
+	{
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(null, "TestKey"), "Should throw IllegalArgumentException due to null file path");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("", "TestKey"), "Should throw IllegalArgumentException due to empty file path");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), null), "Should throw IllegalArgumentException due to null key");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), ""), "Should throw IllegalArgumentException due to empty key");
+	}
+
+	@Test
+	@DisplayName("Test reading from non-readable file")
+	void testReadFromNonReadableFile() throws IOException
+	{
+		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
+		nonReadableFile.setReadable(false);
+
+		String key = "TestItems1";
+
+		assertThrows(IOException.class, () -> handler.readListFromJson(nonReadableFile.getPath(), key), "Should throw IOException due to non-readable file");
+	}
+
+	@Test
 	@DisplayName("Test success of hasJsonKey.")
 	void testHasJsonKey_Success() throws IOException
 	{
@@ -205,7 +300,7 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test success of nested keys")
+	@DisplayName("Test success of checking for nested keys")
 	void testHasJsonKey_NestedKey() throws IOException
 	{
 		JsonObject json = handler.getJsonObject(tempFile.getPath());
@@ -247,6 +342,31 @@ class TestJsonFileHandler
 	}
 
 	@Test
+	@DisplayName("Test deeply nested key")
+	void testHasJsonKey_DeeplyNested() throws IOException
+	{
+		File file = Files.createTempFile("nested", ".json").toFile();
+
+		JsonObject json = new JsonObject();
+		JsonObject level1 = new JsonObject();
+		JsonObject level2 = new JsonObject();
+		JsonObject level3 = new JsonObject();
+
+		level3.addProperty("DeepKey", "value");
+		level2.add("Level3", level3);
+		level1.add("Level2", level2);
+		json.add("Level1", level1);
+
+		try(FileWriter writer = new FileWriter(file))
+		{
+			writer.write(json.toString());
+		}
+
+		assertTrue(handler.hasJsonKey(file.getPath(), "Level1.Level2.Level3.DeepKey"), "Deeply nested key should exist");
+		assertFalse(handler.hasJsonKey(file.getPath(), "Level1.Level2.NonExistent.DeepKey"), "Non-existent deeply nested key should return false");
+	}
+
+	@Test
 	@DisplayName("Test success of getJsonObject.")
 	void testGetJsonObject_Success() throws IOException
 	{
@@ -255,15 +375,5 @@ class TestJsonFileHandler
 		assertTrue(json.has("TestItems1") && json.has("TestItems2"), "The object json should have keys 'TestItem1' and 'TestItems2'.");
 		assertEquals(3, json.getAsJsonArray("TestItems1").size(), "The array should have 3 elements");
 		assertEquals(2, json.getAsJsonArray("TestItems2").size(), "The array should have 2 elements");
-	}
-
-	@ParameterizedTest
-	@ValueSource(strings = {"invalid.json", "nonexistent.json", "noextension"})
-	@DisplayName("Test invalid file names.")
-	void testValidateFileExists_InvalidFiles(String filePath)
-	{
-		String key = "TestItems1";
-
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(filePath, key), "Should throw IllegalArgumentException due to invalid file name.");
 	}
 }
