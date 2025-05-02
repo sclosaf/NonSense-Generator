@@ -7,8 +7,6 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -462,14 +460,15 @@ class TestJsonFileHandler
 		assertEquals(100000, items.size(), "Should read all 100,000 items.");
 	}
 
-	@ParameterizedTest
-	@ValueSource(strings = {"invalid.json", "nonexistent.json", "noextension"})
+	@Test
 	@DisplayName("Test invalid file names.")
-	void testValidateFileExists_InvalidFiles(String filePath)
+	void testValidateFileExists_InvalidFiles()
 	{
 		String key = "TestItems1";
 
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(filePath, key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("invalid.json", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("nonexistent.json", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("noextension", key), "Should throw IllegalArgumentException due to invalid file name.");
 	}
 
 	@Test
