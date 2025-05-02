@@ -17,7 +17,7 @@ import java.util.ArrayList;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-public class JsonFileHandler
+public final class JsonFileHandler
 {
 	private static volatile JsonFileHandler instance = new JsonFileHandler();
 	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);

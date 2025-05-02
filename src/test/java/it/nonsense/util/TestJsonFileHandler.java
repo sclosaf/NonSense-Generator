@@ -7,6 +7,9 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 import java.io.File;
@@ -16,6 +19,9 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 import java.util.List;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 @DisplayName("Testing JsonFileHandler.")
 class TestJsonFileHandler
@@ -75,7 +81,7 @@ class TestJsonFileHandler
 	}
 
 	@Test
-	@DisplayName("Test duplicate case of appendItemToJson.")
+	@DisplayName("Test append duplicate case.")
 	void testAppendItemToJson_DuplicateItem() throws IOException
 	{
 		String key = "TestItems1";
@@ -84,7 +90,7 @@ class TestJsonFileHandler
 		handler.appendItemToJson(tempFile.getPath(), key, str);
 
 		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
-		assertEquals(3, items.size(), "The array schouldn't grow due to duplicate elements");
+		assertEquals(3, items.size(), "The array schouldn't grow due to duplicate elements.");
 	}
 
 	@Test
@@ -98,6 +104,45 @@ class TestJsonFileHandler
 	}
 
 	@Test
+	@DisplayName("Test concurrency of appendItemToJson.")
+	void testAppenItemToJson_Concurrency() throws Exception
+	{
+		String key = "TestItems1";
+		int threads = 25;
+
+		CountDownLatch latch = new CountDownLatch(threads);
+		ExecutorService executor = Executors.newFixedThreadPool(threads);
+
+		for(int i = 0; i < threads; ++i)
+		{
+			final int itemNum = i + 4;
+
+			executor.submit(() ->
+				{
+					try
+					{
+						handler.appendItemToJson(tempFile.getPath(), key, "item" + itemNum);
+					}
+					catch(IOException e)
+					{
+						e.printStackTrace();
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+
+		assertEquals(threads + 3, items.size(), "Should be contained " + threads + " new elements plus the initial 3.");
+	}
+
+	@Test
 	@DisplayName("Test success of readItemFromJson.")
 	void testReadItemFromJson_Success() throws IOException
 	{
@@ -105,7 +150,7 @@ class TestJsonFileHandler
 		int index = 1;
 
 		String result = handler.readItemFromJson(tempFile.getPath(), key, index);
-		assertEquals("item2", result, "Read element should be 'item2'");
+		assertEquals("item2", result, "Read element should be 'item2'.");
 	}
 
 	@Test
@@ -116,8 +161,109 @@ class TestJsonFileHandler
 		int index1 = 10;
 		int index2 = -9;
 
-		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to invalid index");
-		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw IndexOutOfBoundsException due to invalid index");
+		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to invalid index.");
+		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw IndexOutOfBoundsException due to invalid index.");
+	}
 
+	@Test
+	@DisplayName("Test attempt to read an element of a non existent key.")
+	void testReadItemFromJson_NonExistentKey()
+	{
+		String key = "WrongTestItem";
+		int index = 0;
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index), "Should throw IllegalArgumentException due to non existent key.");
+	}
+
+	@Test
+	@DisplayName("Test success of ReadListFromJson.")
+	void testReadListFromJson_Success() throws IOException
+	{
+		String key = "TestItems2";
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+
+		assertEquals(2, items.size(), "The array should have 2 elements.");
+		assertTrue(items.contains("item4") && items.contains("item5"), "The elements should be 'item4' and 'item5'.");
+	}
+
+	@Test
+	@DisplayName("Test attempt to read a list of a non existent key")
+	void testReadListFromJson_NonExistentKey()
+	{
+		String key = "WrongTestItem";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), key), "Should throw IllegalArgumentException due to non existent key.");
+	}
+
+	@Test
+	@DisplayName("Test success of hasJsonKey.")
+	void testHasJsonKey_Success() throws IOException
+	{
+		String key = "TestItems1";
+		assertTrue(handler.hasJsonKey(tempFile.getPath(), key), "Key 'TestItems1' should exist.");
+	}
+
+	@Test
+	@DisplayName("Test success of nested keys")
+	void testHasJsonKey_NestedKey() throws IOException
+	{
+		JsonObject json = handler.getJsonObject(tempFile.getPath());
+
+		JsonObject nestedObject = new JsonObject();
+
+		nestedObject.addProperty("NestedItem1", "nestedItemX");
+		nestedObject.addProperty("NestedItem2", "nestedItemY");
+
+		json.add("TestItem3", nestedObject);
+
+		try(FileWriter writer = new FileWriter(tempFile))
+		{
+			writer.write(json.toString());
+		}
+
+		assertTrue(handler.hasJsonKey(tempFile.getPath(), "TestItem3.NestedItem2"), "Nested key 'TestItem3.NestedItem2' should exist.");
+	}
+
+	@Test
+	@DisplayName("Test attempt check non existent nested key.")
+	void testHasJsonKey_NonExistentNestedKey() throws IOException
+	{
+		JsonObject json = handler.getJsonObject(tempFile.getPath());
+
+		JsonObject nestedObject = new JsonObject();
+
+		nestedObject.addProperty("NestedItem1", "nestedItemX");
+		nestedObject.addProperty("NestedItem2", "nestedItemY");
+
+		json.add("TestItem3", nestedObject);
+
+		try(FileWriter writer = new FileWriter(tempFile))
+		{
+			writer.write(json.toString());
+		}
+
+		assertFalse(handler.hasJsonKey(tempFile.getPath(), "TestItem3.nonExisting"), "Non existent nested key should return false.");
+	}
+
+	@Test
+	@DisplayName("Test success of getJsonObject.")
+	void testGetJsonObject_Success() throws IOException
+	{
+		JsonObject json = handler.getJsonObject(tempFile.getPath());
+
+		assertTrue(json.has("TestItems1") && json.has("TestItems2"), "The object json should have keys 'TestItem1' and 'TestItems2'.");
+		assertEquals(3, json.getAsJsonArray("TestItems1").size(), "The array should have 3 elements");
+		assertEquals(2, json.getAsJsonArray("TestItems2").size(), "The array should have 2 elements");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"invalid.json", "nonexistent.json", "noextension"})
+	@DisplayName("Test invalid file names.")
+	void testValidateFileExists_InvalidFiles(String filePath)
+	{
+		String key = "TestItems1";
+
+		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(filePath, key), "Should throw IllegalArgumentException due to invalid file name.");
 	}
 }
