@@ -213,9 +213,17 @@ public final class JsonFileHandler
 		{
 			return JsonParser.parseReader(reader).getAsJsonObject();
 		}
+		catch(FileNotFoundException e)
+		{
+			throw new IOException();
+		}
 		catch(IllegalStateException | JsonSyntaxException e)
 		{
 			throw new IllegalArgumentException();
+		}
+		catch(IOException e)
+		{
+			throw;
 		}
 	}
 
