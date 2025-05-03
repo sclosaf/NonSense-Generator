@@ -466,9 +466,9 @@ class TestJsonFileHandler
 	{
 		String key = "TestItems1";
 
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("invalid.json", key), "Should throw IllegalArgumentException due to invalid file name.");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("nonexistent.json", key), "Should throw IllegalArgumentException due to invalid file name.");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("noextension", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IOException.class, () -> handler.readListFromJson("invalid.json", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IOException.class, () -> handler.readListFromJson("nonexistent.json", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(IOException.class, () -> handler.readListFromJson("noextension", key), "Should throw IllegalArgumentException due to invalid file name.");
 	}
 
 	@Test
