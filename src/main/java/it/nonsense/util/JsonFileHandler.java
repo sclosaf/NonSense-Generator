@@ -13,14 +13,14 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
-import java.lang.SecurityException;
-
 import java.util.List;
 import java.util.ArrayList;
 
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import java.lang.IllegalStateException;
+import java.lang.SecurityException;
+
 import com.google.gson.JsonSyntaxException;
 
 public final class JsonFileHandler
@@ -194,7 +194,7 @@ public final class JsonFileHandler
 		if(filePath == null || filePath.isEmpty())
 			throw new IllegalArgumentException();
 
-		filePath =  filePath.toLowerCase().endsWith(".json") ? filePath : filePath + ".json";
+		filePath = filePath.toLowerCase().endsWith(".json") ? filePath : filePath + ".json";
 
 		File file = new File(filePath);
 
@@ -206,20 +206,20 @@ public final class JsonFileHandler
 			if(!file.canRead())
 				throw new IOException();
 
-			try(FileReader ignored = new FileReader(file))
-			{}
-			catch(FileNotFoundException e)
-			{
-				throw new IOException();
-			}
-
 			if(requiresWrite && !file.canWrite())
 				throw new IOException();
 		}
 		catch(SecurityException e)
 		{
-			throw new IOException("Security exception when accessing file: " + filePath, e);
+			throw new IOException();
 		}
+
+
+		if(!file.canRead())
+			throw new IOException();
+
+		if(requiresWrite && !file.canWrite())
+			throw new IOException();
 
 		return filePath;
 	}
