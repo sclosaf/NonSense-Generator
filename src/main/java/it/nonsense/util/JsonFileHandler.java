@@ -19,8 +19,6 @@ import java.util.ArrayList;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 import java.lang.IllegalStateException;
-import java.lang.SecurityException;
-
 import com.google.gson.JsonSyntaxException;
 
 public final class JsonFileHandler
@@ -201,20 +199,6 @@ public final class JsonFileHandler
 		if(!file.exists() || !file.isFile())
 			throw new IOException();
 
-		try
-		{
-			if(!file.canRead())
-				throw new IOException();
-
-			if(requiresWrite && !file.canWrite())
-				throw new IOException();
-		}
-		catch(SecurityException e)
-		{
-			throw new IOException();
-		}
-
-
 		if(!file.canRead())
 			throw new IOException();
 
@@ -230,17 +214,9 @@ public final class JsonFileHandler
 		{
 			return JsonParser.parseReader(reader).getAsJsonObject();
 		}
-		catch(FileNotFoundException e)
+		catch(FileNotFoundException | IllegalStateException | JsonSyntaxException e)
 		{
 			throw new IOException();
-		}
-		catch(IllegalStateException | JsonSyntaxException e)
-		{
-			throw new IllegalArgumentException();
-		}
-		catch(IOException e)
-		{
-			throw e;
 		}
 	}
 
