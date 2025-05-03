@@ -13,6 +13,8 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.io.FileNotFoundException;
 
+import java.lang.SecurityException;
+
 import java.util.List;
 import java.util.ArrayList;
 
@@ -199,11 +201,25 @@ public final class JsonFileHandler
 		if(!file.exists() || !file.isFile())
 			throw new IOException();
 
-		if(!file.canRead())
-			throw new IOException();
+		try
+		{
+			if(!file.canRead())
+				throw new IOException();
 
-		if(requiresWrite && !file.canWrite())
-			throw new IOException();
+			try(FileReader ignored = new FileReader(file))
+			{}
+			catch(FileNotFoundException e)
+			{
+				throw new IOException();
+			}
+
+			if(requiresWrite && !file.canWrite())
+				throw new IOException();
+		}
+		catch(SecurityException e)
+		{
+			throw new IOException("Security exception when accessing file: " + filePath, e);
+		}
 
 		return filePath;
 	}
