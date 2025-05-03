@@ -9,7 +9,7 @@ public class GoogleApiClient
 		InputStream credentialsStream = getClass().getClassLoader().getResourceAsStream("config.json");
 
 		if(credentialsStream == null)
-			throw new IOException("File config.json non trovato");
+			throw new IOException();
 
 		ServiceAccountCredentials credentials;
         try(InputStreamReader reader = new InputStreamReader(credentialsStream))
