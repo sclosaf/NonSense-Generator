@@ -14,7 +14,7 @@ import com.google.cloud.language.v1.LanguageServiceSettings;
 
 public class GoogleApiClient implements AutoCloseable
 {
-	private final LanguageServiceClient client;
+	private LanguageServiceClient client;
 	private final Lock lock = new ReentrantLock();
 
 	public GoogleApiClient(String filePath) throws IOException
@@ -41,7 +41,11 @@ public class GoogleApiClient implements AutoCloseable
 			lock.lock();
 			try
 			{
-				client.close();
+				if(client != null)
+				{
+					client.close();
+					client = null;
+				}
 			}
 			finally
 			{

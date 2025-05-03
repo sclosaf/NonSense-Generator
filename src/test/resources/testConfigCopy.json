@@ -1,6 +1,6 @@
 {
   "type": "service_account",
-  "project_id": "test-project1",
+  "project_id": "test-project2",
   "private_key_id": "fake-key-id-123456",
   "private_key": "-----BEGIN FAKE PRIVATE KEY-----\nMII...FAKE...KEY...DATA\n-----END FAKE PRIVATE KEY-----\n",
   "client_email": "test-service@test-project.iam.gserviceaccount.com",
