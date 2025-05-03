@@ -103,7 +103,7 @@
 					<archive>
 						<manifest>
 						<addClasspath>true</addClasspath>
-						<mainClass>it.nonsense.App</mainClass>
+						<mainClass>unipd.nonsense.App</mainClass>
 						</manifest>
 					</archive>
 				</configuration>
