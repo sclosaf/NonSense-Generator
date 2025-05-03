@@ -223,7 +223,7 @@ public final class JsonFileHandler
 		}
 		catch(IOException e)
 		{
-			throw;
+			throw e;
 		}
 	}
 
