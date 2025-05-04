@@ -24,7 +24,7 @@ if /i "%COMMAND%"=="compile" (
 ) else if /i "%COMMAND%"=="clean" (
 	mvn -s settings.xml clean
 ) else if /i "%COMMAND%"=="execute" (
-	java -jar target/nonsense-generator-fat-1.0.jar
+	java -jar target/nonsense-generator-1.0.jar
 ) else (
 	echo Invalid option: %COMMAND%
 	echo Available options: compile, test, package, javadoc, clean, execute
