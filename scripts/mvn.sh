@@ -6,27 +6,27 @@ execute_maven()
 
 	case $1 in
 		"compile")
-			mvn -s settings.xml compile
+			mvn -s config/settings.xml compile
 			;;
 
 		"test")
-			mvn -s settings.xml test
+			mvn -s config/settings.xml test
 			;;
 
 		"package")
-			mvn -s settings.xml package
+			mvn -s config/settings.xml package
 			;;
 
 		"javadoc")
-			mvn -s settings.xml javadoc:javadoc
+			mvn -s config/settings.xml javadoc:javadoc
 			;;
 
 		"clean")
-			mvn -s settings.xml clean
+			mvn -s config/settings.xml clean
 			;;
 
 		"execute")
-			java -jar target/nonsense-generator-1.0.jar
+			java -cp "target/nonsense-generator-1.0.jar:target/libs/*" unipd.nonsense.App
 			;;
 
 		*)

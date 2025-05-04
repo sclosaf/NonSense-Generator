@@ -1,9 +1,11 @@
 package unipd.nonsense;
 
+import unipd.nonsense.util.LoggerManager;
+
 public class App
 {
 	public static void main(String[] args)
 	{
-		System.out.println("Hello World!");
+		LoggerManager log = new LoggerManager();
 	}
 }

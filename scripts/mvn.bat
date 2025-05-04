@@ -14,17 +14,17 @@ set COMMAND=%~1
 cd %~dp0..
 
 if /i "%COMMAND%"=="compile" (
-	mvn -s settings.xml compile
+	mvn -s config\settings.xml compile
 ) else if /i "%COMMAND%"=="test" (
-	mvn -s settings.xml test
+	mvn -s config\settings.xml test
 ) else if /i "%COMMAND%"=="package" (
-	mvn -s settings.xml package
+	mvn -s config\settings.xml package
 ) else if /i "%COMMAND%"=="javadoc" (
-	mvn -s settings.xml javadoc:javadoc
+	mvn -s config\settings.xml javadoc:javadoc
 ) else if /i "%COMMAND%"=="clean" (
-	mvn -s settings.xml clean
+	mvn -s config\settings.xml clean
 ) else if /i "%COMMAND%"=="execute" (
-	java -jar target/nonsense-generator-1.0.jar
+	java -cp "target\nonsense-generator-1.0.jar:target\libs\*" unipd.nonsense.App
 ) else (
 	echo Invalid option: %COMMAND%
 	echo Available options: compile, test, package, javadoc, clean, execute
