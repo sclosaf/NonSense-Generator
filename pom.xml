@@ -222,14 +222,12 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<targetPath>config</targetPath>
+				<targetPath>.</targetPath>
+				<filtering>false</filtering>
 				<includes>
-					<include>**/*.xml</include>
-					<include>**/*.json</include>
+					<include>log4j2.xml</include>
+					<include>credentials.json</include>
 				</includes>
-				<excludes>
-					<exclude>settings.xml</exclude>
-				</excludes>
 			</resource>
 		</resources>
 

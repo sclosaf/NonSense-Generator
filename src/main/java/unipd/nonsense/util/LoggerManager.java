@@ -7,6 +7,7 @@ public class LoggerManager
 
 	public LoggerManager()
 	{
+		logger.debug("messaggio DEBUG");
 		logger.fatal("messaggio FATAL");
 		logger.debug("messaggio DEBUG");
 	}
