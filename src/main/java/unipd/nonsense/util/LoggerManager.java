@@ -6,5 +6,8 @@ public class LoggerManager
 	private static final Logger logger = LogManager.getLogger(LoggerManager.class);
 
 	public LoggerManager()
-	{}
+	{
+		logger.fatal("messaggio FATAL");
+		logger.debug("messaggio DEBUG");
+	}
 }
