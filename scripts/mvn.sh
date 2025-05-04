@@ -26,7 +26,7 @@ execute_maven()
 			;;
 
 		"execute")
-			java -jar target/nonsense-generator-1.0.jar
+			java -jar target/nonsense-generator-1.0-jar-with-dependencies.jar
 			;;
 
 		*)
