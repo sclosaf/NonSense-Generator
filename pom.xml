@@ -223,6 +223,13 @@
 			<resource>
 				<directory>${project.basedir}/config</directory>
 				<targetPath>config</targetPath>
+				<includes>
+					<include>**/*.xml</include>
+					<include>**/*.json</include>
+				</includes>
+				<excludes>
+					<exclude>settings.xml</exclude>
+				</excludes>
 			</resource>
 		</resources>
 
