@@ -91,9 +91,9 @@
 		</dependency>
 
 		<dependency>
-		    <groupId>org.apache.logging.log4j</groupId>
-		    <artifactId>log4j-api</artifactId>
-		    <version>2.20.0</version>
+			<groupId>org.apache.logging.log4j</groupId>
+			<artifactId>log4j-api</artifactId>
+			<version>2.20.0</version>
 		</dependency>
 
 		<!-- Mocking classes - Testing -->
@@ -168,29 +168,55 @@
 			</plugin>
 
 			<plugin>
-			    <groupId>org.apache.maven.plugins</groupId>
-			    <artifactId>maven-assembly-plugin</artifactId>
-			    <version>3.6.0</version>
-			    <configuration>
-			        <descriptorRefs>
-			            <descriptorRef>jar-with-dependencies</descriptorRef>
-			        </descriptorRefs>
-			        <archive>
-			            <manifest>
-			                <mainClass>unipd.nonsense.App</mainClass>
-			            </manifest>
-			        </archive>
-			    </configuration>
-			    <executions>
-			        <execution>
-			            <id>make-assembly</id>
-			            <phase>package</phase>
-			            <goals>
-			                <goal>single</goal>
-			            </goals>
-			        </execution>
-			    </executions>
+				<groupId>org.apache.maven.plugins</groupId>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<version>3.6.0</version>
+				<configuration>
+					<appendAssemblyId>false</appendAssemblyId>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>unipd.nonsense.App</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id>
+						<phase>package</phase>
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
 			</plugin>
+
+		<plugin>
+			<groupId>org.apache.maven.plugins</groupId>
+			<artifactId>maven-resources-plugin</artifactId>
+			<version>3.3.1</version>
+			<executions>
+				<execution>
+					<id>copy-config-files</id>
+					<phase>prepare-package</phase>
+					<goals>
+						<goal>copy-resources</goal>
+					</goals>
+					<configuration>
+						<outputDirectory>${project.build.directory}/config</outputDirectory>
+						<resources>
+							<resource>
+								<directory>${project.basedir}/config</directory>
+								<filtering>true</filtering>
+							</resource>
+						</resources>
+					</configuration>
+				</execution>
+			</executions>
+		</plugin>
+
 		</plugins>
 
 		<resources>
@@ -199,6 +225,11 @@
 				<includes>
 					<include>**/*.json</include>
 				</includes>
+			</resource>
+
+			<resource>
+				<directory>${project.basedir}/config</directory>
+				<targetPath>config</targetPath>
 			</resource>
 		</resources>
 
