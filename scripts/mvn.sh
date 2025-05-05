@@ -26,7 +26,7 @@ execute_maven()
 			;;
 
 		"execute")
-			java -cp "target/nonsense-generator-1.0.jar:target/libs/*:config/" unipd.nonsense.App
+			java -cp "target/nonsense-generator-1.0.jar:target/libs/*:target/config/" unipd.nonsense.App
 			;;
 
 		*)
