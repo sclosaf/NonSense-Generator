@@ -222,7 +222,7 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<targetPath>config</targetPath>
+				<targetPath>.</targetPath>
 				<includes>
 					<include>**/*.xml</include>
 					<include>**/*.json</include>
