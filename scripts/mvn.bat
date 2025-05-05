@@ -24,7 +24,7 @@ if /i "%COMMAND%"=="compile" (
 ) else if /i "%COMMAND%"=="clean" (
 	mvn -s config\settings.xml clean
 ) else if /i "%COMMAND%"=="execute" (
-	java -Dlog4j.configurationFile=config/log4j2.xml -cp "target\nonsense-generator-1.0.jar;target\libs\*;config/" unipd.nonsense.App
+	java -Dlog4j.configurationFile=config/log4j2.xml -cp "target\nonsense-generator-1.0.jar;target\libs\*;config\" unipd.nonsense.App
 ) else (
 	echo Invalid option: %COMMAND%
 	echo Available options: compile, test, package, javadoc, clean, execute
