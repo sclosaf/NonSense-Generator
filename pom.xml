@@ -223,22 +223,11 @@
 			<resource>
 				<directory>${project.basedir}/config</directory>
 				<targetPath>config</targetPath>
-<<<<<<< HEAD
-				<includes>
-					<include>**/*.xml</include>
-					<include>**/*.json</include>
-				</includes>
-				<excludes>
-					<exclude>settings.xml</exclude>
-				</excludes>
-||||||| c6285ee
-=======
 				<filtering>false</filtering>
 				<includes>
 					<include>log4j2.xml</include>
 					<include>credentials.json</include>
 				</includes>
->>>>>>> cad10e404a753126d4eac20badca690136477c82
 			</resource>
 		</resources>
 
