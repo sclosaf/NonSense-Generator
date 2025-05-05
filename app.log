@@ -1,3 +1,9 @@
 2025-05-05 08:48:00,988 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
 2025-05-05 08:48:00,992 [main] FATAL unipd.nonsense.util.LoggerManager - messaggio FATAL
 2025-05-05 08:48:00,992 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
+2025-05-05 16:46:43,962 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
+2025-05-05 16:46:43,966 [main] FATAL unipd.nonsense.util.LoggerManager - messaggio FATAL
+2025-05-05 16:46:43,966 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
+2025-05-05 16:46:52,408 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
+2025-05-05 16:46:52,412 [main] FATAL unipd.nonsense.util.LoggerManager - messaggio FATAL
+2025-05-05 16:46:52,412 [main] DEBUG unipd.nonsense.util.LoggerManager - messaggio DEBUG
