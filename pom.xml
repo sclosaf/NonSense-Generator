@@ -222,7 +222,7 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<targetPath>.</targetPath>
+				<targetPath>config</targetPath>
 				<filtering>false</filtering>
 				<includes>
 					<include>log4j2.xml</include>
