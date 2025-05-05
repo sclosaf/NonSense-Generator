@@ -1,65 +1,56 @@
 package unipd.nonsense.generator;
 
+import unipd.nonsense.util.JsonFileHandler;
+import unipd.nonsense.model.Template;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.io.IOException;
 import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-import org.json.simple.JSONArray;
-import org.json.simple.JSONObject;
-import org.json.simple.parser.JSONParser;
-import org.json.simple.parser.ParseException;
-
 public class TemplateGenerator {
-    private List<String> templates;
+    private List<Template> templates;  // Changed to store Template objects
     private Random random;
     private static final String TEMPLATE_FILE = "templates.json";
     
-    // Constructor without parameters - always loads templates.json
-    public TemplateGenerator() throws IOException, ParseException {
+    public TemplateGenerator() throws IOException {
         this.templates = new ArrayList<>();
         this.random = new Random();
         loadTemplates();
     }
     
-    // Loads templates from templates.json resource file
-    private void loadTemplates() throws IOException, ParseException {
+    private void loadTemplates() throws IOException {
         try {
-            JSONParser parser = new JSONParser();
-            JSONObject jsonObject;
-            
-            // Load from classpath resource
             InputStream inputStream = getClass().getClassLoader().getResourceAsStream(TEMPLATE_FILE);
             if (inputStream == null) {
                 throw new IOException("Resource not found: " + TEMPLATE_FILE);
             }
             
-            // Parse JSON from resource
-            jsonObject = (JSONObject) parser.parse(new InputStreamReader(inputStream, StandardCharsets.UTF_8));
+            java.nio.file.Path tempFile = java.nio.file.Files.createTempFile("templates", ".json");
+            java.nio.file.Files.copy(inputStream, tempFile, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            String filePath = tempFile.toString();
             
-            // Get templates array
-            JSONArray templatesArray = (JSONArray) jsonObject.get("templates");
+            JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
+            JsonObject jsonObject = jsonHandler.getJsonObject(filePath);
+            JsonArray templatesArray = jsonObject.getAsJsonArray("templates");
             
-            // Add templates to list
-            for (Object template : templatesArray) {
-                this.templates.add((String) template);
+            // Create Template objects instead of storing raw strings
+            for (var element : templatesArray) {
+                this.templates.add(new Template(element.getAsString()));
             }
             
+            java.nio.file.Files.delete(tempFile);
             System.out.println("Loaded " + this.templates.size() + " templates from " + TEMPLATE_FILE);
         } catch (IOException e) {
             System.err.println("Error reading template file: " + e.getMessage());
             throw e;
-        } catch (ParseException e) {
-            System.err.println("Error parsing JSON: " + e.getMessage());
-            throw e;
         }
     }
     
-    // Returns a random template
-    public String getRandomTemplate() {
+    // Returns a random Template object
+    public Template getRandomTemplate() {
         if (templates.isEmpty()) {
             throw new IllegalStateException("No templates loaded");
         }
@@ -67,5 +58,4 @@ public class TemplateGenerator {
         int randomIndex = random.nextInt(templates.size());
         return templates.get(randomIndex);
     }
-    
 }
