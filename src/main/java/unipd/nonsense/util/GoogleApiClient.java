@@ -70,7 +70,6 @@ public class GoogleApiClient implements AutoCloseable
 		}
 
 		return filePath;
-
 	}
 }
 
