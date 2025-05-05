@@ -155,13 +155,9 @@
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.2.5</version>
-				<configuration>
+					<configuration>
 						<argLine>-XX:+EnableDynamicAgentLoading</argLine>
-					<systemPropertyVariables>
-						<org.slf4j.simpleLogger.defaultLogLevel>off</org.slf4j.simpleLogger.defaultLogLevel>
-						<log4j2.debug>false</log4j2.debug>
-					</systemPropertyVariables>
-				</configuration>
+					</configuration>
 				<dependencies>
 					<dependency>
 						<groupId>org.junit.jupiter</groupId>
