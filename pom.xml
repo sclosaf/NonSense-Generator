@@ -157,10 +157,6 @@
 				<version>3.3.1</version>
 					<configuration>
 						<argLine>-XX:+EnableDynamicAgentLoading</argLine>
-						<reuseForks>true</reuseForks>
-						<forkCount>1</forkCount>
-						<runOrder>filesystem</runOrder>
-						<skipTests>${skipTests}</skipTests>
 					</configuration>
 				<dependencies>
 					<dependency>
