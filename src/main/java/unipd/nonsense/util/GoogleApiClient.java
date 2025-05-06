@@ -1,5 +1,9 @@
 package unipd.nonsense.util;
 
+import unipd.nonsense.exceptions.NullFilePathException;
+import unipd.nonsense.exceptions.InvalidFilePathException;
+import unipd.nonsense.exceptions.FailedOpeningInputStreamException;
+
 import java.io.File;
 import java.io.InputStream;
 import java.io.IOException;
@@ -56,8 +60,11 @@ public class GoogleApiClient implements AutoCloseable
 
 	private String validateFile(String filePath) throws IOException
 	{
-		if(filePath == null || filePath.isEmpty())
-			throw new IllegalArgumentException();
+		if(filePath == null)
+			throw new NullFilePathException();
+
+		if(filePath.isEmpty())
+			throw new InvalidFilePathException(filePath);
 
 		filePath = filePath.toLowerCase().endsWith(".json") ? filePath : filePath + ".json";
 
@@ -66,7 +73,7 @@ public class GoogleApiClient implements AutoCloseable
 		try(InputStream stream = getClass().getResourceAsStream(filePath))
 		{
 			if(stream == null)
-				throw new IOException();
+				throw new FailedOpeningInputStreamException();
 		}
 
 		return filePath;
