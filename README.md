@@ -12,7 +12,7 @@ Classi:
 
     2interfaccia per terminale, - Davide
 
-    3parser Input, - Davide
+    3Sentence analyzer, - Davide
 
     4elaboratore File JSON, - Fabrizio
 
