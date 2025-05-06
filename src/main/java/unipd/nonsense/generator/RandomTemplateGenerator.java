@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 
-public class TemplateGenerator
+public class RandomTemplateGenerator
 {
 	private List<Template> templates;
 	private Random random;
@@ -17,7 +17,7 @@ public class TemplateGenerator
 	private static String templatesPath = "templates.json";
 	private static String templatesKey = "templates";
 
-	public TemplateGenerator() throws IOException
+	public RandomTemplateGenerator() throws IOException
 	{
 		this.templates = new ArrayList<>();
 		this.random = new Random();
