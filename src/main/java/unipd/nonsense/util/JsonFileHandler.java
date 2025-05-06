@@ -151,18 +151,21 @@ public final class JsonFileHandler
 			JsonObject json = readJsonObject(filePath);
 			String[] keys = key.split("\\.");
 
+			JsonElement currentElement = json;
+
 			for(String k : keys)
 			{
-				if(!json.has(k))
+				if(!currentElement.isJsonObject())
 					return false;
 
-				JsonElement element = json.get(k);
+				JsonObject currentObject = currentElement.getAsJsonObject();
 
-				if(element.isJsonObject())
-					json = element.getAsJsonObject();
-				else if(k != keys[keys.length - 1])
+				if(!currentObject.has(k))
 					return false;
+
+				currentElement = currentObject.get(k);
 			}
+
 			return true;
 		}
 		finally
@@ -228,7 +231,7 @@ public final class JsonFileHandler
 		}
 		catch(IllegalStateException | JsonSyntaxException e)
 		{
-			throw new IllegalArgumentException();
+			throw new IOException();
 		}
 	}
 }

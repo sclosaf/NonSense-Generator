@@ -302,6 +302,29 @@ class TestJsonFileHandler
 		assertEquals(item, "itemX", "'itemX' should have been appended.");
 	}
 
+	@Test
+	@DisplayName("Test handling long value of json file.")
+	void testReadItemFromJson_LongValue() throws IOException
+	{
+		JsonObject json = handler.getJsonObject(tempFile.getPath());
+		json.add("TestItem", new JsonArray());
+
+		try(FileWriter writer = new FileWriter(tempFile))
+		{
+			writer.write(json.toString());
+		}
+
+		StringBuilder longValueBuilder = new StringBuilder();
+		for(int i = 0; i < 100000; ++i)
+			longValueBuilder.append("X");
+
+		String longValue = longValueBuilder.toString();
+
+		handler.appendItemToJson(tempFile.getPath(), "TestItem", longValue);
+
+		String readValue = handler.readItemFromJson(tempFile.getPath(), "TestItem", 0);
+		assertEquals(longValue, readValue, "Should be able to read the long value");
+	}
 
 	@Test
 	@DisplayName("Stress test concurrent read and write.")
@@ -434,6 +457,34 @@ class TestJsonFileHandler
 
 		String key = "TestItems1";
 		assertThrows(IOException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw IOException due to malformed json file.");
+	}
+
+	@Test
+	@DisplayName("Test handling long key of json file.")
+	void testReadListFromJson_LongKey() throws IOException
+	{
+		StringBuilder longKeyBuilder = new StringBuilder();
+		for(int i = 0; i < 100000; ++i)
+			longKeyBuilder.append("X");
+
+		String longKey = longKeyBuilder.toString();
+
+		File longKeyFile = Files.createTempFile("longKey", ".json").toFile();
+		longKeyFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray array = new JsonArray();
+
+		array.add("itemX");
+		json.add(longKey, array);
+
+		try(FileWriter writer = new FileWriter(longKeyFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(longKeyFile.getPath(), longKey);
+		assertEquals(1, items.size(), "Should be able to read the array with the long key.");
 	}
 
 	@Test
@@ -628,6 +679,55 @@ class TestJsonFileHandler
 	}
 
 	@Test
+	@DisplayName("Test file with path extremely long.")
+	void testReadListFromJson_LongPath() throws IOException
+	{
+		StringBuilder pathBuilder = new StringBuilder();
+		String basePath = System.getProperty("java.io.tmpdir");
+
+		pathBuilder.append(basePath);
+
+		if (!basePath.endsWith(File.separator))
+			pathBuilder.append(File.separator);
+
+		int maxDir = 10;
+
+		for(int i = 0; i < maxDir; ++i)
+			pathBuilder.append("subdir").append(i).append(File.separator);
+
+		pathBuilder.append("testFile.json");
+
+		String longPath = pathBuilder.toString();
+
+		File pathDir = new File(pathBuilder.toString()).getParentFile();
+
+		if (!pathDir.exists())
+			pathDir.mkdirs();
+
+		File pathFile = new File(longPath);
+		if(!pathFile.exists())
+			pathFile.createNewFile();
+
+		JsonObject json = new JsonObject();
+		JsonArray array = new JsonArray();
+
+		array.add("itemX");
+		json.add("TestItems", array);
+
+		try(FileWriter writer = new FileWriter(pathFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(longPath, "TestItems");
+		assertEquals(1, items.size(), "Dovrebbe essere possibile leggere da un file con percorso estremamente lungo.");
+
+		pathFile.delete();
+
+
+	}
+
+	@Test
 	@DisplayName("Test success of hasJsonKey.")
 	void testHasJsonKey_Success() throws IOException
 	{
@@ -692,7 +792,7 @@ class TestJsonFileHandler
 
 	@Test
 	@DisplayName("Test deeply nested key.")
-	void testHasJsonKey_DeeplyNested() throws IOException
+	void testHasJsonKey_DeeplyNestedKey() throws IOException
 	{
 		File file = Files.createTempFile("nested", ".json").toFile();
 		file.deleteOnExit();
@@ -714,6 +814,47 @@ class TestJsonFileHandler
 
 		assertTrue(handler.hasJsonKey(file.getPath(), "Level1.Level2.Level3.DeepKey"), "Deeply nested key should exist.");
 		assertFalse(handler.hasJsonKey(file.getPath(), "Level1.Level2.NonExistent.DeepKey"), "Non-existent deeply nested key should return false.");
+	}
+
+	@Test
+	@DisplayName("Test extreme nested key.")
+	void testHasJsonKey_ExtremelyDeeplyNestedKey() throws IOException
+	{
+		File nestedFile = Files.createTempFile("nested", ".json").toFile();
+		nestedFile.deleteOnExit();
+
+		JsonObject root = new JsonObject();
+		JsonObject current = root;
+
+		for(int i = 0; i < 100; ++i)
+		{
+			JsonObject next = new JsonObject();
+			current.add("level" + i, next);
+			current = next;
+		}
+
+		current.addProperty("value", "itemX");
+
+		try(FileWriter writer = new FileWriter(nestedFile))
+		{
+			writer.write(root.toString());
+		}
+
+		StringBuilder keyBuilder = new StringBuilder();
+		for(int i = 0; i < 100; ++i)
+		{
+			if(i > 0)
+				keyBuilder.append(".");
+
+			keyBuilder.append("level").append(i);
+		}
+
+		keyBuilder.append(".value");
+
+		String key = keyBuilder.toString();
+
+		boolean exists = handler.hasJsonKey(nestedFile.getPath(), key);
+		assertTrue(exists, "Should be able to access extremely deeply nested key.");
 	}
 
 	@Test
