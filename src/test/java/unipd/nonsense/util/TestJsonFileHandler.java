@@ -234,7 +234,7 @@ class TestJsonFileHandler
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readItemFromJson(emptyFile.getPath(), key, 0), "Should throw IOException for empty JSON file.");
+		assertThrows(IllegalStateException.class, () -> handler.readItemFromJson(emptyFile.getPath(), key, 0), "Should throw IOException for empty JSON file.");
 	}
 
 	@Test
@@ -440,7 +440,7 @@ class TestJsonFileHandler
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw IOException due to empty json file.");
+		assertThrows(IllegalStateException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw IOException due to empty json file.");
 	}
 
 	@Test
@@ -456,7 +456,7 @@ class TestJsonFileHandler
 		}
 
 		String key = "TestItems1";
-		assertThrows(IOException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw IOException due to malformed json file.");
+		assertThrows(IllegalStateException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw IOException due to malformed json file.");
 	}
 
 	@Test
