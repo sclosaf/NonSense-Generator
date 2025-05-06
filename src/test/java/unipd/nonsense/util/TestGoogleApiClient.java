@@ -1,11 +1,13 @@
 package unipd.nonsense.util;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -121,6 +123,56 @@ class TestGoogleApiClient
 		GoogleApiClient client2 = new GoogleApiClient(filePath);
 
 		assertSame(client1.getClient(), client2.getClient(), "Should create the same session for the same client.");
+	}
+
+	@Test
+	@DisplayName("Test extreme long file path")
+	void testConstructor_ExtremeLongFilePath()
+	{
+		StringBuilder longPathBuilder = new StringBuilder();
+		for(int i = 0; i < 1000; ++i)
+			longPathBuilder.append("directory").append(i).append(File.separator);
+
+		longPathBuilder.append("config.json");
+
+		String longPath = longPathBuilder.toString();
+
+		assertThrows(IOException.class, () -> new GoogleApiClient(longPath), "Should be able to manage extreme long file paths.");
+	}
+
+	@Test
+	@DisplayName("Test handling many simultaneous clients.")
+	void testConstructor_ManySimultaneousClients() throws InterruptedException, IOException
+	{
+		int threadCount = 100;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+		GoogleApiClient sharedClient = new GoogleApiClient(filePath);
+
+		for(int i = 0; i < threadCount; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						LanguageServiceClient client = sharedClient.getClient();
+						assertNotNull(client);
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		boolean completed = latch.await(10, TimeUnit.SECONDS);
+		executor.shutdown();
+
+		sharedClient.close();
+
+		verify(mockClient, times(1)).close();
+		assertTrue(completed, "Not all threads were able to be completed on time.");
 	}
 
 	@Test
