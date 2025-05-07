@@ -62,14 +62,6 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
-			<version>${junit.version}</version>
-			<type>jar</type>
-			<scope>test</scope>
-		</dependency>
-
 		<!-- Google Cloud - Natural language -->
 		<dependency>
 			<groupId>com.google.cloud</groupId>
