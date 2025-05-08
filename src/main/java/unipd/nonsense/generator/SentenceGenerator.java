@@ -5,18 +5,14 @@ import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Template;
 
+import unipd.nonsense.generator.RandomNounGenerator;
+import unipd.nonsense.generator.RandomVerbGenerator;
+import unipd.nonsense.generator.RandomAdjectiveGenerator;
 import unipd.nonsense.generator.RandomTemplateGenerator;
+
 
 public class SentenceGenerator
 {
-	private nounsPath = "";
-	private verbsPath = "";
-	private adjectivesPath = "";
-
-	private List<> Nouns;
-	private List<> Verbs;
-	private List<> Adjectives;
-
 	public SentenceGenerator()
 	{}
 

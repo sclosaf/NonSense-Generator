@@ -17,7 +17,7 @@ public class RandomNounGenerator
 	private static Map<Number, List<Noun>> nouns;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler;
+	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String nounsPath = "nouns.json";
 	private static List<String> keys = List.of("singularNouns", "pluralNouns");
@@ -26,7 +26,6 @@ public class RandomNounGenerator
 	{
 		this.nouns = new HashMap<>();
 		this.random = new Random();
-		this.jsonHandler = JsonFileHandler.getInstance();
 
 		loadNouns();
 	}

@@ -15,7 +15,7 @@ public class RandomTemplateGenerator
 	private static Map<TemplateType, List<Template>> templates;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler;
+	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String templatesPath = "templates.json";
 	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
@@ -24,7 +24,6 @@ public class RandomTemplateGenerator
 	{
 		this.templates = new HashMap<>();
 		this.random = new Random();
-		this.jsonHandler = JsonFileHandler.getInstance();
 
 		loadTemplates();
 	}

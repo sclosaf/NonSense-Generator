@@ -17,7 +17,7 @@ public class RandomVerbGenerator
 	private static Map<Tense, List<Verb>> verbs;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler;
+	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String verbsPath = "verbs.json";
 	private static List<String> keys = List.of("pastVerbs", "presentVerbs", "futureVerbs");
@@ -26,7 +26,6 @@ public class RandomVerbGenerator
 	{
 		this.verbs = new HashMap<>();
 		this.random = new Random();
-		this.jsonHandler = JsonFileHandler.getInstance();
 
 		loadVerbs();
 	}

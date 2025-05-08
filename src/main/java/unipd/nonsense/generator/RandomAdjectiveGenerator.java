@@ -16,7 +16,7 @@ public class RandomAdjectiveGenerator
 	private static List<Adjective> adjectives;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler;
+	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String adjectivesPath = "adjectives.json";
 	private static List<String> keys = List.of("adjective");
@@ -25,7 +25,6 @@ public class RandomAdjectiveGenerator
 	{
 		this.adjectives = new ArrayList<>();
 		this.random = new Random();
-		this.jsonHandler = JsonFileHandler.getInstance();
 
 		loadAdjectives();
 	}
