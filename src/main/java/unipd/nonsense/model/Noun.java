@@ -3,7 +3,7 @@ package unipd.nonsense.model;
 public class Noun{
 	
 	private static enum Number{SINGULAR, PLURAL};
-	private final String noun;
+	private String noun;
 	private final Number number;
 
 	public Noun(String newNoun, Number newNumber){

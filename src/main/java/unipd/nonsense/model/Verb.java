@@ -3,8 +3,8 @@ package unipd.nonsense.model;
 public class Verb{
 
 	private static enum Tense{PAST, PRESENT, FUTURE};
-	private final String verb;
-	private final String tense;
+	private String verb;
+	private final Tense tense;
 
 	public Verb(String newVerb, Tense newTense){
 		verb = newVerb;
