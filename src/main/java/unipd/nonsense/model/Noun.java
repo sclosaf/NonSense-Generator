@@ -7,24 +7,22 @@ public class Noun
 		SINGULAR, PLURAL
 	}
 
-	private String noun;
+	private final String noun;
 	private final Number number;
 
-	public Noun(String newNoun, Number newNumber){
-		noun = newNoun;
-		number = newNumber;
+	public Noun(String noun, Number number)
+	{
+		this.noun = noun;
+		this.number = number;
 	}
 
-	public String getNoun(){
+	public String getNoun()
+	{
 		return noun;
 	}
 
-	public void setNoun(String newNoun){
-		noun = newNoun;
-	}
-
-	public Number getNumber(){
+	public Number getNumber()
+	{
 		return number;
 	}
-
 }

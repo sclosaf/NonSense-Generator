@@ -3,14 +3,14 @@ package unipd.nonsense.model;
 public class Template
 {
 	// Enum for template types
-	public enum TemplateType
+	public static enum TemplateType
 	{
 		SINGULAR,
 		PLURAL
 	}
 
 	private String pattern;
-	private TemplateType type;
+	private final TemplateType type;
 
 	// Constructor with pattern and type
 	public Template(String pattern, TemplateType type)

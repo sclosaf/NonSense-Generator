@@ -1,29 +1,28 @@
 package unipd.nonsense.model;
 
-public class Verb{
-
-	private static enum Tense
+public class Verb
+{
+	public static enum Tense
 	{
 		PAST, PRESENT, FUTURE
 	}
 
-	private String verb;
+	private final String verb;
 	private final Tense tense;
 
-	public Verb(String newVerb, Tense newTense){
-		verb = newVerb;
-		tense = newTense;
+	public Verb(String verb, Tense tense)
+	{
+		this.verb = verb;
+		this.tense = tense;
 	}
 
-	public String getVerb(){
+	public String getVerb()
+	{
 		return verb;
 	}
 
-	public void setVerb(String newVerb){
-		verb = newVerb;
-	}
-
-	public Tense getTense(){
+	public Tense getTense()
+	{
 		return tense;
 	}
 

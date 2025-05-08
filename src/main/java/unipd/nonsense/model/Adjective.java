@@ -1,19 +1,16 @@
 package unipd.nonsense.model;
 
-public class Adjective{
+public class Adjective
+{
+	private final String adjective;
 
-	private String adj;
-	
-	public Adjective(String newAdj){
-		adj = newAdj;
+	public Adjective(String adjective)
+	{
+		this.adjective = adjective;
 	}
 
-	public String getAdjective(){
-		return adj;
+	public String getAdjective()
+	{
+		return adjective;
 	}
-
-	public void setAdjective(String newAdj){
-		adj = newAdj;
-	}
-
 }
