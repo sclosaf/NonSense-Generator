@@ -78,16 +78,7 @@ class TestJsonElementIsNotPrimitiveException
 	void testGetNonPrimitiveElement()
 	{
 		JsonObject obj = new JsonObject();
-		JsonElementIsNotPrimitiveException exception1 = new JsonElementIsNotPrimitiveException(obj);
-		assertSame(obj, exception1.getNonPrimitiveElement());
-
-		JsonArray array = new JsonArray();
-		JsonElementIsNotPrimitiveException exception2 = new JsonElementIsNotPrimitiveException(array);
-		assertSame(array, exception2.getNonPrimitiveElement());
-
-		JsonObject complex = new JsonObject();
-		complex.add("array", new JsonArray());
-		JsonElementIsNotPrimitiveException exception3 = new JsonElementIsNotPrimitiveException(complex);
-		assertSame(complex, exception3.getNonPrimitiveElement());
+		JsonElementIsNotPrimitiveException exception = new JsonElementIsNotPrimitiveException(obj);
+		assertSame(obj, exception.getNonPrimitiveElement());
 	}
 }

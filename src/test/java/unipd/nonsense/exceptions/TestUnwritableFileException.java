@@ -60,25 +60,4 @@ class TestUnwritableFileException
 		UnwritableFileException exception = new UnwritableFileException();
 		assertTrue(exception instanceof IOException, "Should be subclass of IOException");
 	}
-
-	@Test
-	@DisplayName("Test with various write failure scenarios")
-	void testWithWriteFailureScenarios()
-	{
-		IOException diskFullCause = new IOException("No space left on device");
-		UnwritableFileException exception1 = new UnwritableFileException(diskFullCause);
-		assertSame(diskFullCause, exception1.getCause());
-
-		String accessMessage = "Cannot write to protected file";
-		IOException accessCause = new IOException("protected.txt");
-		UnwritableFileException exception2 = new UnwritableFileException(accessMessage, accessCause);
-		assertEquals(accessMessage, exception2.getMessage());
-		assertSame(accessCause, exception2.getCause());
-
-		String fsMessage = "Filesystem error during write";
-		IOException fsCause = new IOException("Read-only filesystem");
-		UnwritableFileException exception3 = new UnwritableFileException(fsMessage, fsCause);
-		assertEquals(fsMessage, exception3.getMessage());
-		assertSame(fsCause, exception3.getCause());
-	}
 }

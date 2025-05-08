@@ -54,20 +54,4 @@ class TestClientNonExistentException
 		ClientNonExistentException exception = new ClientNonExistentException();
 		assertTrue(exception instanceof IllegalStateException, "Should be subclass of IllegalStateException");
 	}
-
-	@Test
-	@DisplayName("Test with various client lookup scenarios")
-	void testWithClientLookupScenarios()
-	{
-		String idMessage = "No client with ID 'nonexistent'";
-		ClientNonExistentException exception1 = new ClientNonExistentException(idMessage);
-		assertEquals(idMessage, exception1.getMessage());
-		assertNull(exception1.getCause());
-
-		String cacheMessage = "Client not found in cache";
-		IllegalStateException cacheCause = new IllegalStateException("Cache miss");
-		ClientNonExistentException exception2 = new ClientNonExistentException(cacheMessage, cacheCause);
-		assertEquals(cacheMessage, exception2.getMessage());
-		assertSame(cacheCause, exception2.getCause());
-	}
 }

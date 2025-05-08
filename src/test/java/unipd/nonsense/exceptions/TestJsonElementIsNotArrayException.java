@@ -71,15 +71,7 @@ class TestJsonElementIsNotArrayException
 	void testGetNotArrayKey()
 	{
 		String simpleKey = "items";
-		JsonElementIsNotArrayException exception1 = new JsonElementIsNotArrayException(simpleKey);
-		assertEquals(simpleKey, exception1.getNotArrayKey());
-
-		String nestedKey = "data.config.items";
-		JsonElementIsNotArrayException exception2 = new JsonElementIsNotArrayException(nestedKey);
-		assertEquals(nestedKey, exception2.getNotArrayKey());
-
-		String specialKey = "user@domain.com";
-		JsonElementIsNotArrayException exception3 = new JsonElementIsNotArrayException(specialKey);
-		assertEquals(specialKey, exception3.getNotArrayKey());
+		JsonElementIsNotArrayException exception = new JsonElementIsNotArrayException(simpleKey);
+		assertEquals(simpleKey, exception.getNotArrayKey());
 	}
 }

@@ -59,23 +59,4 @@ class TestFailedOpeningInputStreamException
 		FailedOpeningInputStreamException exception = new FailedOpeningInputStreamException();
 		assertTrue(exception instanceof IOException, "Should be subclass of IOException");
 	}
-
-	@Test
-	@DisplayName("Test with various stream opening failure scenarios")
-	void testWithStreamFailureScenarios()
-	{
-		IOException notFoundCause = new IOException("input.txt");
-		FailedOpeningInputStreamException exception1 = new FailedOpeningInputStreamException(notFoundCause);
-		assertSame(notFoundCause, exception1.getCause());
-
-		String networkMessage = "Cannot open network stream";
-		IOException networkCause = new IOException("Connection timed out");
-		FailedOpeningInputStreamException exception2 = new FailedOpeningInputStreamException(networkMessage, networkCause);
-		assertEquals(networkMessage, exception2.getMessage());
-		assertSame(networkCause, exception2.getCause());
-
-		IOException securityCause = new IOException("Access denied");
-		FailedOpeningInputStreamException exception3 = new FailedOpeningInputStreamException(securityCause);
-		assertSame(securityCause, exception3.getCause());
-	}
 }

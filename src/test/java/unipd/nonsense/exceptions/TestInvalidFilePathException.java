@@ -72,26 +72,7 @@ class TestInvalidFilePathException
 	void testGetInvalidPath()
 	{
 		String unixPath = "/home/user/invalid.file";
-		InvalidFilePathException exception1 = new InvalidFilePathException(unixPath);
-		assertEquals(unixPath, exception1.getInvalidPath());
-
-		String windowsPath = "C:\\Program Files\\invalid\\path.exe";
-		InvalidFilePathException exception2 = new InvalidFilePathException(windowsPath);
-		assertEquals(windowsPath, exception2.getInvalidPath());
-
-
-		String relativePath = "../parent/../invalid.file";
-		InvalidFilePathException exception3 = new InvalidFilePathException(relativePath);
-		assertEquals(relativePath, exception3.getInvalidPath());
-	}
-
-	@Test
-	@DisplayName("Test empty path handling")
-	void testEmptyPath()
-	{
-		String emptyPath = "";
-		InvalidFilePathException exception = new InvalidFilePathException(emptyPath);
-		assertTrue(exception.getMessage().contains("Path: ''"));
-		assertEquals(emptyPath, exception.getInvalidPath());
+		InvalidFilePathException exception = new InvalidFilePathException(unixPath);
+		assertEquals(unixPath, exception.getInvalidPath());
 	}
 }

@@ -19,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -197,7 +198,9 @@ class TestJsonFileHandler
 			writer.write(json.toString());
 		}
 
-		nonWritableFile.setWritable(false);
+		boolean setWritableFailed = !nonWritableFile.setWritable(false);
+		Assumptions.assumeFalse(setWritableFailed, "Could not make file non-writable, skipping test");
+
 
 		String key = "TestItems1";
 
@@ -254,8 +257,16 @@ class TestJsonFileHandler
 	void testReadItemFromJson_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
 
 		String key = "TestItems1";
 
@@ -682,8 +693,15 @@ class TestJsonFileHandler
 	void testReadListFromJson_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
 
 		String key = "TestItems1";
 
@@ -792,8 +810,17 @@ class TestJsonFileHandler
 	void testHasJsonKey_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
+
 
 		String key = "TestItems1";
 

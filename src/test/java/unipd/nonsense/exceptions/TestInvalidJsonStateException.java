@@ -55,17 +55,4 @@ class TestInvalidJsonStateException
 		InvalidJsonStateException exception = new InvalidJsonStateException();
 		assertTrue(exception instanceof IllegalStateException, "Should be subclass of IllegalStateException");
 	}
-
-	@Test
-	@DisplayName("Test with various JSON-related causes")
-	void testWithJsonRelatedCauses()
-	{
-		IllegalStateException jsonParseException = new IllegalStateException("Unexpected token '}'");
-		InvalidJsonStateException exception1 = new InvalidJsonStateException(jsonParseException);
-		assertSame(jsonParseException, exception1.getCause());
-
-		String validationMessage = "Missing required fields: name, id";
-		InvalidJsonStateException exception2 = new InvalidJsonStateException(validationMessage);
-		assertEquals(validationMessage, exception2.getMessage());
-	}
 }

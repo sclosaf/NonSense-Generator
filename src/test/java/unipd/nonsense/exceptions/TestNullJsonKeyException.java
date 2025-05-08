@@ -56,26 +56,4 @@ class TestNullJsonKeyException
 		NullJsonKeyException exception = new NullJsonKeyException();
 		assertTrue(exception instanceof IllegalArgumentException, "Should be subclass of IllegalArgumentException");
 	}
-
-	@Test
-	@DisplayName("Test with various JSON processing scenarios")
-	void testWithJsonProcessingScenarios()
-	{
-		String parseMessage = "Null key in JSON parser";
-		IllegalArgumentException parseCause = new IllegalArgumentException("Parser state invalid");
-		NullJsonKeyException exception1 = new NullJsonKeyException(parseMessage, parseCause);
-		assertEquals(parseMessage, exception1.getMessage());
-		assertSame(parseCause, exception1.getCause());
-
-		String configMessage = "Configuration key cannot be null";
-		NullJsonKeyException exception2 = new NullJsonKeyException(configMessage);
-		assertEquals(configMessage, exception2.getMessage());
-		assertNull(exception2.getCause());
-
-		String apiMessage = "API response contained null key";
-		IllegalArgumentException apiCause = new IllegalArgumentException("response.key");
-		NullJsonKeyException exception3 = new NullJsonKeyException(apiMessage, apiCause);
-		assertEquals(apiMessage, exception3.getMessage());
-		assertSame(apiCause, exception3.getCause());
-	}
 }

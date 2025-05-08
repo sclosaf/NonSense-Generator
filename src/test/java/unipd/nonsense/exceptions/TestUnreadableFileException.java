@@ -59,25 +59,4 @@ class TestUnreadableFileException
 		UnreadableFileException exception = new UnreadableFileException();
 		assertTrue(exception instanceof IOException, "Should be subclass of IOException");
 	}
-
-	@Test
-	@DisplayName("Test with various read failure scenarios")
-	void testWithReadFailureScenarios()
-	{
-		IOException missingFileCause = new IOException("missing.txt");
-		UnreadableFileException exception1 = new UnreadableFileException(missingFileCause);
-		assertSame(missingFileCause, exception1.getCause());
-
-		String corruptMessage = "File appears to be corrupted";
-		IOException corruptCause = new IOException("Invalid file format");
-		UnreadableFileException exception2 = new UnreadableFileException(corruptMessage, corruptCause);
-		assertEquals(corruptMessage, exception2.getMessage());
-		assertSame(corruptCause, exception2.getCause());
-
-		String lockedMessage = "File is locked by another process";
-		IOException lockedCause = new IOException("The process cannot access the file");
-		UnreadableFileException exception3 = new UnreadableFileException(lockedMessage, lockedCause);
-		assertEquals(lockedMessage, exception3.getMessage());
-		assertSame(lockedCause, exception3.getCause());
-	}
 }

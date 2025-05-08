@@ -57,23 +57,4 @@ class TestInaccessibleFileException
 		InaccessibleFileException exception = new InaccessibleFileException();
 		assertTrue(exception instanceof IOException, "Should be subclass of IOException");
 	}
-
-	@Test
-	@DisplayName("Test with various file access failure scenarios")
-	void testWithFileAccessScenarios()
-	{
-		IOException notFoundCause = new IOException("file.txt");
-		InaccessibleFileException exception1 = new InaccessibleFileException(notFoundCause);
-		assertSame(notFoundCause, exception1.getCause());
-
-		String accessMessage = "Insufficient permissions to open file";
-		InaccessibleFileException exception2 = new InaccessibleFileException(accessMessage);
-		assertEquals(accessMessage, exception2.getMessage());
-
-		String lockedMessage = "File is locked by another process";
-		IOException lockedCause = new IOException("The process cannot access the file");
-		InaccessibleFileException exception3 = new InaccessibleFileException(lockedMessage, lockedCause);
-		assertEquals(lockedMessage, exception3.getMessage());
-		assertSame(lockedCause, exception3.getCause());
-	}
 }

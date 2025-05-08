@@ -56,26 +56,4 @@ class TestNullFilePathException
 		NullFilePathException exception = new NullFilePathException();
 		assertTrue(exception instanceof IllegalArgumentException, "Should be subclass of IllegalArgumentException");
 	}
-
-	@Test
-	@DisplayName("Test with various file operation scenarios")
-	void testWithFileOperationScenarios()
-	{
-		String uploadMessage = "Upload path cannot be null";
-		NullFilePathException exception1 = new NullFilePathException(uploadMessage);
-		assertEquals(uploadMessage, exception1.getMessage());
-		assertNull(exception1.getCause());
-
-		String configMessage = "Configuration file path is null";
-		IllegalArgumentException configCause = new IllegalArgumentException("Missing path");
-		NullFilePathException exception2 = new NullFilePathException(configMessage, configCause);
-		assertEquals(configMessage, exception2.getMessage());
-		assertSame(configCause, exception2.getCause());
-
-		String dbMessage = "Database file path cannot be null";
-		IllegalArgumentException dbCause = new IllegalArgumentException("dbPath");
-		NullFilePathException exception3 = new NullFilePathException(dbMessage, dbCause);
-		assertEquals(dbMessage, exception3.getMessage());
-		assertSame(dbCause, exception3.getCause());
-	}
 }

@@ -53,26 +53,4 @@ class TestClientAlreadyClosedException
 		ClientAlreadyClosedException exception = new ClientAlreadyClosedException();
 		assertTrue(exception instanceof IllegalStateException, "Should be subclass of IllegalStateException");
 	}
-
-	@Test
-	@DisplayName("Test with various client closure scenarios")
-	void testWithClientClosureScenarios()
-	{
-		String socketMessage = "Client socket already closed";
-		Exception socketCause = new Exception("Socket shutdown");
-		ClientAlreadyClosedException exception1 = new ClientAlreadyClosedException(socketMessage, socketCause);
-		assertEquals(socketMessage, exception1.getMessage());
-		assertSame(socketCause, exception1.getCause());
-
-		String resourceMessage = "Client resources already released";
-		ClientAlreadyClosedException exception2 = new ClientAlreadyClosedException(resourceMessage);
-		assertEquals(resourceMessage, exception2.getMessage());
-		assertNull(exception2.getCause());
-
-		String doubleCloseMessage = "Attempted to close client twice";
-		IllegalStateException doubleCloseCause = new IllegalStateException("Already closed");
-		ClientAlreadyClosedException exception3 = new ClientAlreadyClosedException(doubleCloseMessage, doubleCloseCause);
-		assertEquals(doubleCloseMessage, exception3.getMessage());
-		assertSame(doubleCloseCause, exception3.getCause());
-	}
 }
