@@ -1,8 +1,14 @@
 package unipd.nonsense.model;
 
 public class Noun{
-	public Noun(String newNoun){
+	
+	private static enum Number{SINGULAR, PLURAL};
+	private final String noun;
+	private final Number number;
+
+	public Noun(String newNoun, Number newNumber){
 		noun = newNoun;
+		number = newNumber;
 	}
 
 	public String getNoun(){
@@ -13,5 +19,8 @@ public class Noun{
 		noun = newNoun;
 	}
 
-	private String noun;
+	public Number getNumber(){
+		return number;
+	}
+
 }

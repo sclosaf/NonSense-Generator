@@ -1,6 +1,9 @@
 package unipd.nonsense.model;
 
 public class Adjective{
+
+	private String adj;
+	
 	public Adjective(String newAdj){
 		adj = newAdj;
 	}
@@ -13,5 +16,4 @@ public class Adjective{
 		adj = newAdj;
 	}
 
-	private String adj;
 }
