@@ -910,8 +910,16 @@ class TestJsonFileHandler
 	void testGetJsonObject_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test.")
 
 		assertThrows(UnreadableFileException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw UnreadableFileException due to non readable file.");
 	}
