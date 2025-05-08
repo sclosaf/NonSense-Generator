@@ -1,5 +1,5 @@
 {
-	"singularTemplates": 
+	"singularTemplates":
 	[
 		"The [adjective] [noun] [verb] the [noun].",
 		"A [noun] [verb] when it sees a [adjective] [noun].",
@@ -32,7 +32,7 @@
 		"No [adjective] [noun] [verb] the [noun] quite like this.",
 		"The [noun] [verb] just like a [adjective] [noun] would."
 	],
-	
+
 	"pluralTemplates":
 	[
 		"The [adjective] [noun] [verb] near the [noun].",

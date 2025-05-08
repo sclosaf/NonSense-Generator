@@ -2,7 +2,11 @@ package unipd.nonsense.model;
 
 public class Verb{
 
-	private static enum Tense{PAST, PRESENT, FUTURE};
+	private static enum Tense
+	{
+		PAST, PRESENT, FUTURE
+	}
+
 	private String verb;
 	private final Tense tense;
 

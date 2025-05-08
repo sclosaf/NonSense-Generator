@@ -2,10 +2,8 @@ package unipd.nonsense.model;
 
 public class Template
 {
-
 	// The template pattern with placeholders like [noun], [verb], etc.
 	private String pattern;
-
 
 	// Constructor
 	public Template(String pattern)
@@ -14,7 +12,6 @@ public class Template
 	}
 
 	// Get the template pattern
-
 	public String getPattern()
 	{
 		return pattern;
@@ -25,7 +22,6 @@ public class Template
 	{
 		return pattern.contains("[" + placeholder + "]");
 	}
-
 
 	// Count occurrences of a specific placeholder
 	public int countPlaceholders(String placeholder)

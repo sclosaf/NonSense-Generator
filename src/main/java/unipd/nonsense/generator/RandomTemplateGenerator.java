@@ -28,7 +28,6 @@ public class RandomTemplateGenerator
 
 	private void loadTemplates() throws IOException
 	{
-		jsonHandler = JsonFileHandler.getInstance();
 		List<String> jsonList = jsonHandler.readListFromJson(templatesPath, templatesKey);
 
 		for(String element : jsonList)
