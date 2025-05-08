@@ -919,7 +919,7 @@ class TestJsonFileHandler
 
 		boolean setReadableFailed = !nonReadableFile.setReadable(false);
 
-		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test.")
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test.");
 
 		assertThrows(UnreadableFileException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw UnreadableFileException due to non readable file.");
 	}
