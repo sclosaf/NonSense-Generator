@@ -1,11 +1,19 @@
 package unipd.nonsense.util;
 
+import unipd.nonsense.exceptions.NullFilePathException;
+import unipd.nonsense.exceptions.InvalidFilePathException;
+import unipd.nonsense.exceptions.FailedOpeningInputStreamException;
+import unipd.nonsense.exceptions.ClientAlreadyClosedException;
+import unipd.nonsense.exceptions.ClientNonExistentException;
+
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.CountDownLatch;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -30,6 +38,7 @@ import com.google.cloud.language.v1.LanguageServiceSettings;
 class TestGoogleApiClient
 {
 	private static final String filePath = "/testConfig.json";
+	private static final String alternativeFilePath = "/testConfigAlternative.json";
 
 	@Mock
 	private LanguageServiceClient mockClient;
@@ -69,7 +78,7 @@ class TestGoogleApiClient
 		when(LanguageServiceSettings.newBuilder()).thenReturn(mockSettingsBuilder);
 		when(mockSettingsBuilder.setCredentialsProvider(mockCredentialsProvider)).thenReturn(mockSettingsBuilder);
 		when(mockSettingsBuilder.build()).thenReturn(mockSettings);
-		when(LanguageServiceClient.create(mockSettings)).thenReturn(mockClient);
+		when(LanguageServiceClient.create(any(LanguageServiceSettings.class))).thenReturn(mockClient);
 
 		googleClient = new GoogleApiClient(filePath);
 	}
@@ -80,6 +89,8 @@ class TestGoogleApiClient
 	{
 		if(googleClient != null)
 			googleClient.close();
+
+		GoogleApiClient.closeAllClients();
 
 		mockedLanguageServiceClient.close();
 		mockedServiceAccountCredentials.close();
@@ -95,8 +106,6 @@ class TestGoogleApiClient
 		assertEquals(mockClient, googleClient.getClient(), "The two clients should be the same.");
 	}
 
-	@Test
-	@DisplayName("Test invalid credentials.")
 	void testConstructor_InvalidCredentials() throws IOException
 	{
 		when(ServiceAccountCredentials.fromStream(any())).thenThrow(new IOException());
@@ -107,10 +116,10 @@ class TestGoogleApiClient
 	@DisplayName("Test invalid configuration file.")
 	void testConstructor_InvalidFile()
 	{
-		assertThrows(IOException.class, () ->
+		assertThrows(FailedOpeningInputStreamException.class, () ->
 			{
 				new GoogleApiClient("nonexistent.json");
-			}, "Should throw IOException due to non existent configuration file.");
+			}, "Should throw FailedOpeningInputStreamException due to non existent configuration file.");
 	}
 
 	@Test
@@ -121,6 +130,69 @@ class TestGoogleApiClient
 		GoogleApiClient client2 = new GoogleApiClient(filePath);
 
 		assertSame(client1.getClient(), client2.getClient(), "Should create the same session for the same client.");
+
+		assertEquals(3, GoogleApiClient.getClientCount(filePath), "Should have 2 plus the first created client with the same credentials.");
+
+		client1.close();
+		client2.close();
+	}
+
+	@Test
+	@DisplayName("Test extreme long file path")
+	void testConstructor_ExtremeLongFilePath()
+	{
+		StringBuilder longPathBuilder = new StringBuilder();
+		for(int i = 0; i < 1000; ++i)
+			longPathBuilder.append("directory").append(i).append(File.separator);
+
+		longPathBuilder.append("config.json");
+
+		String longPath = longPathBuilder.toString();
+
+		assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient(longPath), "Should throw FailedOpeningInputStreamException due to extreme long file paths.");
+	}
+
+	@Test
+	@DisplayName("Test handling many simultaneous clients.")
+	void testConstructor_ManySimultaneousClients() throws InterruptedException, IOException
+	{
+		int threadCount = 100;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+		int initialCount = GoogleApiClient.getClientCount(filePath);
+
+		GoogleApiClient sharedClient = new GoogleApiClient(filePath);
+
+		for(int i = 0; i < threadCount; ++i)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						LanguageServiceClient client = sharedClient.getClient();
+						assertNotNull(client);
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		boolean completed = latch.await(10, TimeUnit.SECONDS);
+		executor.shutdown();
+
+		assertEquals(initialCount + 1, GoogleApiClient.getClientCount(filePath));
+
+		sharedClient.close();
+
+		assertEquals(initialCount, GoogleApiClient.getClientCount(filePath));
+
+		if(initialCount == 0)
+			verify(mockClient, times(1)).close();
+
+		assertTrue(completed, "Not all threads were able to be completed on time.");
 	}
 
 	@Test
@@ -150,6 +222,34 @@ class TestGoogleApiClient
 		for(LanguageServiceClient client : clients)
 			assertEquals(mockClient, client, "All threads should get the same client instance");
 
+	}
+
+	@Test
+	@DisplayName("Test getting client after closure throws exception.")
+	void testGetClient_AfterClosure()
+	{
+		googleClient.close();
+		assertThrows(ClientAlreadyClosedException.class, () -> googleClient.getClient(), "Should throw ClientAlreadyClosedException when getting a client after closure.");
+	}
+
+	@Test
+	@DisplayName("Test getClientCount returns correct count")
+	void testGetClientCount_Success() throws IOException
+	{
+		assertEquals(1, GoogleApiClient.getClientCount(filePath), "Should return 1 for the client created in setup.");
+
+		GoogleApiClient client2 = new GoogleApiClient(filePath);
+		assertEquals(2, GoogleApiClient.getClientCount(filePath), "Should return 2 after creating another client with the same credentials.");
+
+		client2.close();
+		assertEquals(1, GoogleApiClient.getClientCount(filePath), "Should return 1 after closing one client.");
+	}
+
+	@Test
+	@DisplayName("Test getClientCount returns 0 for non existent clients")
+	void testGetClientCount_NonExistent()
+	{
+		assertEquals(0, GoogleApiClient.getClientCount("nonexistent.json"), "Should return 0 for non-existent client path.");
 	}
 
 	@Test
@@ -186,18 +286,31 @@ class TestGoogleApiClient
 	}
 
 	@Test
-	@DisplayName("Test validateFile with null or empty file path")
-	void testValidateFile_NullOrEmpty()
+	@DisplayName("Test closeAllClients closes all clients")
+	void testCloseAllClients() throws IOException
 	{
-		assertThrows(IllegalArgumentException.class, () ->
-			{
-				GoogleApiClient client = new GoogleApiClient(null);
-			}, "Should throw IllegalArgumentException due to null file path");
+		LanguageServiceClient mockClientAlternative = mock(LanguageServiceClient.class);
+		when(LanguageServiceClient.create(any(LanguageServiceSettings.class))).thenReturn(mockClientAlternative);
+		GoogleApiClient alternativeClient = new GoogleApiClient(alternativeFilePath);
 
-		assertThrows(IllegalArgumentException.class, () ->
-			{
-				GoogleApiClient client = new GoogleApiClient("");
-			}, "Should throw IllegalArgumentException due to empty file path");
+		assertEquals(1, GoogleApiClient.getClientCount(filePath), "Should have one client with the first credentials.");
+		assertEquals(1, GoogleApiClient.getClientCount(alternativeFilePath), "Should have one client with the alternative credentials.");
+
+		GoogleApiClient.closeAllClients();
+
+		verify(mockClient, times(1)).close();
+		verify(mockClientAlternative, times(1)).close();
+
+		assertEquals(0, GoogleApiClient.getClientCount(filePath), "Should have no clients with the first credentials after closing all.");
+		assertEquals(0, GoogleApiClient.getClientCount(alternativeFilePath), "Should have no clients with the alternative credentials after closing all.");
+	}
+
+	@Test
+	@DisplayName("Test validateFile success.")
+	void testValidateFile_Success() throws IOException
+	{
+		GoogleApiClient client = new GoogleApiClient(filePath);
+		assertNotNull(client, "Client should be created");
 	}
 
 	@Test
@@ -208,5 +321,35 @@ class TestGoogleApiClient
 
 		GoogleApiClient client = new GoogleApiClient(noExtensionFilePath);
 		assertNotNull(client, "Client should be created with automatically appended .json extension");
+	}
+
+	@Test
+	@DisplayName("Test validateFile with null file path")
+	void testValidateFile_Null()
+	{
+		assertThrows(NullFilePathException.class, () -> new GoogleApiClient(null), "Should throw NullFilePathException due to null file path");
+	}
+
+	@Test
+	@DisplayName("Test validateFile with empty file path")
+	void testValidateFile_Empty()
+	{
+		assertThrows(InvalidFilePathException.class, () -> new GoogleApiClient(""), "Should throw InvalidFilePathException due to empty file path");
+	}
+
+	@Test
+	@DisplayName("Test stream opening failure")
+	void testValidateFile_FailedOpeningInputStream() throws IOException
+	{
+		try(MockedStatic<GoogleApiClient> mockedClient = mockStatic(GoogleApiClient.class, invocation ->
+			{
+				if(invocation.getMethod().getName().equals("getResourceAsStream"))
+					return null;
+
+				return invocation.callRealMethod();
+			}))
+		{
+			assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient("wrongConfig.json"), "Should throw FailedOpeningInputStreamException when stream can't be opened.");
+		}
 	}
 }

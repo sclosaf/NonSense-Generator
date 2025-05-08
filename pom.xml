@@ -17,11 +17,13 @@
 	</properties>
 
 	<repositories>
+		<!-- Looks for dependences in lib -->
 		<repository>
 			<id>project-local-repo</id>
 			<url>file://${project.basedir}/lib</url>
 		</repository>
 
+		<!-- Otherwise downloads them from central repository -->
 		<repository>
 			<id>central</id>
 			<url>https://repo.maven.apache.org/maven2</url>
@@ -29,11 +31,13 @@
 	</repositories>
 
 	<pluginRepositories>
+		<!-- Looks for dependences in lib -->
 		<pluginRepository>
 			<id>project-local-repo</id>
 			<url>file://${project.basedir}/lib</url>
 		</pluginRepository>
 
+		<!-- Otherwise downloads them from central repository -->
 		<pluginRepository>
 			<id>central</id>
 			<url>https://repo.maven.apache.org/maven2</url>
@@ -53,14 +57,6 @@
 		<dependency>
 			<groupId>org.junit.jupiter</groupId>
 			<artifactId>junit-jupiter-engine</artifactId>
-			<version>${junit.version}</version>
-			<type>jar</type>
-			<scope>test</scope>
-		</dependency>
-
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
 			<version>${junit.version}</version>
 			<type>jar</type>
 			<scope>test</scope>
@@ -110,7 +106,6 @@
 			<version>5.13.0</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<!-- Settings for building -->
@@ -118,6 +113,7 @@
 		<plugins>
 
 			<plugin>
+				<!-- Jar creation -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.3.0</version>
@@ -132,6 +128,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- javadoc command via maven -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.6.0</version>
@@ -152,6 +149,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Testing engine -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.3.1</version>
@@ -168,6 +166,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Resources and include management -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.3.1</version>
@@ -192,6 +191,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Dependencies management -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>3.6.1</version>
@@ -211,6 +211,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Testing automatic report creation -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
 				<version>3.0.0</version>
