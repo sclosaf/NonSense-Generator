@@ -1,5 +1,5 @@
 package unipd.nonsense.generator;
-
+/*
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Adjective;
@@ -56,4 +56,4 @@ public class SentenceGenerator
 	// {}
 
 	// Helpers
-}
+}*/
