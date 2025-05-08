@@ -2,7 +2,11 @@ package unipd.nonsense.model;
 
 public class Noun
 {
-	public static enum Number{SINGULAR, PLURAL};
+	public static enum Number
+	{
+		SINGULAR, PLURAL
+	}
+
 	private String noun;
 	private final Number number;
 

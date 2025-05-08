@@ -2,6 +2,7 @@ package unipd.nonsense.generator;
 
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Noun.Number;
 
 import java.io.IOException;
 
@@ -13,7 +14,7 @@ import java.util.HashMap;
 
 public class RandomNounGenerator
 {
-	private static Map<String, List<Noun>> nouns;
+	private static Map<Number, List<Noun>> nouns;
 	private static Random random;
 
 	private static JsonFileHandler jsonHandler;
@@ -34,46 +35,38 @@ public class RandomNounGenerator
 	{
 		for(String key : keys)
 		{
-			List<String> jsonList = jsonHandler.readListFromJson(nounsPath, key);
-
-			nouns.computeIfAbsent(key, k -> new ArrayList<>());
-
-			Noun.Number num;
+			Number num;
 
 			if(key == keys.get(0))
-				num = Noun.Number.SINGULAR;
+				num = Number.SINGULAR;
 			else
-				num = Noun.Number.PLURAL;
+				num = Number.PLURAL;
+
+			nouns.computeIfAbsent(num, k -> new ArrayList<>());
+
+			List<String> jsonList = jsonHandler.readListFromJson(nounsPath, key);
 
 			for(String element : jsonList)
-				this.nouns.get(key).add(new Noun(element, num));
+				this.nouns.get(num).add(new Noun(element, num));
 		}
 	}
 
-	public Noun getRandomNoun(Noun.Number num)
+	public Noun getRandomNoun()
 	{
-		if(nouns.isEmpty())
-			throw new IllegalStateException("No nouns loaded");
+		Number[] nums = Number.values();
+		Number randomNumber = nums[random.nextInt(nums.length)];
 
-		String key;
-		List<Noun> nounList;
-		int randomIndex;
-
-		switch(num)
-		{
-			case SINGULAR:
-				key = keys.get(0);
-				nounList = nouns.get(key);
-				randomIndex = random.nextInt(nounList.size());
-				return nounList.get(randomIndex);
-			case PLURAL:
-				key = keys.get(1);
-				nounList = nouns.get(key);
-				randomIndex = random.nextInt(nounList.size());
-				return nounList.get(randomIndex);
-			default:
-				throw new IllegalArgumentException();
-		}
+		return getRandomNoun(randomNumber);
 	}
 
+	public Noun getRandomNoun(Number num)
+	{
+		List<Noun> nounList = nouns.get(num);
+
+		if(nounList == null || nounList.isEmpty())
+			throw new IllegalStateException("No nouns loaded for number: " + num);
+
+		int randomIndex = random.nextInt(nounList.size());
+		return nounList.get(randomIndex);
+	}
 }

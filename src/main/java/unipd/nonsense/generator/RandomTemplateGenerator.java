@@ -12,43 +12,41 @@ import java.util.Random;
 
 public class RandomTemplateGenerator
 {
-	private Map<TemplateType, List<Template>> templateMap;
-	private Random random;
+	private static Map<TemplateType, List<Template>> templates;
+	private static Random random;
 
-	JsonFileHandler jsonHandler;
+	private static JsonFileHandler jsonHandler;
 
 	private static String templatesPath = "templates.json";
-	private static String singularTemplatesKey = "singularTemplates";
-	private static String pluralTemplatesKey = "pluralTemplates";
+	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
 
 	public RandomTemplateGenerator() throws IOException
 	{
-		this.templateMap = new HashMap<>();
+		this.templates = new HashMap<>();
 		this.random = new Random();
+		this.jsonHandler = JsonFileHandler.getInstance();
 
-		jsonHandler = JsonFileHandler.getInstance();
 		loadTemplates();
 	}
 
 	private void loadTemplates() throws IOException
 	{
-		// Load singular templates
-		List<String> singularJsonList = jsonHandler.readListFromJson(templatesPath, singularTemplatesKey);
-		List<Template> singularTemplates = new ArrayList<>();
-		
-		for(String element : singularJsonList)
-			singularTemplates.add(new Template(element, TemplateType.SINGULAR));
-		
-		templateMap.put(TemplateType.SINGULAR, singularTemplates);
+		for(String key : keys)
+		{
+			TemplateType type;
 
-		// Load plural templates
-		List<String> pluralJsonList = jsonHandler.readListFromJson(templatesPath, pluralTemplatesKey);
-		List<Template> pluralTemplates = new ArrayList<>();
-		
-		for(String element : pluralJsonList)
-			pluralTemplates.add(new Template(element, TemplateType.PLURAL));
-		
-		templateMap.put(TemplateType.PLURAL, pluralTemplates);
+			if(key == keys.get(0))
+				type = TemplateType.SINGULAR;
+			else
+				type = TemplateType.PLURAL;
+
+			templates.computeIfAbsent(type, k -> new ArrayList<>());
+
+			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
+
+			for(String element : jsonList)
+				this.templates.get(type).add(new Template(element, type));
+		}
 	}
 
 	public Template getRandomTemplate()
@@ -56,18 +54,18 @@ public class RandomTemplateGenerator
 		// Choose a random template type
 		TemplateType[] types = TemplateType.values();
 		TemplateType randomType = types[random.nextInt(types.length)];
-		
+
 		return getRandomTemplate(randomType);
 	}
 
 	public Template getRandomTemplate(TemplateType type)
 	{
-		List<Template> templates = templateMap.get(type);
-		
-		if(templates == null || templates.isEmpty())
+		List<Template> templateList = templates.get(type);
+
+		if(templateList == null || templateList.isEmpty())
 			throw new IllegalStateException("No templates loaded for type: " + type);
 
-		int randomIndex = random.nextInt(templates.size());
-		return templates.get(randomIndex);
+		int randomIndex = random.nextInt(templateList.size());
+		return templateList.get(randomIndex);
 	}
 }
