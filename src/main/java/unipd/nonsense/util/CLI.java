@@ -1,137 +1,175 @@
 package unipd.nonsense.util;
 
-import java.util.*;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.Scanner;
+import java.io.InputStream;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.io.IOException;
 
 public class CLI
 {
-    private enum Command
-    {
-        GENERATESENTENCE, ANALYZESENTENCE, GENERATEANDANALYZESENTENCE, HELP, QUIT
-    }
+	private enum Command
+	{
+		GENERATESENTENCE, ANALYZESENTENCE, GENERATEANDANALYZESENTENCE, SETTOLERANCE, HELP, QUIT
+	}
 
-    private static Map<String, Command> commands = new HashMap<>();
-    private boolean running;
+	private static final String RESET = "\033[0m";
+	private static final String BOLD = "\033[1m";
+	private static final String RED = "\033[31m";
+	private static final String GREEN = "\033[32m";
+	private static final String YELLOW = "\033[33m";
+	private static final String BLUE = "\033[34m";
+	private static final String PURPLE = "\033[35m";
+	private static final String CYAN = "\033[36m";
 
-    public CLI()
-    {
-        running = true;
+	private static Map<String, Command> commands = new HashMap<>();
+	private Scanner scanner;
+	private boolean running;
 
-        commands.put("GenerateSentence", Command.GENERATESENTENCE);
-        commands.put("AnalyzeSentence", Command.ANALYZESENTENCE);
-        commands.put("GenerateAndAnalyzeSentence", Command.GENERATEANDANALYZESENTENCE);
-        commands.put("Help", Command.HELP);
-        commands.put("Quit", Command.QUIT);
+	public CLI()
+	{
+		running = true;
+		scanner = new Scanner(System.in);
 
-        welcome();
-        usage();
+		commands.put("generate", Command.GENERATESENTENCE);
+		commands.put("g", Command.GENERATESENTENCE);
+		commands.put("analyze", Command.ANALYZESENTENCE);
+		commands.put("a", Command.ANALYZESENTENCE);
+		commands.put("generate and analyze", Command.GENERATEANDANALYZESENTENCE);
+		commands.put("ga", Command.GENERATEANDANALYZESENTENCE);
+		commands.put("set tolerance", Command.SETTOLERANCE);
+		commands.put("st", Command.SETTOLERANCE);
+		commands.put("help", Command.HELP);
+		commands.put("h", Command.HELP);
+		commands.put("quit", Command.QUIT);
+		commands.put("q", Command.QUIT);
 
-        while(running==true)
-        {    
-            inputCatcher();
-        }
-    }
+		welcome();
+		usage();
+	}
 
-    public void welcome()
-    {
-        System.out.println("Welcome to");
-        System.out.println(" __  __                                                             ____                                          __                           ");
-        System.out.println("/\\ \\/\\ \\                                                           /\\  _`\\                                       /\\ \\__                       ");
-        System.out.println("\\ \\ `\\\\ \\    ___     ___     ____     __    ___     ____     __    \\ \\ \\L\\_\\     __    ___      __   _ __    __  \\ \\ ,_\\   ___   _ __          ");
-        System.out.println(" \\ \\ , ` \\  / __`\\ /' _ `\\  /',__\\  /'__`\\/' _ `\\  /',__\\  /'__`\\   \\ \\ \\L_L   /'__`\\/' _ `\\  /'__`\\/\\`'__\\/'__`\\ \\ \\ \\/  / __`\\/\\`'__\\        ");
-        System.out.println("  \\ \\ \\`\\ \\/\\ \\L\\ \\/\\ \\/\\ \\/\\__, `\\/\\  __//\\ \\/\\ \\/\\__, `\\/\\  __/    \\ \\ \\/, \\/\\  __//\\ \\/\\ \\/\\  __/\\ \\ \\//\\ \\L\\.\\_\\ \\ \\_/\\ \\L\\ \\ \\ \\/         ");
-        System.out.println("   \\ \\_\\ \\_\\ \\____/\\ \\_\\ \\_\\/\\____/\\ \\____\\ \\_\\ \\_\\/\\____/\\ \\____\\    \\ \\____/\\ \\____\\ \\_\\ \\_\\ \\____\\\\ \\_\\\\ \\__/.\\_\\\\ \\__\\ \\____/\\ \\_\\         ");
-        System.out.println("    \\/_/\\/_/\\/___/  \\/_/\\/_/\\/___/  \\/____/\\/_/\\/_/\\/___/  \\/____/     \\/___/  \\/____/\\/_/\\/_/\\/____/ \\/_/ \\/__/\\/_/ \\/__/\\/___/  \\/_/         ");
-        
-    }
+	private void welcome()
+	{
+		int asciiArtWidth = 58;
+		String title = "Welcome to";
 
-    private void usage()
-    {
-        System.out.println("");
-        System.out.println("This is the list of commands:");
-        System.out.println("1) Generate Sentence");
-        System.out.println("Generate a nonsense sentence based on the syntax of a given random sentence");
-        System.out.println("2) Analyze Sentence");
-        System.out.println("Validate the sentence structure and provide the syntactic tree");
-        System.out.println("3) Generate And Analyze Sentence");
-        System.out.println("Generate a nonsense sentence based on the syntax of a given random sentence,\nvalidate the sentence structure and provide the syntactic tree");
-        System.out.println("4) Help");
-        System.out.println("Give the list of the commands and the definition");
-        System.out.println("5) Quit");
-        System.out.println("Terminate the program");
-    }
+		int totalPadding = asciiArtWidth - title.length() - 2;
+		int leftPadding = totalPadding / 2;
+		int rightPadding = totalPadding - leftPadding;
 
-    public void inputCatcher()
-    {
-        System.out.println();
-        Scanner sc = new Scanner(System.in);
-        String cmd = sc.nextLine();
-        commandExecuter(analyzeCommand(cmd));
-        sc.close();
-    }
-    
-    private String analyzeCommand(String cmd)
-    {
-        String trimmedCmd = cmd.trim();                                                       //eliminate the spaces before the sentence
-        String[] ctrl = trimmedCmd.split("[^A-Za-z]");                              //divide the string and throw away everything but letters
-        List<String> sentence = new ArrayList<>(Arrays.asList(ctrl));                         //create a list for the words from the string
-        String command = "";                                                                  
-        for (int i = 0; i<sentence.size(); i++)                                               //for loop to assemble the given command
-        {
-            if(sentence.get(i)=="") continue;
-            String element = sentence.get(i);                                                 //save the element in the i position
-            String firstLetter = element.substring(0, 1).toUpperCase();   //make the first letter of the element uppercase
-            String otherLetters = element.substring(1);                            //take the other letters
-            String newElement = firstLetter + otherLetters;                                   //combine the letters
-            command += newElement;                                                            //combine the previous element with the new
-        }
-        return command;                                                                       //return the unified command
-    }
+		String topBorder = BOLD + "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding) + RESET;
 
-    private void commandExecuter(String cmd)
-    {
-        if(commands.containsKey(cmd))
-        {
-            switch(commands.get(cmd))
-            {
-                case GENERATESENTENCE:
-                    System.out.println("Sentence generated");
-                    inputCatcher();
-                break;
+		System.out.println(topBorder);
 
-                case ANALYZESENTENCE:
-                    System.out.println("Sentence analyzed");
-                    inputCatcher();
-                break;
+		try(InputStream stream = getClass().getResourceAsStream("/asciiArt.txt"))
+		{
+			if(stream == null)
+				return;
 
-                case GENERATEANDANALYZESENTENCE:
-                    System.out.println("Sentence generated and analyzed");
-                    inputCatcher();
-                break;
+			try(BufferedReader reader = new BufferedReader(new InputStreamReader(stream)))
+			{
+				String line;
 
-                case HELP: 
-                    usage();
-                    inputCatcher();
-                break;
+				while((line = reader.readLine()) != null)
+					System.out.println(BOLD + line + RESET);
+			}
+		}
+		catch (IOException e)
+		{
+			System.out.println(RED + "[ERROR] Failed to load ASCII art." + RESET);
+		}
 
-                case QUIT:
-                    System.out.println("See you soon!");
-                    running = false;
-                break;
+		System.out.println(BOLD + "=".repeat(asciiArtWidth + 2) + RESET);
+	}
 
-                default:
-                    throw new IllegalArgumentException("Please insert a valid command");
-            }
-        }
+	private void usage()
+	{
+		int totalWidth = 58;
+		String title = "Available Commands";
 
-        else
-        {
-            System.out.println("Please, insert a valid command");
-            inputCatcher();
-        }
-    }
+		int titlePadding = (totalWidth - title.length() - 2) / 2;
+		String titleLine = BOLD + PURPLE + "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding) + RESET;
 
-    public boolean isRunning()
-    {
-        return running;
-    }
+		System.out.println(titleLine);
+
+		String format = GREEN + BOLD + "%-22s" + RESET + " %-33s" + RESET;
+
+		System.out.printf(format + "\n", "Generate", "Generates a random nonsense sentence");
+		System.out.printf(format + "\n", "Analyze", "Validates sentence structure and syntax");
+		System.out.printf(format + "\n", "Generate and analyze", "Does both operations in one step");
+		System.out.printf(format + "\n", "Set tolerance", "Change tollerance level (default: X)");
+		System.out.printf(format + "\n", "Help", "Shows this help menu");
+		System.out.printf(format + "\n", "Quit", "Exits the program");
+		System.out.println(BOLD + PURPLE + "=".repeat(totalWidth + 2) + RESET);
+
+		System.out.println(BOLD + PURPLE + "Enter a command or type 'Help' to see this again:" + RESET);
+	}
+
+	public boolean inputCatcher()
+	{
+		System.out.print(BOLD + ">> " + RESET);
+
+		String cmd = scanner.nextLine();
+
+		commandExecuter(cmd.trim().replaceAll("\\s+", " ").toLowerCase());
+
+		return running;
+	}
+
+	public void closeResources()
+	{
+		if(scanner != null)
+			scanner.close();
+
+		if(running)
+			running = false;
+	}
+
+	private void commandExecuter(String cmd)
+	{
+		if(cmd.isEmpty())
+		{
+			System.out.println(YELLOW + "Please enter a command." + RESET);
+			return;
+		}
+
+		if(!commands.containsKey(cmd))
+		{
+			System.out.println(RED + "Invalid command. Type 'Help' for options." + RESET);
+			return;
+		}
+
+		switch(commands.get(cmd))
+		{
+			case GENERATESENTENCE:
+				System.out.println("Sentence generated");
+			break;
+
+			case ANALYZESENTENCE:
+				System.out.println("Sentence analyzed");
+			break;
+
+			case GENERATEANDANALYZESENTENCE:
+				System.out.println("Sentence generated and analyzed");
+			break;
+
+			case SETTOLERANCE:
+				System.out.println("Setted new tolerance.");
+			break;
+
+			case HELP:
+				usage();
+			break;
+
+			case QUIT:
+				System.out.println("See you soon!");
+				running = false;
+			break;
+
+			default:
+				throw new IllegalArgumentException("Please insert a valid command");
+		}
+	}
 }

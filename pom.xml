@@ -253,8 +253,9 @@
 				<directory>${project.basedir}/config</directory>
 				<filtering>false</filtering>
 				<includes>
-					<include>log4j2.xml</include>
-					<include>credentials.json</include>
+						<include>**/*.xml</include>
+						<include>**/*.json</include>
+						<include>**/*.txt</include>
 				</includes>
 			</resource>
 		</resources>
