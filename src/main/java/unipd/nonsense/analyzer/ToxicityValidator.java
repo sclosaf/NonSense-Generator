@@ -1,4 +1,4 @@
-package unipd.nonsense.validator;
+package unipd.nonsense.analyzer;
 
 import com.google.cloud.language.v1.Document;
 import com.google.cloud.language.v1.LanguageServiceClient;
