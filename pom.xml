@@ -251,7 +251,6 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<targetPath>.</targetPath>
 				<filtering>false</filtering>
 				<includes>
 					<include>log4j2.xml</include>
