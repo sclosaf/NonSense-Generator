@@ -1,5 +1,8 @@
 package unipd.nonsense.generator;
 
+import unipd.nonsense.util.JsonUpdateObserver;
+import unipd.nonsense.util.JsonUpdater;
+
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Adjective;
 
@@ -11,9 +14,11 @@ import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
 
-public class RandomAdjectiveGenerator
+import java.util.stream.Collectors;
+
+public class RandomAdjectiveGenerator implements JsonUpdateObserver
 {
-	private static List<Adjective> adjectives;
+	private List<Adjective> adjectives;
 	private static Random random;
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
@@ -27,6 +32,7 @@ public class RandomAdjectiveGenerator
 		this.random = new Random();
 
 		loadAdjectives();
+		JsonUpdater.addObserver(this);
 	}
 
 	private void loadAdjectives() throws IOException
@@ -35,8 +41,12 @@ public class RandomAdjectiveGenerator
 		{
 			List<String> jsonList = jsonHandler.readListFromJson(adjectivesPath, key);
 
-			for(String element : jsonList)
-				this.adjectives.add(new Adjective(element));
+			if(jsonList != null)
+			{
+				List<Adjective> adjectiveList = jsonList.stream().map(adjective -> new Adjective(adjective)).collect(Collectors.toList());
+				adjectives = adjectiveList;
+			}
+
 		}
 	}
 
@@ -44,5 +54,18 @@ public class RandomAdjectiveGenerator
 	{
 		int randomIndex = random.nextInt(adjectives.size());
 		return adjectives.get(randomIndex);
+	}
+
+	@Override
+	public void onJsonUpdate()
+	{
+		try
+		{
+			loadAdjectives();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

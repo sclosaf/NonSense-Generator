@@ -1,18 +1,25 @@
 package unipd.nonsense.generator;
 
+import unipd.nonsense.util.JsonUpdateObserver;
+import unipd.nonsense.util.JsonUpdater;
+
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Template;
 import unipd.nonsense.model.Template.TemplateType;
+
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
 
-public class RandomTemplateGenerator
+import java.util.stream.Collectors;
+
+public class RandomTemplateGenerator implements JsonUpdateObserver
 {
-	private static Map<TemplateType, List<Template>> templates;
+	private Map<TemplateType, List<Template>> templates;
 	private static Random random;
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
@@ -26,6 +33,7 @@ public class RandomTemplateGenerator
 		this.random = new Random();
 
 		loadTemplates();
+		JsonUpdater.addObserver(this);
 	}
 
 	private void loadTemplates() throws IOException
@@ -34,7 +42,7 @@ public class RandomTemplateGenerator
 		{
 			TemplateType type;
 
-			if(key == keys.get(0))
+			if(key.equals(keys.get(0)))
 				type = TemplateType.SINGULAR;
 			else
 				type = TemplateType.PLURAL;
@@ -43,14 +51,17 @@ public class RandomTemplateGenerator
 
 			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
 
-			for(String element : jsonList)
-				this.templates.get(type).add(new Template(element, type));
+			if(jsonList != null)
+			{
+				List<Template> templateList = jsonList.stream().map(template -> new Template(template, type)).collect(Collectors.toList());
+				templates.put(type, templateList);
+			}
+
 		}
 	}
 
 	public Template getRandomTemplate()
 	{
-		// Choose a random template type
 		TemplateType[] types = TemplateType.values();
 		TemplateType randomType = types[random.nextInt(types.length)];
 
@@ -66,5 +77,18 @@ public class RandomTemplateGenerator
 
 		int randomIndex = random.nextInt(templateList.size());
 		return templateList.get(randomIndex);
+	}
+
+	@Override
+	public void onJsonUpdate()
+	{
+		try
+		{
+			loadTemplates();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

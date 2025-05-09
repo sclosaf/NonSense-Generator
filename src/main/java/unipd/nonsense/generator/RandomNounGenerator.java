@@ -1,5 +1,8 @@
 package unipd.nonsense.generator;
 
+import unipd.nonsense.util.JsonUpdateObserver;
+import unipd.nonsense.util.JsonUpdater;
+
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
@@ -12,9 +15,11 @@ import java.util.Random;
 import java.util.Map;
 import java.util.HashMap;
 
-public class RandomNounGenerator
+import java.util.stream.Collectors;
+
+public class RandomNounGenerator implements JsonUpdateObserver
 {
-	private static Map<Number, List<Noun>> nouns;
+	private Map<Number, List<Noun>> nouns;
 	private static Random random;
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
@@ -28,6 +33,7 @@ public class RandomNounGenerator
 		this.random = new Random();
 
 		loadNouns();
+		JsonUpdater.addObserver(this);
 	}
 
 	private void loadNouns() throws IOException
@@ -36,7 +42,7 @@ public class RandomNounGenerator
 		{
 			Number num;
 
-			if(key == keys.get(0))
+			if(key.equals(keys.get(0)))
 				num = Number.SINGULAR;
 			else
 				num = Number.PLURAL;
@@ -45,8 +51,11 @@ public class RandomNounGenerator
 
 			List<String> jsonList = jsonHandler.readListFromJson(nounsPath, key);
 
-			for(String element : jsonList)
-				this.nouns.get(num).add(new Noun(element, num));
+			if(jsonList != null)
+			{
+				List<Noun> nounList = jsonList.stream().map(noun -> new Noun(noun, num)).collect(Collectors.toList());
+				nouns.put(num, nounList);
+			}
 		}
 	}
 
@@ -67,5 +76,18 @@ public class RandomNounGenerator
 
 		int randomIndex = random.nextInt(nounList.size());
 		return nounList.get(randomIndex);
+	}
+
+	@Override
+	public void onJsonUpdate()
+	{
+		try
+		{
+			loadNouns();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }

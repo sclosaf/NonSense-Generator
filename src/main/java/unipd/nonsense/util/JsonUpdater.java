@@ -3,6 +3,7 @@ package unipd.nonsense.util;
 import java.io.IOException;
 
 import unipd.nonsense.util.JsonFileHandler;
+import unipd.nonsense.util.JsonUpdateObserver;
 
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
@@ -12,9 +13,13 @@ import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Template;
 import unipd.nonsense.model.Template.TemplateType;
 
+import java.util.ArrayList;
+import java.util.List;
+
 public class JsonUpdater
 {
 	private static JsonFileHandler jsonHandler =  JsonFileHandler.getInstance();
+	private static List<JsonUpdateObserver> observers = new ArrayList<>();
 
 	private static String nounsPath = "nouns.json";
 	private static String verbsPath = "verbs.json";
@@ -24,6 +29,22 @@ public class JsonUpdater
 	private JsonUpdater()
 	{
 		throw new UnsupportedOperationException("Utility class: cannot be instantiated.");
+	}
+
+	public static void addObserver(JsonUpdateObserver observer)
+	{
+		observers.add(observer);
+	}
+
+	public static void removeObserver(JsonUpdateObserver observer)
+	{
+		observers.remove(observer);
+	}
+
+	private static void notifyAllObservers()
+	{
+		for(JsonUpdateObserver observer : observers)
+			observer.onJsonUpdate();
 	}
 
 	public static void loadNoun(Noun noun) throws IOException
@@ -43,6 +64,7 @@ public class JsonUpdater
 		}
 
 		jsonHandler.appendItemToJson(nounsPath, key, noun);
+		notifyAllObservers();
 	}
 
 	public static void loadVerb(Verb verb) throws IOException
@@ -63,6 +85,7 @@ public class JsonUpdater
 		}
 
 		jsonHandler.appendItemToJson(verbsPath, key, verb);
+		notifyAllObservers();
 	}
 
 	public static void loadAdjective(Adjective adjective) throws IOException
@@ -75,6 +98,7 @@ public class JsonUpdater
 		String key = "adjectives";
 
 		jsonHandler.appendItemToJson(adjectivesPath, key, adjective);
+		notifyAllObservers();
 	}
 
 	public static void loadTemplate(Template template) throws IOException
@@ -94,5 +118,6 @@ public class JsonUpdater
 		}
 
 		jsonHandler.appendItemToJson(templatesPath, key, template);
+		notifyAllObservers();
 	}
 }
