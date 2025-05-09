@@ -1,5 +1,17 @@
 package unipd.nonsense.util;
 
+import unipd.nonsense.exceptions.NullJsonKeyException;
+import unipd.nonsense.exceptions.InvalidJsonKeyException;
+import unipd.nonsense.exceptions.JsonElementIsNotArrayException;
+import unipd.nonsense.exceptions.InvalidJsonIndexException;
+import unipd.nonsense.exceptions.JsonElementIsNotPrimitiveException;
+import unipd.nonsense.exceptions.NullFilePathException;
+import unipd.nonsense.exceptions.InvalidFilePathException;
+import unipd.nonsense.exceptions.InaccessibleFileException;
+import unipd.nonsense.exceptions.UnreadableFileException;
+import unipd.nonsense.exceptions.UnwritableFileException;
+import unipd.nonsense.exceptions.InvalidJsonStateException;
+
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
@@ -7,6 +19,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -106,7 +119,7 @@ class TestJsonFileHandler
 		String key = "WrongTestItem";
 		String str = "itemX";
 
-		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(tempFile.getPath(), key, str), "Should throw IllegalArgumentException due to non existent key.");
+		assertThrows(InvalidJsonKeyException.class, () -> handler.appendItemToJson(tempFile.getPath(), key, str), "Should throw InvalidJsonKeyException due to non existent key.");
 	}
 
 	@Test
@@ -163,7 +176,7 @@ class TestJsonFileHandler
 			writer.write(json.toString());
 		}
 
-		assertThrows(IllegalArgumentException.class, () -> handler.appendItemToJson(file.getPath(), "TestKey", "itemX"), "Should throw IllegalArgumentException due to non array key.");
+		assertThrows(JsonElementIsNotArrayException.class, () -> handler.appendItemToJson(file.getPath(), "TestKey", "itemX"), "Should throw JsonElementIsNotArrayException due to non array key.");
 	}
 
 
@@ -185,11 +198,13 @@ class TestJsonFileHandler
 			writer.write(json.toString());
 		}
 
-		nonWritableFile.setWritable(false);
+		boolean setWritableFailed = !nonWritableFile.setWritable(false);
+		Assumptions.assumeFalse(setWritableFailed, "Could not make file non-writable, skipping test");
+
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.appendItemToJson(nonWritableFile.getPath(), key, "itemX"), "Should throw IOException for non writable file.");
+		assertThrows(UnwritableFileException.class, () -> handler.appendItemToJson(nonWritableFile.getPath(), key, "itemX"), "Should throw UnwritableFileException for non writable file.");
 	}
 
 	@Test
@@ -211,8 +226,8 @@ class TestJsonFileHandler
 		int index1 = 10;
 		int index2 = -9;
 
-		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw IndexOutOfBoundsException due to out of bound index.");
-		assertThrows(IndexOutOfBoundsException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw IndexOutOfBoundsException due to invalid index.");
+		assertThrows(InvalidJsonIndexException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index1), "Should throw InvalidJsonIndexException due to out of bound index.");
+		assertThrows(InvalidJsonIndexException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index2), "Should throw InvalidJsonIndexException due to invalid index.");
 	}
 
 	@Test
@@ -222,7 +237,7 @@ class TestJsonFileHandler
 		String key = "WrongTestItem";
 		int index = 0;
 
-		assertThrows(IllegalArgumentException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index), "Should throw IllegalArgumentException due to non existent key.");
+		assertThrows(InvalidJsonKeyException.class, () -> handler.readItemFromJson(tempFile.getPath(), key, index), "Should throw InvalidJsonKeyException due to non existent key.");
 	}
 
 	@Test
@@ -234,7 +249,7 @@ class TestJsonFileHandler
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readItemFromJson(emptyFile.getPath(), key, 0), "Should throw IOException for empty JSON file.");
+		assertThrows(InvalidJsonStateException.class, () -> handler.readItemFromJson(emptyFile.getPath(), key, 0), "Should throw InvalidJsonStateException for empty JSON file.");
 	}
 
 	@Test
@@ -242,12 +257,20 @@ class TestJsonFileHandler
 	void testReadItemFromJson_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readItemFromJson(nonReadableFile.getPath(), key, 0), "Should throw IOException due to non readable file.");
+		assertThrows(UnreadableFileException.class, () -> handler.readItemFromJson(nonReadableFile.getPath(), key, 0), "Should throw UnreadableFileException due to non readable file.");
 	}
 
 	@Test
@@ -302,6 +325,29 @@ class TestJsonFileHandler
 		assertEquals(item, "itemX", "'itemX' should have been appended.");
 	}
 
+	@Test
+	@DisplayName("Test handling long value of json file.")
+	void testReadItemFromJson_LongValue() throws IOException
+	{
+		JsonObject json = handler.getJsonObject(tempFile.getPath());
+		json.add("TestItem", new JsonArray());
+
+		try(FileWriter writer = new FileWriter(tempFile))
+		{
+			writer.write(json.toString());
+		}
+
+		StringBuilder longValueBuilder = new StringBuilder();
+		for(int i = 0; i < 100000; ++i)
+			longValueBuilder.append("X");
+
+		String longValue = longValueBuilder.toString();
+
+		handler.appendItemToJson(tempFile.getPath(), "TestItem", longValue);
+
+		String readValue = handler.readItemFromJson(tempFile.getPath(), "TestItem", 0);
+		assertEquals(longValue, readValue, "Should be able to read the long value");
+	}
 
 	@Test
 	@DisplayName("Stress test concurrent read and write.")
@@ -405,7 +451,7 @@ class TestJsonFileHandler
 	{
 		String key = "WrongTestItem";
 
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), key), "Should throw IllegalArgumentException due to non existent key.");
+		assertThrows(InvalidJsonKeyException.class, () -> handler.readListFromJson(tempFile.getPath(), key), "Should throw InvalidJsonKeyException due to non existent key.");
 	}
 
 	@Test
@@ -417,7 +463,7 @@ class TestJsonFileHandler
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw IOException due to empty json file.");
+		assertThrows(InvalidJsonStateException.class, () -> handler.readListFromJson(emptyFile.getPath(), key), "Should throw InvalidJsonStateException due to empty json file.");
 	}
 
 	@Test
@@ -433,7 +479,35 @@ class TestJsonFileHandler
 		}
 
 		String key = "TestItems1";
-		assertThrows(IOException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw IOException due to malformed json file.");
+		assertThrows(InvalidJsonStateException.class, () -> handler.readListFromJson(malformedFile.getPath(), key), "Should throw InvalidJsonStateException due to malformed json file.");
+	}
+
+	@Test
+	@DisplayName("Test handling long key of json file.")
+	void testReadListFromJson_LongKey() throws IOException
+	{
+		StringBuilder longKeyBuilder = new StringBuilder();
+		for(int i = 0; i < 100000; ++i)
+			longKeyBuilder.append("X");
+
+		String longKey = longKeyBuilder.toString();
+
+		File longKeyFile = Files.createTempFile("longKey", ".json").toFile();
+		longKeyFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray array = new JsonArray();
+
+		array.add("itemX");
+		json.add(longKey, array);
+
+		try(FileWriter writer = new FileWriter(longKeyFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(longKeyFile.getPath(), longKey);
+		assertEquals(1, items.size(), "Should be able to read the array with the long key.");
 	}
 
 	@Test
@@ -466,19 +540,19 @@ class TestJsonFileHandler
 	{
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readListFromJson("invalid.json", key), "Should throw IllegalArgumentException due to invalid file name.");
-		assertThrows(IOException.class, () -> handler.readListFromJson("nonexistent.json", key), "Should throw IllegalArgumentException due to invalid file name.");
-		assertThrows(IOException.class, () -> handler.readListFromJson("noextension", key), "Should throw IllegalArgumentException due to invalid file name.");
+		assertThrows(InaccessibleFileException.class, () -> handler.readListFromJson("invalid.json", key), "Should throw InaccessibleFileException due to invalid file name.");
+		assertThrows(InaccessibleFileException.class, () -> handler.readListFromJson("nonexistent.json", key), "Should throw InaccessibleFileException due to invalid file name.");
+		assertThrows(InaccessibleFileException.class, () -> handler.readListFromJson("noextension", key), "Should throw InaccessibleFileException due to invalid file name.");
 	}
 
 	@Test
 	@DisplayName("Test null or empty file path and key.")
 	void testNullOrEmptyInputs()
 	{
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(null, "TestKey"), "Should throw IllegalArgumentException due to null file path.");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson("", "TestKey"), "Should throw IllegalArgumentException due to empty file path.");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), null), "Should throw IllegalArgumentException due to null key.");
-		assertThrows(IllegalArgumentException.class, () -> handler.readListFromJson(tempFile.getPath(), ""), "Should throw IllegalArgumentException due to empty key.");
+		assertThrows(NullFilePathException.class, () -> handler.readListFromJson(null, "TestKey"), "Should throw NullFilePathException due to null file path.");
+		assertThrows(InvalidFilePathException.class, () -> handler.readListFromJson("", "TestKey"), "Should throw InvalidFilePathException due to empty file path.");
+		assertThrows(NullJsonKeyException.class, () -> handler.readListFromJson(tempFile.getPath(), null), "Should throw NullJsonKeyException due to null key.");
+		assertThrows(InvalidJsonKeyException.class, () -> handler.readListFromJson(tempFile.getPath(), ""), "Should throw InvalidJsonKeyException due to empty key.");
 	}
 
 	@Test
@@ -619,12 +693,66 @@ class TestJsonFileHandler
 	void testReadListFromJson_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.readListFromJson(nonReadableFile.getPath(), key), "Should throw IOException due to non readable file.");
+		assertThrows(UnreadableFileException.class, () -> handler.readListFromJson(nonReadableFile.getPath(), key), "Should throw UnreadableFileException due to non readable file.");
+	}
+
+	@Test
+	@DisplayName("Test file with path extremely long.")
+	void testReadListFromJson_LongPath() throws IOException
+	{
+		StringBuilder pathBuilder = new StringBuilder();
+		String basePath = System.getProperty("java.io.tmpdir");
+
+		pathBuilder.append(basePath);
+
+		if (!basePath.endsWith(File.separator))
+			pathBuilder.append(File.separator);
+
+		int maxDir = 10;
+
+		for(int i = 0; i < maxDir; ++i)
+			pathBuilder.append("subdir").append(i).append(File.separator);
+
+		pathBuilder.append("testFile.json");
+
+		String longPath = pathBuilder.toString();
+
+		File pathDir = new File(pathBuilder.toString()).getParentFile();
+
+		if (!pathDir.exists())
+			pathDir.mkdirs();
+
+		File pathFile = new File(longPath);
+		if(!pathFile.exists())
+			pathFile.createNewFile();
+
+		JsonObject json = new JsonObject();
+		JsonArray array = new JsonArray();
+
+		array.add("itemX");
+		json.add("TestItems", array);
+
+		try(FileWriter writer = new FileWriter(pathFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(longPath, "TestItems");
+		assertEquals(1, items.size(), "Should be able to read from a long path.");
+
+		pathFile.delete();
 	}
 
 	@Test
@@ -682,17 +810,26 @@ class TestJsonFileHandler
 	void testHasJsonKey_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test");
+
 
 		String key = "TestItems1";
 
-		assertThrows(IOException.class, () -> handler.hasJsonKey(nonReadableFile.getPath(), key), "Should throw IOException due to non readable file.");
+		assertThrows(UnreadableFileException.class, () -> handler.hasJsonKey(nonReadableFile.getPath(), key), "Should throw UnreadableFileException due to non readable file.");
 	}
 
 	@Test
 	@DisplayName("Test deeply nested key.")
-	void testHasJsonKey_DeeplyNested() throws IOException
+	void testHasJsonKey_DeeplyNestedKey() throws IOException
 	{
 		File file = Files.createTempFile("nested", ".json").toFile();
 		file.deleteOnExit();
@@ -717,6 +854,47 @@ class TestJsonFileHandler
 	}
 
 	@Test
+	@DisplayName("Test extreme nested key.")
+	void testHasJsonKey_ExtremelyDeeplyNestedKey() throws IOException
+	{
+		File nestedFile = Files.createTempFile("nested", ".json").toFile();
+		nestedFile.deleteOnExit();
+
+		JsonObject root = new JsonObject();
+		JsonObject current = root;
+
+		for(int i = 0; i < 100; ++i)
+		{
+			JsonObject next = new JsonObject();
+			current.add("level" + i, next);
+			current = next;
+		}
+
+		current.addProperty("value", "itemX");
+
+		try(FileWriter writer = new FileWriter(nestedFile))
+		{
+			writer.write(root.toString());
+		}
+
+		StringBuilder keyBuilder = new StringBuilder();
+		for(int i = 0; i < 100; ++i)
+		{
+			if(i > 0)
+				keyBuilder.append(".");
+
+			keyBuilder.append("level").append(i);
+		}
+
+		keyBuilder.append(".value");
+
+		String key = keyBuilder.toString();
+
+		boolean exists = handler.hasJsonKey(nestedFile.getPath(), key);
+		assertTrue(exists, "Should be able to access extremely deeply nested key.");
+	}
+
+	@Test
 	@DisplayName("Test success of getJsonObject.")
 	void testGetJsonObject_Success() throws IOException
 	{
@@ -732,9 +910,17 @@ class TestJsonFileHandler
 	void testGetJsonObject_NonReadableFile() throws IOException
 	{
 		File nonReadableFile = Files.createTempFile("nonreadable", ".json").toFile();
-		nonReadableFile.setReadable(false);
 		nonReadableFile.deleteOnExit();
 
-		assertThrows(IOException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw IOException due to non readable file.");
+		try(FileWriter writer = new FileWriter(nonReadableFile))
+		{
+			writer.write("{}");
+		}
+
+		boolean setReadableFailed = !nonReadableFile.setReadable(false);
+
+		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test.");
+
+		assertThrows(UnreadableFileException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw UnreadableFileException due to non readable file.");
 	}
 }

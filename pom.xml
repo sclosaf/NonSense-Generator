@@ -17,11 +17,13 @@
 	</properties>
 
 	<repositories>
+		<!-- Looks for dependences in lib -->
 		<repository>
 			<id>project-local-repo</id>
 			<url>file://${project.basedir}/lib</url>
 		</repository>
 
+		<!-- Otherwise downloads them from central repository -->
 		<repository>
 			<id>central</id>
 			<url>https://repo.maven.apache.org/maven2</url>
@@ -29,16 +31,30 @@
 	</repositories>
 
 	<pluginRepositories>
+		<!-- Looks for dependences in lib -->
 		<pluginRepository>
 			<id>project-local-repo</id>
 			<url>file://${project.basedir}/lib</url>
 		</pluginRepository>
 
+		<!-- Otherwise downloads them from central repository -->
 		<pluginRepository>
 			<id>central</id>
 			<url>https://repo.maven.apache.org/maven2</url>
 		</pluginRepository>
 	</pluginRepositories>
+
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>com.google.cloud</groupId>
+				<artifactId>libraries-bom</artifactId>
+				<version>26.59.0</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
 
 	<dependencies>
 		<!-- JUnit - Testing  -->
@@ -58,19 +74,10 @@
 			<scope>test</scope>
 		</dependency>
 
-		<dependency>
-			<groupId>org.junit.jupiter</groupId>
-			<artifactId>junit-jupiter-params</artifactId>
-			<version>${junit.version}</version>
-			<type>jar</type>
-			<scope>test</scope>
-		</dependency>
-
 		<!-- Google Cloud - Natural language -->
 		<dependency>
 			<groupId>com.google.cloud</groupId>
 			<artifactId>google-cloud-language</artifactId>
-			<version>2.28.0</version>
 			<type>jar</type>
 		</dependency>
 
@@ -110,7 +117,6 @@
 			<version>5.13.0</version>
 			<scope>test</scope>
 		</dependency>
-
 	</dependencies>
 
 	<!-- Settings for building -->
@@ -118,6 +124,7 @@
 		<plugins>
 
 			<plugin>
+				<!-- Jar creation -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-jar-plugin</artifactId>
 				<version>3.3.0</version>
@@ -132,6 +139,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- javadoc command via maven -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-javadoc-plugin</artifactId>
 				<version>3.6.0</version>
@@ -152,6 +160,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Testing engine -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-plugin</artifactId>
 				<version>3.3.1</version>
@@ -168,6 +177,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Resources and include management -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-resources-plugin</artifactId>
 				<version>3.3.1</version>
@@ -192,6 +202,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Dependencies management -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-dependency-plugin</artifactId>
 				<version>3.6.1</version>
@@ -211,6 +222,7 @@
 			</plugin>
 
 			<plugin>
+				<!-- Testing automatic report creation -->
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-surefire-report-plugin</artifactId>
 				<version>3.0.0</version>
@@ -239,7 +251,6 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<targetPath>.</targetPath>
 				<filtering>false</filtering>
 				<includes>
 					<include>log4j2.xml</include>

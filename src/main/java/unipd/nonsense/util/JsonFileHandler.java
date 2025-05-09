@@ -1,5 +1,17 @@
 package unipd.nonsense.util;
 
+import unipd.nonsense.exceptions.NullJsonKeyException;
+import unipd.nonsense.exceptions.InvalidJsonKeyException;
+import unipd.nonsense.exceptions.JsonElementIsNotArrayException;
+import unipd.nonsense.exceptions.InvalidJsonIndexException;
+import unipd.nonsense.exceptions.JsonElementIsNotPrimitiveException;
+import unipd.nonsense.exceptions.NullFilePathException;
+import unipd.nonsense.exceptions.InvalidFilePathException;
+import unipd.nonsense.exceptions.InaccessibleFileException;
+import unipd.nonsense.exceptions.UnreadableFileException;
+import unipd.nonsense.exceptions.UnwritableFileException;
+import unipd.nonsense.exceptions.InvalidJsonStateException;
+
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonParser;
@@ -21,11 +33,11 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.lang.IllegalStateException;
 import com.google.gson.JsonSyntaxException;
 
-public final class JsonFileHandler
+public class JsonFileHandler
 {
 	private static volatile JsonFileHandler instance = new JsonFileHandler();
 	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
-    private final Gson gson;
+	private final Gson gson;
 
 	private JsonFileHandler()
 	{
@@ -40,10 +52,9 @@ public final class JsonFileHandler
 	public void appendItemToJson(String filePath, String key, String str) throws IOException, IllegalArgumentException
 	{
 		if(key == null)
-			throw new IllegalArgumentException();
+			throw new NullJsonKeyException();
 
 		filePath = validateFile(filePath, true);
-
 
 		lock.writeLock().lock();
 
@@ -51,8 +62,11 @@ public final class JsonFileHandler
 		{
 			JsonObject json = readJsonObject(filePath);
 
-			if(!json.has(key) || !json.get(key).isJsonArray())
-				throw new IllegalArgumentException();
+			if(!json.has(key))
+				throw new InvalidJsonKeyException(key);
+
+			if(!json.get(key).isJsonArray())
+				throw new JsonElementIsNotArrayException(key);
 
 			JsonArray elements = json.getAsJsonArray(key);
 
@@ -72,12 +86,12 @@ public final class JsonFileHandler
 	public String readItemFromJson(String filePath, String key, int index) throws IOException, IllegalArgumentException, IndexOutOfBoundsException
 	{
 		if(key == null)
-			throw new IllegalArgumentException();
+			throw new NullJsonKeyException();
 
 		filePath = validateFile(filePath, false);
 
 		if(index < 0)
-			throw new IndexOutOfBoundsException();
+			throw new InvalidJsonIndexException(index);
 
 		lock.readLock().lock();
 
@@ -85,18 +99,21 @@ public final class JsonFileHandler
 		{
 			JsonObject json = readJsonObject(filePath);
 
-			if(!json.has(key) || !json.get(key).isJsonArray())
-				throw new IllegalArgumentException();
+			if(!json.has(key))
+				throw new InvalidJsonKeyException(key);
+
+			if(!json.get(key).isJsonArray())
+				throw new JsonElementIsNotArrayException(key);
 
 			JsonArray elements = json.getAsJsonArray(key);
 
 			if(index >= elements.size())
-				throw new IndexOutOfBoundsException();
+				throw new InvalidJsonIndexException(index);
 
 			JsonElement element = elements.get(index);
 
 			if(!element.isJsonPrimitive())
-				throw new IllegalArgumentException();
+				throw new JsonElementIsNotPrimitiveException(element);
 
 			return element.getAsString();
 		}
@@ -109,7 +126,7 @@ public final class JsonFileHandler
 	public List<String> readListFromJson(String filePath, String key) throws IOException, IllegalArgumentException
 	{
 		if(key == null)
-			throw new IllegalArgumentException();
+			throw new NullJsonKeyException();
 
 		filePath = validateFile(filePath, false);
 
@@ -119,8 +136,11 @@ public final class JsonFileHandler
 		{
 			JsonObject json = readJsonObject(filePath);
 
-			if(!json.has(key) || !json.get(key).isJsonArray())
-				throw new IllegalArgumentException();
+			if(!json.has(key))
+				throw new InvalidJsonKeyException(key);
+
+			if(!json.get(key).isJsonArray())
+				throw new JsonElementIsNotArrayException(key);
 
 			JsonArray elements = json.getAsJsonArray(key);
 			List<String> result = new ArrayList<String>();
@@ -140,7 +160,7 @@ public final class JsonFileHandler
 	public boolean hasJsonKey(String filePath, String key) throws IOException, IllegalArgumentException
 	{
 		if(key == null)
-			throw new IllegalArgumentException();
+			throw new NullJsonKeyException();
 
 		filePath = validateFile(filePath, false);
 
@@ -151,18 +171,21 @@ public final class JsonFileHandler
 			JsonObject json = readJsonObject(filePath);
 			String[] keys = key.split("\\.");
 
+			JsonElement currentElement = json;
+
 			for(String k : keys)
 			{
-				if(!json.has(k))
+				if(!currentElement.isJsonObject())
 					return false;
 
-				JsonElement element = json.get(k);
+				JsonObject currentObject = currentElement.getAsJsonObject();
 
-				if(element.isJsonObject())
-					json = element.getAsJsonObject();
-				else if(k != keys[keys.length - 1])
+				if(!currentObject.has(k))
 					return false;
+
+				currentElement = currentObject.get(k);
 			}
+
 			return true;
 		}
 		finally
@@ -189,21 +212,24 @@ public final class JsonFileHandler
 
 	private String validateFile(String filePath, boolean requiresWrite) throws IOException, IllegalArgumentException
 	{
-		if(filePath == null || filePath.isEmpty())
-			throw new IllegalArgumentException();
+		if(filePath == null)
+			throw new NullFilePathException();
+
+		if(filePath.isEmpty())
+			throw new InvalidFilePathException(filePath);
 
 		filePath = filePath.toLowerCase().endsWith(".json") ? filePath : filePath + ".json";
 
 		File file = new File(filePath);
 
 		if(!file.exists() || !file.isFile())
-			throw new IOException();
+			throw new InaccessibleFileException();
 
 		if(!file.canRead())
-			throw new IOException();
+			throw new UnreadableFileException();
 
 		if(requiresWrite && !file.canWrite())
-			throw new IOException();
+			throw new UnwritableFileException();
 
 		return filePath;
 	}
@@ -214,9 +240,9 @@ public final class JsonFileHandler
 		{
 			return JsonParser.parseReader(reader).getAsJsonObject();
 		}
-		catch(FileNotFoundException | IllegalStateException | JsonSyntaxException e)
+		catch(IllegalStateException | JsonSyntaxException e)
 		{
-			throw new IOException();
+			throw new InvalidJsonStateException();
 		}
 	}
 
@@ -228,7 +254,7 @@ public final class JsonFileHandler
 		}
 		catch(IllegalStateException | JsonSyntaxException e)
 		{
-			throw new IllegalArgumentException();
+			throw new InvalidJsonStateException();
 		}
 	}
 }
