@@ -1,1 +1,1 @@
-package unipd.nonsense.model;
+package unipd.nonsense.generator;
