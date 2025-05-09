@@ -1,5 +1,8 @@
 package unipd.nonsense.generator;
 
+import unipd.nonsense.util.JsonUpdateObserver;
+import unipd.nonsense.util.JsonUpdater;
+
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Verb.Tense;
@@ -12,9 +15,11 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.Random;
 
-public class RandomVerbGenerator
+import java.util.stream.Collectors;
+
+public class RandomVerbGenerator implements JsonUpdateObserver
 {
-	private static Map<Tense, List<Verb>> verbs;
+	private Map<Tense, List<Verb>> verbs;
 	private static Random random;
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
@@ -28,6 +33,7 @@ public class RandomVerbGenerator
 		this.random = new Random();
 
 		loadVerbs();
+		JsonUpdater.addObserver(this);
 	}
 
 	private void loadVerbs() throws IOException
@@ -36,9 +42,9 @@ public class RandomVerbGenerator
 		{
 			Tense tense;
 
-			if(key == keys.get(0))
+			if(key.equals(keys.get(0)))
 				tense = Tense.PAST;
-			else if(key == keys.get(1))
+			else if(key.equals(keys.get(1)))
 				tense = Tense.PRESENT;
 			else
 				tense = Tense.FUTURE;
@@ -47,8 +53,11 @@ public class RandomVerbGenerator
 
 			List<String> jsonList = jsonHandler.readListFromJson(verbsPath, key);
 
-			for(String element : jsonList)
-				this.verbs.get(tense).add(new Verb(element, tense));
+			if(jsonList != null)
+			{
+				List<Verb> verbList = jsonList.stream().map(verb -> new Verb(verb, tense)).collect(Collectors.toList());
+				verbs.put(tense, verbList);
+			}
 		}
 	}
 
@@ -69,5 +78,18 @@ public class RandomVerbGenerator
 
 		int randomIndex = random.nextInt(verbList.size());
 		return verbList.get(randomIndex);
+	}
+
+	@Override
+	public void onJsonUpdate()
+	{
+		try
+		{
+			loadVerbs();
+		}
+		catch(IOException e)
+		{
+			e.printStackTrace();
+		}
 	}
 }
