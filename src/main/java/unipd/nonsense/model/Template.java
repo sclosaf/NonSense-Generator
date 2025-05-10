@@ -2,7 +2,6 @@ package unipd.nonsense.model;
 
 public class Template
 {
-	// Enum for template types
 	public static enum TemplateType
 	{
 		SINGULAR,
@@ -19,32 +18,27 @@ public class Template
 	private String pattern;
 	private final TemplateType type;
 
-	// Constructor with pattern and type
 	public Template(String pattern, TemplateType type)
 	{
 		this.pattern = pattern;
 		this.type = type;
 	}
 
-	// Get the template pattern
 	public String getPattern()
 	{
 		return pattern;
 	}
 
-	// Get the template type
 	public TemplateType getType()
 	{
 		return type;
 	}
 
-	// Check if template contains a specific placeholder
 	public boolean containsPlaceholder(Placeholder placeholder)
 	{
 		return pattern.contains("[" + placeholder.name().toLowerCase() + "]");
 	}
 
-	// Count occurrences of a specific placeholder
 	public int countPlaceholders(Placeholder placeholder)
 	{
 		String target = "[" + placeholder.name().toLowerCase() + "]";
@@ -61,13 +55,11 @@ public class Template
 		return count;
 	}
 
-	// Replace a placeholder with actual content
 	public String replacePlaceholder(Placeholder placeholder, String replacement)
 	{
 		return pattern.replace("[" + placeholder.name().toLowerCase() + "]", replacement);
 	}
 
-	// Create a new Template instance with a placeholder replaced
 	public Template withReplacement(Placeholder placeholder, String replacement)
 	{
 		return new Template(replacePlaceholder(placeholder, replacement), this.type);

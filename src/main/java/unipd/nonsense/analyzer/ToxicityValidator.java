@@ -11,91 +11,80 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ToxicityValidator implements AutoCloseable {
-    
-    private final GoogleApiClient apiClient;
-    private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
+public class ToxicityValidator implements AutoCloseable
+{
+	private final GoogleApiClient apiClient;
+	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
 
-    // Constructor
-    public ToxicityValidator(GoogleApiClient apiClient) {
-        if (apiClient == null) {
-            throw new IllegalArgumentException("GoogleApiClient cannot be null");
-        }
-        this.apiClient = apiClient;
-    }
+	public ToxicityValidator(GoogleApiClient apiClient)
+	{
+		if(apiClient == null)
+			throw new IllegalArgumentException("GoogleApiClient cannot be null");
 
-    // Gets toxicity categories
-    public Map<String, Float> getToxicityScores(String text) throws IOException {
-        ModerateTextResponse response = moderateText(text);
-        Map<String, Float> scores = new HashMap<>();
-        
-        for (ClassificationCategory category : response.getModerationCategoriesList()) {
-            scores.put(category.getName(), category.getConfidence());
-        }
-        
-        return scores;
-    }
+		this.apiClient = apiClient;
+	}
 
-    // Formatted report
-    public String getToxicityReport(String text) throws IOException {
-        Map<String, Float> scores = getToxicityScores(text);
-        StringBuilder report = new StringBuilder();
-        
-        report.append("Toxicity Analysis Report:\n");
-        report.append("------------------------\n");
-        
-        for (Map.Entry<String, Float> entry : scores.entrySet()) {
-            report.append(String.format("%-20s: %.1f%%\n", 
-                entry.getKey(), entry.getValue() * 100));
-        }
-        
-        return report.toString();
-    }
+	public Map<String, Float> getToxicityScores(String text) throws IOException
+	{
+		ModerateTextResponse response = moderateText(text);
+		Map<String, Float> scores = new HashMap<>();
 
-    // API call
-    public ModerateTextResponse moderateText(String text) throws IOException {
-        if (text == null || text.trim().isEmpty()) {
-            throw new IllegalArgumentException("Text cannot be null or empty");
-        }
+		for(ClassificationCategory category : response.getModerationCategoriesList())
+			scores.put(category.getName(), category.getConfidence());
 
-        LanguageServiceClient languageClient = apiClient.getClient();
+		return scores;
+	}
 
-        Document doc = Document.newBuilder()
-                .setContent(text)
-                .setType(Document.Type.PLAIN_TEXT)
-                .build();
+	public String getToxicityReport(String text) throws IOException
+	{
+		Map<String, Float> scores = getToxicityScores(text);
+		StringBuilder report = new StringBuilder();
 
-        ModerateTextRequest request = ModerateTextRequest.newBuilder()
-                .setDocument(doc)
-                .build();
+		report.append("Toxicity Analysis Report:\n");
+		report.append("------------------------\n");
 
-        return languageClient.moderateText(request);
-    }
+		for (Map.Entry<String, Float> entry : scores.entrySet())
+			report.append(String.format("%-20s: %.1f%%\n", entry.getKey(), entry.getValue() * 100));
 
-    // Moderates text with default threshold
-    public boolean isTextToxic(String text) throws IOException {
-        return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
-    }
+		return report.toString();
+	}
 
-    // Custom threshold
-    public boolean isTextToxic(String text, float threshold) throws IOException {
-        if (threshold < 0 || threshold > 1) {
-            throw new IllegalArgumentException("Threshold must be between 0 and 1");
-        }
+	public ModerateTextResponse moderateText(String text) throws IOException
+	{
+		if(text == null || text.trim().isEmpty())
+			throw new IllegalArgumentException("Text cannot be null or empty");
 
-        ModerateTextResponse response = moderateText(text);
-        for (ClassificationCategory category : response.getModerationCategoriesList()) {
-            if (category.getConfidence() > threshold) {
-                return true;
-            }
-        }
-        return false;
-    }
+		LanguageServiceClient languageClient = apiClient.getClient();
 
-    @Override
-    public void close() {
-        if (apiClient != null) {
-            apiClient.close();
-        }
-    }
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+
+		ModerateTextRequest request = ModerateTextRequest.newBuilder().setDocument(doc).build();
+
+		return languageClient.moderateText(request);
+	}
+
+	public boolean isTextToxic(String text) throws IOException
+	{
+		return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
+	}
+
+	public boolean isTextToxic(String text, float threshold) throws IOException
+	{
+		if(threshold < 0 || threshold > 1)
+			throw new IllegalArgumentException("Threshold must be between 0 and 1");
+
+		ModerateTextResponse response = moderateText(text);
+		for(ClassificationCategory category : response.getModerationCategoriesList())
+			if(category.getConfidence() > threshold)
+				return true;
+
+		return false;
+	}
+
+	@Override
+	public void close()
+	{
+		if(apiClient != null)
+			apiClient.close();
+	}
 }
