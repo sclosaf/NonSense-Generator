@@ -22,7 +22,7 @@ public class CLI
 {
 	private enum Command
 	{
-		GENERATESENTENCE, ANALYZESENTENCE, GENERATEANDANALYZESENTENCE, SETTOLERANCE, HELP, CLEAR, QUIT
+		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, HELP, CLEAR, QUIT
 	}
 
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
@@ -39,7 +39,7 @@ public class CLI
 
 
 	private static Map<String, Command> commands = new HashMap<>();
-	private static final int HISTORY_SIZE = 25;
+	private static final int HISTORY_SIZE = 20;
 	private String initialOutput;
 	private boolean running;
 
@@ -88,12 +88,14 @@ public class CLI
 
 		running = true;
 
-		commands.put("generate", Command.GENERATESENTENCE);
-		commands.put("g", Command.GENERATESENTENCE);
-		commands.put("analyze", Command.ANALYZESENTENCE);
-		commands.put("a", Command.ANALYZESENTENCE);
-		commands.put("generate and analyze", Command.GENERATEANDANALYZESENTENCE);
-		commands.put("ga", Command.GENERATEANDANALYZESENTENCE);
+		commands.put("generate", Command.GENERATE);
+		commands.put("g", Command.GENERATE);
+		commands.put("analyze", Command.ANALYZE);
+		commands.put("a", Command.ANALYZE);
+		commands.put("generate and analyze", Command.GENERATEANALYZE);
+		commands.put("ga", Command.GENERATEANALYZE);
+		commands.put("tree", Command.TREE);
+		commands.put("t", Command.TREE);
 		commands.put("set tolerance", Command.SETTOLERANCE);
 		commands.put("st", Command.SETTOLERANCE);
 		commands.put("help", Command.HELP);
@@ -164,6 +166,7 @@ public class CLI
 			"Generate", "Generates a random nonsense sentence",
 			"Analyze", "Validates sentence structure and syntax",
 			"Generate and analyze", "Does both operations in one step",
+			"Tree", "Prints the syntactic tree",
 			"Set tolerance", "Change tolerance level (default: X)",
 			"Clear", "Clears the terminal and shows initial menu",
 			"Help", "Shows this help menu",
@@ -204,7 +207,7 @@ public class CLI
 
 			if(!cmd.isEmpty() && !commands.containsKey(cmd))
 			{
-				terminal.writer().println(new AttributedString("Invalid command: " + cmd, RED_STYLE).toAnsi(terminal));
+				terminal.writer().println(new AttributedString("Invalid command: " + cmd, BOLD_RED_STYLE).toAnsi(terminal));
 				terminal.flush();
 			}
 
@@ -212,7 +215,7 @@ public class CLI
 			}
 			catch(UserInterruptException e)
 			{
-				terminal.writer().println(new AttributedString("Program interrupted.", YELLOW_STYLE).toAnsi(terminal));
+				terminal.writer().println(new AttributedString("Program interrupted.", BOLD_YELLOW_STYLE).toAnsi(terminal));
 				terminal.flush();
 				running = false;
 			}
@@ -244,32 +247,37 @@ public class CLI
 	{
 		if(cmd.isEmpty())
 		{
-			terminal.writer().println(new AttributedString("Please enter a command.", YELLOW_STYLE).toAnsi(terminal));
+			terminal.writer().println(new AttributedString("Please enter a command.", BOLD_YELLOW_STYLE).toAnsi(terminal));
 			terminal.flush();
 			return;
 		}
 
 		if(!commands.containsKey(cmd))
 		{
-			terminal.writer().println(new AttributedString("Type 'Help' for available commands.", RED_STYLE).toAnsi(terminal));
+			terminal.writer().println(new AttributedString("Type 'Help' for available commands.", BOLD_RED_STYLE).toAnsi(terminal));
 			terminal.flush();
 			return;
 		}
 
 		switch(commands.get(cmd))
 		{
-			case GENERATESENTENCE:
+			case GENERATE:
 				terminal.writer().println(new AttributedString("Sentence generated", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
-			case ANALYZESENTENCE:
+			case ANALYZE:
 				terminal.writer().println(new AttributedString("Sentence analyzed", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
-			case GENERATEANDANALYZESENTENCE:
+			case GENERATEANALYZE:
 				terminal.writer().println(new AttributedString("Sentence generated and analyzed", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
+			break;
+
+			case TREE:
+				terminal.writer().println(new AttributedString("Tree printed", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
