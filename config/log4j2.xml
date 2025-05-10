@@ -15,7 +15,8 @@
 			<DefaultRolloverStrategy max="10" />
 		</RollingFile>
 		<Console name="ConsoleLogger" target="SYSTEM_OUT">
-			<PatternLayout pattern="[%t] %-5level - %msg%n" />
+			<PatternLayout pattern="[%style{%t}{blue}] %highlight{%-5level} %logger{36} - %msg%n"
+				disableAnsi="false" noConsoleNoAnsi="false" />
 			<Filters>
 				<ThresholdFilter level="error" onMatch="ACCEPT" onMismatch="DENY"/>
 			</Filters>
