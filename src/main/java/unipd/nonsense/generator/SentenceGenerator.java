@@ -1,7 +1,8 @@
 package unipd.nonsense.generator;
-/*
+
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Verb.Tense;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Template;
 
@@ -10,23 +11,32 @@ import unipd.nonsense.generator.RandomVerbGenerator;
 import unipd.nonsense.generator.RandomAdjectiveGenerator;
 import unipd.nonsense.generator.RandomTemplateGenerator;
 
+import java.io.IOException;
 
 public class SentenceGenerator
 {
-	public SentenceGenerator()
-	{}
+	private RandomNounGenerator nounGenerator;
+	private RandomAdjectiveGenerator adjectiveGenerator;
+	private RandomVerbGenerator verbGenerator;
+	private RandomTemplateGenerator templateGenerator;
+
+	public SentenceGenerator() throws IOException
+	{
+		nounGenerator = new RandomNounGenerator();
+		adjectiveGenerator = new RandomAdjectiveGenerator();
+		verbGenerator = new RandomVerbGenerator();
+		templateGenerator = new RandomTemplateGenerator();
+	}
 
 	public String generateRandomSentence()
-	{}
-
-	public String generateSentenceWithTemplate() // given Template as argument
-	{}
-
-	public String generateSentenceWithInputWords() // given lists of Nouns, Verbs, Adjectives as arguments
-	{}
+	{
+		return "";
+	}
 
 	public String generateSentenceWithTense(Tense tense)
-	{}
+	{
+		return "";
+	}
 
 	private void loadResources()
 	{}
@@ -34,22 +44,13 @@ public class SentenceGenerator
 	private void setResourcesPaths(String templatesPath, String nounsPath, String verbsPath, String adjectivesPath)
 	{}
 
-	private <T> T getRandomElement(List<T> list)
+	private <T> T getRandomElement(T element)
+	{
+		return element;
+	}
+
+	private <T> void addNewElementToJson(T element)
 	{}
 
-	// Update resources with new words or templates ???
-	//
-	// private void addNewNouns(List<Noun> nouns)
-	// {}
-	//
-	// private void addNewVerbs(List<Verb> verbs)
-	// {}
-	//
-	// private void addNewAdjectives(List<Adjective> adjectives)
-	// {}
-	//
-	// private void addNewTemplates(List<Template> templates)
-	// {}
-
 	// Helpers
-}*/
+}

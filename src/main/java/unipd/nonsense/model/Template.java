@@ -9,6 +9,13 @@ public class Template
 		PLURAL
 	}
 
+	public static enum Placeholder
+	{
+		NOUN,
+		VERB,
+		ADJECTIVE
+	}
+
 	private String pattern;
 	private final TemplateType type;
 
@@ -32,15 +39,16 @@ public class Template
 	}
 
 	// Check if template contains a specific placeholder
-	public boolean containsPlaceholder(String placeholder)
+	public boolean containsPlaceholder(Placeholder placeholder)
 	{
-		return pattern.contains("[" + placeholder + "]");
+		return pattern.contains("[" + placeholder.name().toLowerCase() + "]");
 	}
 
 	// Count occurrences of a specific placeholder
-	public int countPlaceholders(String placeholder)
+	public int countPlaceholders(Placeholder placeholder)
 	{
-		String target = "[" + placeholder + "]";
+		String target = "[" + placeholder.name().toLowerCase() + "]";
+
 		int count = 0;
 		int index = pattern.indexOf(target);
 
@@ -54,13 +62,13 @@ public class Template
 	}
 
 	// Replace a placeholder with actual content
-	public String replacePlaceholder(String placeholder, String replacement)
+	public String replacePlaceholder(Placeholder placeholder, String replacement)
 	{
-		return pattern.replace("[" + placeholder + "]", replacement);
+		return pattern.replace("[" + placeholder.name().toLowerCase() + "]", replacement);
 	}
 
 	// Create a new Template instance with a placeholder replaced
-	public Template withReplacement(String placeholder, String replacement)
+	public Template withReplacement(Placeholder placeholder, String replacement)
 	{
 		return new Template(replacePlaceholder(placeholder, replacement), this.type);
 	}

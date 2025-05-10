@@ -117,6 +117,13 @@
 			<version>5.13.0</version>
 			<scope>test</scope>
 		</dependency>
+
+		<!-- CLI - Enhancement -->
+		<dependency>
+			<groupId>org.jline</groupId>
+			<artifactId>jline</artifactId>
+			<version>3.26.3</version>
+		</dependency>
 	</dependencies>
 
 	<!-- Settings for building -->

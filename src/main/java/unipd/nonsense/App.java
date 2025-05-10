@@ -6,19 +6,15 @@ public class App
 {
 	public static void main(String[] args)
 	{
-		CLI cli = new CLI();
-
 		try
 		{
+			CLI cli = new CLI();
 			while(cli.inputCatcher());
+			cli.closeResources();
 		}
 		catch(Exception e)
 		{
 			e.printStackTrace();
-		}
-		finally
-		{
-			cli.closeResources();
 		}
 	}
 }
