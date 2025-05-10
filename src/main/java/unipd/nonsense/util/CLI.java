@@ -2,36 +2,91 @@ package unipd.nonsense.util;
 
 import java.util.Map;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.io.IOException;
+import java.io.PrintWriter;
+import java.io.StringWriter;
+
+import org.jline.reader.*;
+import org.jline.reader.Highlighter;
+import org.jline.reader.impl.completer.StringsCompleter;
+import org.jline.terminal.Terminal;
+import org.jline.terminal.TerminalBuilder;
+import org.jline.utils.AttributedString;
+import org.jline.utils.AttributedStyle;
+import org.jline.utils.InfoCmp;
 
 public class CLI
 {
 	private enum Command
 	{
-		GENERATESENTENCE, ANALYZESENTENCE, GENERATEANDANALYZESENTENCE, SETTOLERANCE, HELP, QUIT
+		GENERATESENTENCE, ANALYZESENTENCE, GENERATEANDANALYZESENTENCE, SETTOLERANCE, HELP, CLEAR, QUIT
 	}
 
-	private static final String RESET = "\033[0m";
-	private static final String BOLD = "\033[1m";
-	private static final String RED = "\033[31m";
-	private static final String GREEN = "\033[32m";
-	private static final String YELLOW = "\033[33m";
-	private static final String BLUE = "\033[34m";
-	private static final String PURPLE = "\033[35m";
-	private static final String CYAN = "\033[36m";
+	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
+	private static final AttributedStyle GREEN_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN);
+	private static final AttributedStyle YELLOW_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW);
+	private static final AttributedStyle PURPLE_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.MAGENTA);
+	private static final AttributedStyle DEFAULT_STYLE = AttributedStyle.DEFAULT;
+
+	private static final AttributedStyle BOLD_RED_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.RED);
+	private static final AttributedStyle BOLD_GREEN_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.GREEN);
+	private static final AttributedStyle BOLD_YELLOW_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.YELLOW);
+	private static final AttributedStyle BOLD_MAGENTA_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.MAGENTA);
+	private static final AttributedStyle BOLD_WHITE_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.WHITE);
+
 
 	private static Map<String, Command> commands = new HashMap<>();
-	private Scanner scanner;
+	private static final int HISTORY_SIZE = 25;
+	private String initialOutput;
 	private boolean running;
 
-	public CLI()
+	private final Terminal terminal;
+	private final LineReader reader;
+
+	private static class CommandHighlighter implements Highlighter
 	{
+		@Override
+		public AttributedString highlight(LineReader reader, String buffer)
+		{
+			String trimmedBuffer = buffer.trim().toLowerCase();
+
+			if(trimmedBuffer.isEmpty())
+				return new AttributedString(buffer, DEFAULT_STYLE);
+
+			boolean isValid = commands.keySet().stream().anyMatch(cmd -> cmd.startsWith(trimmedBuffer));
+
+			if(isValid)
+				return new AttributedString(buffer, GREEN_STYLE);
+
+			return new AttributedString(buffer, RED_STYLE);
+		}
+
+		@Override
+		public void setErrorPattern(java.util.regex.Pattern pattern)
+		{}
+
+		@Override
+		public void setErrorIndex(int index)
+		{}
+	}
+
+	public CLI() throws IOException
+	{
+		terminal = TerminalBuilder.builder().system(true).build();
+		reader = LineReaderBuilder.builder()
+			.terminal(terminal)
+			.completer(new StringsCompleter(commands.keySet()))
+			.option(LineReader.Option.HISTORY_BEEP, false)
+			.option(LineReader.Option.AUTO_LIST, true)
+			.option(LineReader.Option.AUTO_FRESH_LINE, true)
+			.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
+			.highlighter(new CommandHighlighter())
+			.build();
+
 		running = true;
-		scanner = new Scanner(System.in);
 
 		commands.put("generate", Command.GENERATESENTENCE);
 		commands.put("g", Command.GENERATESENTENCE);
@@ -43,14 +98,25 @@ public class CLI
 		commands.put("st", Command.SETTOLERANCE);
 		commands.put("help", Command.HELP);
 		commands.put("h", Command.HELP);
+		commands.put("clear", Command.CLEAR);
+		commands.put("c", Command.CLEAR);
 		commands.put("quit", Command.QUIT);
 		commands.put("q", Command.QUIT);
 
-		welcome();
-		usage();
+		StringWriter stringWriter = new StringWriter();
+		PrintWriter tempWriter = new PrintWriter(stringWriter);
+
+		welcome(tempWriter);
+		usage(tempWriter);
+		tempWriter.flush();
+
+		initialOutput = stringWriter.toString();
+
+		welcome(terminal.writer());
+		usage(terminal.writer());
 	}
 
-	private void welcome()
+	private void welcome(PrintWriter writer)
 	{
 		int asciiArtWidth = 58;
 		String title = "Welcome to";
@@ -59,9 +125,8 @@ public class CLI
 		int leftPadding = totalPadding / 2;
 		int rightPadding = totalPadding - leftPadding;
 
-		String topBorder = BOLD + "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding) + RESET;
-
-		System.out.println(topBorder);
+		String topBorder = "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding);
+		writer.println(new AttributedString(topBorder, BOLD_WHITE_STYLE).toAnsi(terminal));
 
 		try(InputStream stream = getClass().getResourceAsStream("/asciiArt.txt"))
 		{
@@ -73,103 +138,159 @@ public class CLI
 				String line;
 
 				while((line = reader.readLine()) != null)
-					System.out.println(BOLD + line + RESET);
+					writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
 			}
 		}
 		catch (IOException e)
 		{
-			System.out.println(RED + "[ERROR] Failed to load ASCII art." + RESET);
+			 writer.println(new AttributedString("[ERROR] Failed to load ASCII art.", RED_STYLE).toAnsi(terminal));
 		}
 
-		System.out.println(BOLD + "=".repeat(asciiArtWidth + 2) + RESET);
+		writer.println(new AttributedString("=".repeat(asciiArtWidth + 2), BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.flush();
 	}
 
-	private void usage()
+	private void usage(PrintWriter writer)
 	{
 		int totalWidth = 58;
 		String title = "Available Commands";
 
 		int titlePadding = (totalWidth - title.length() - 2) / 2;
-		String titleLine = BOLD + PURPLE + "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding) + RESET;
+		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
+		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
 
-		System.out.println(titleLine);
+		String[] commands =
+		{
+			"Generate", "Generates a random nonsense sentence",
+			"Analyze", "Validates sentence structure and syntax",
+			"Generate and analyze", "Does both operations in one step",
+			"Set tolerance", "Change tolerance level (default: X)",
+			"Clear", "Clears the terminal and shows initial menu",
+			"Help", "Shows this help menu",
+			"Quit", "Exits the program"
+		};
 
-		String format = GREEN + BOLD + "%-22s" + RESET + " %-33s" + RESET;
+		for(int i = 0; i < commands.length; i += 2)
+		{
+			String command = String.format("%-22s", commands[i]);
+			String description = String.format("%-33s", commands[i + 1]);
 
-		System.out.printf(format + "\n", "Generate", "Generates a random nonsense sentence");
-		System.out.printf(format + "\n", "Analyze", "Validates sentence structure and syntax");
-		System.out.printf(format + "\n", "Generate and analyze", "Does both operations in one step");
-		System.out.printf(format + "\n", "Set tolerance", "Change tollerance level (default: X)");
-		System.out.printf(format + "\n", "Help", "Shows this help menu");
-		System.out.printf(format + "\n", "Quit", "Exits the program");
-		System.out.println(BOLD + PURPLE + "=".repeat(totalWidth + 2) + RESET);
+			AttributedString styledCommand = new AttributedString(command, BOLD_GREEN_STYLE);
+			AttributedString styledDescription = new AttributedString(description, BOLD_WHITE_STYLE);
 
-		System.out.println(BOLD + PURPLE + "Enter a command or type 'Help' to see this again:" + RESET);
+			writer.println(styledCommand.toAnsi(terminal) + styledDescription.toAnsi(terminal));
+		}
+
+		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.println(new AttributedString("Enter a command or type 'Help' to see this again:", BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.flush();
+	}
+
+	private void clearTerminal()
+	{
+		terminal.puts(InfoCmp.Capability.clear_screen);
+		terminal.writer().print("\033[3J");
+		terminal.flush();
+
+		terminal.writer().print(initialOutput);
+		terminal.flush();
 	}
 
 	public boolean inputCatcher()
 	{
-		System.out.print(BOLD + ">> " + RESET);
+		try
+		{
+			String cmd = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 
-		String cmd = scanner.nextLine();
+			if(!cmd.isEmpty() && !commands.containsKey(cmd))
+			{
+				terminal.writer().println(new AttributedString("Invalid command: " + cmd, RED_STYLE).toAnsi(terminal));
+				terminal.flush();
+			}
 
-		commandExecuter(cmd.trim().replaceAll("\\s+", " ").toLowerCase());
+			commandExecuter(cmd);
+			}
+			catch(UserInterruptException e)
+			{
+				terminal.writer().println(new AttributedString("Program interrupted.", YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				running = false;
+			}
+			catch(EndOfFileException e)
+			{
+				running = false;
+			}
 
 		return running;
 	}
 
 	public void closeResources()
 	{
-		if(scanner != null)
-			scanner.close();
-
 		if(running)
 			running = false;
+
+		try
+		{
+			terminal.close();
+		}
+		catch(IOException e)
+		{
+			System.err.println("Failed to close terminal: " + e.getMessage());
+			e.printStackTrace();
+		}
 	}
 
 	private void commandExecuter(String cmd)
 	{
 		if(cmd.isEmpty())
 		{
-			System.out.println(YELLOW + "Please enter a command." + RESET);
+			terminal.writer().println(new AttributedString("Please enter a command.", YELLOW_STYLE).toAnsi(terminal));
+			terminal.flush();
 			return;
 		}
 
 		if(!commands.containsKey(cmd))
 		{
-			System.out.println(RED + "Invalid command. Type 'Help' for options." + RESET);
+			terminal.writer().println(new AttributedString("Type 'Help' for available commands.", RED_STYLE).toAnsi(terminal));
+			terminal.flush();
 			return;
 		}
 
 		switch(commands.get(cmd))
 		{
 			case GENERATESENTENCE:
-				System.out.println("Sentence generated");
+				terminal.writer().println(new AttributedString("Sentence generated", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
 			break;
 
 			case ANALYZESENTENCE:
-				System.out.println("Sentence analyzed");
+				terminal.writer().println(new AttributedString("Sentence analyzed", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
 			break;
 
 			case GENERATEANDANALYZESENTENCE:
-				System.out.println("Sentence generated and analyzed");
+				terminal.writer().println(new AttributedString("Sentence generated and analyzed", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
 			break;
 
 			case SETTOLERANCE:
-				System.out.println("Setted new tolerance.");
+				terminal.writer().println(new AttributedString("Set new tolerance.", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
 			break;
 
+			case CLEAR:
+				clearTerminal();
+				break;
+
 			case HELP:
-				usage();
+				usage(terminal.writer());
 			break;
 
 			case QUIT:
-				System.out.println("See you soon!");
+				terminal.writer().println(new AttributedString("See you soon!", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
 				running = false;
 			break;
-
-			default:
-				throw new IllegalArgumentException("Please insert a valid command");
 		}
 	}
 }
