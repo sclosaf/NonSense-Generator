@@ -1,15 +1,20 @@
 package unipd.nonsense.generator;
 
 import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Noun.Number;
 import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Verb.Tense;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Template;
+import unipd.nonsense.model.Template.TemplateType;
+import unipd.nonsense.model.Template.Placeholder;
 
 import unipd.nonsense.generator.RandomNounGenerator;
 import unipd.nonsense.generator.RandomVerbGenerator;
 import unipd.nonsense.generator.RandomAdjectiveGenerator;
 import unipd.nonsense.generator.RandomTemplateGenerator;
+
+import java.util.Random;
 
 import java.io.IOException;
 
@@ -20,37 +25,79 @@ public class SentenceGenerator
 	private RandomVerbGenerator verbGenerator;
 	private RandomTemplateGenerator templateGenerator;
 
+	private static Random random;
+
 	public SentenceGenerator() throws IOException
 	{
-		nounGenerator = new RandomNounGenerator();
-		adjectiveGenerator = new RandomAdjectiveGenerator();
-		verbGenerator = new RandomVerbGenerator();
-		templateGenerator = new RandomTemplateGenerator();
+		this.nounGenerator = new RandomNounGenerator();
+		this.adjectiveGenerator = new RandomAdjectiveGenerator();
+		this.verbGenerator = new RandomVerbGenerator();
+		this.templateGenerator = new RandomTemplateGenerator();
+
+		this.random = new Random();
 	}
 
-	public String generateRandomSentence()
+	public Template generateRandomSentence()
 	{
-		return "";
+		Number[] numbers = Number.values();
+		Tense[] tenses = Tense.values();
+
+		Number randomNumber = numbers[random.nextInt(numbers.length)];
+		Tense randomTense = tenses[random.nextInt(tenses.length)];
+
+		return generateSentenceWithTenseAndNumber(randomTense, randomNumber);
 	}
 
-	public String generateSentenceWithTense(Tense tense)
+	public Template generateSentenceWithTense(Tense tense)
 	{
-		return "";
+		Number[] numbers = Number.values();
+		Number randomNumber = numbers[random.nextInt(numbers.length)];
+
+		return generateSentenceWithTenseAndNumber(tense, randomNumber);
 	}
 
-	private void loadResources()
-	{}
-
-	private void setResourcesPaths(String templatesPath, String nounsPath, String verbsPath, String adjectivesPath)
-	{}
-
-	private <T> T getRandomElement(T element)
+	public Template generateSentenceWithNumber(Number number)
 	{
-		return element;
+		Tense[] tenses = Tense.values();
+		Tense randomTense = tenses[random.nextInt(tenses.length)];
+
+		return generateSentenceWithTenseAndNumber(randomTense, number);
 	}
 
-	private <T> void addNewElementToJson(T element)
-	{}
+	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
+	{
+		Template template = templateGenerator.getRandomTemplate(convertNumberToTemplateType(number));
 
-	// Helpers
+		for(int i = template.countPlaceholders(Placeholder.NOUN); i > 0; --i)
+			template.replacePlaceholder(Placeholder.NOUN, nounGenerator.getRandomNoun(number).getNoun());
+
+
+		for(int i = template.countPlaceholders(Placeholder.ADJECTIVE); i > 0; --i)
+			template.replacePlaceholder(Placeholder.ADJECTIVE, adjectiveGenerator.getRandomAdjective().getAdjective());
+
+		for(int i = template.countPlaceholders(Placeholder.VERB); i > 0; --i)
+			template.replacePlaceholder(Placeholder.VERB, verbGenerator.getRandomVerb(tense).getVerb());
+
+		return template;
+	}
+
+	private TemplateType convertNumberToTemplateType(Number number)
+	{
+		switch(number)
+		{
+			case Number.SINGULAR: return TemplateType.SINGULAR;
+			case Number.PLURAL: return TemplateType.PLURAL;
+			default: throw new IllegalArgumentException();
+		}
+	}
+
+	private Number convertTemplateTypeToNumber(TemplateType type)
+	{
+		switch(type)
+		{
+			case TemplateType.SINGULAR: return Number.SINGULAR;
+			case TemplateType.PLURAL: return Number.PLURAL;
+			default: throw new IllegalArgumentException();
+		}
+	}
 }
