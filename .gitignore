@@ -2,4 +2,4 @@
 /lib
 config/credentials.json
 /logs
-.vscode/
+/.vscode
