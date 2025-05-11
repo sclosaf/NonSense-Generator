@@ -14,7 +14,7 @@ public class Noun
 
 	public Noun(String noun, Number number)
 	{
-		if(noun == null || null.isEmpty())
+		if(noun == null || noun.isEmpty())
 			throw new InvalidGrammaticalElementException();
 
 		this.noun = noun;

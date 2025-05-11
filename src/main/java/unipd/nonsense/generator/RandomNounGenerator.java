@@ -7,7 +7,7 @@ import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
 
-import unipd.nonsense.exception.InvalidListException;
+import unipd.nonsense.exceptions.InvalidListException;
 
 import java.io.IOException;
 

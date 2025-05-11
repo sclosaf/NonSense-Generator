@@ -17,7 +17,7 @@ public class InvalidListException extends IllegalStateException
 		super(cause);
 	}
 
-	public InvalidListException(String msg, Throwable)
+	public InvalidListException(String msg, Throwable cause)
 	{
 		super(msg, cause);
 	}

@@ -22,7 +22,7 @@ public class Template
 
 	public Template(String pattern, TemplateType type)
 	{
-		if(pattern == null || patter.isEmpty())
+		if(pattern == null || pattern.isEmpty())
 			throw new InvalidGrammaticalElementException();
 
 		this.pattern = pattern;
