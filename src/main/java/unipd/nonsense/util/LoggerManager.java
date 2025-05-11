@@ -3,16 +3,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 /*
- * Aggiungere il logInfo come funzione
- *
- * Configurare il file .xml affinché stampi su file tutti i 6 livelli fino al
- * trace, mentre a terminale solo da info in su, escludendo trace e debug
- *
- * Vedi se si può ridurre la rotazione dei log in modo tale che i file non
- * diventino infiniti se si fa girare più volte il progetto, cioè se ne creino
- * di distinti ad ogni esecuzione ma si rimuova l'ultimo se per esempio sono
- * più di un tot
- *
  * So che alcune librerie possono usare anche loro dei logger e quindi creano
  * "rumore" nel file di log con stampe loro, vedi se esiste qualche
  * configurazione possibile per mantenere le stampe su file solo per il nostro
@@ -37,50 +27,66 @@ import org.apache.logging.log4j.LogManager;
 
 public class LoggerManager
 {
-	private final Logger logger;
+	private final Logger fileLogger;
+	private final Logger consoleLogger;
 
 	public LoggerManager(Class <?> myClass)
 	{
-		this.logger = LogManager.getLogger(myClass);
+		this.fileLogger = LogManager.getLogger("FileLogger");
+		this.consoleLogger = LogManager.getLogger("ConsoleLogger");
 	}
 
 	public void logTrace(String entry)
 	{
-		logger.trace(entry);
+		fileLogger.trace(entry);
+		consoleLogger.trace(entry);
 	}
 
 	public void logDebug(String entry)
 	{
-		logger.debug(entry);
+		fileLogger.debug(entry);
+		consoleLogger.debug(entry);
+	}
+
+	public void logInfo(String entry)
+	{
+		fileLogger.info(entry);
+		consoleLogger.info(entry);
 	}
 
 	public void logWarn(String entry)
 	{
-		logger.warn(entry);
+		fileLogger.warn(entry);
+		consoleLogger.warn(entry);
 	}
 
 	public void logWarn(String entry, Throwable eccept)
 	{
-		logger.warn(entry, eccept);
+		fileLogger.warn(entry, eccept);
+		consoleLogger.warn(entry, eccept);
 	}
 
 	public void logError(String entry)
 	{
-		logger.error(entry);
+		fileLogger.error(entry);
+		consoleLogger.error(entry);
 	}
 
 	public void logError(String entry, Throwable eccept)
 	{
-		logger.error(entry, eccept);
+		fileLogger.error(entry, eccept);
+		consoleLogger.error(entry, eccept);
 	}
 
 	public void logFatal(String entry)
 	{
-		logger.fatal(entry);
+		fileLogger.fatal(entry);
+		consoleLogger.fatal(entry);
 	}
 
 	public void logFatal(String entry, Throwable eccept)
 	{
-		logger.fatal(entry, eccept);
+		fileLogger.fatal(entry, eccept);
+		consoleLogger.fatal(entry, eccept);
 	}
 }
