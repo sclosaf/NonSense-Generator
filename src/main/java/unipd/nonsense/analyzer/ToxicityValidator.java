@@ -18,7 +18,7 @@ public class ToxicityValidator implements AutoCloseable
 
 	public ToxicityValidator() throws IOException
 	{
-		this.apiClient = new GoogleApiClient("/settings.json");
+		this.apiClient = new GoogleApiClient("/credentials.json");
 	}
 
 	public Map<String, Float> getToxicityScores(String text) throws IOException
