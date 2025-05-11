@@ -7,7 +7,6 @@ import unipd.nonsense.model.Template;
 import unipd.nonsense.model.Template.TemplateType;
 import unipd.nonsense.exception.TemplateLoadException;
 import unipd.nonsense.exception.TemplateNotFoundException;
-import unipd.nonsense.exception.JsonFileAccessException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -25,7 +24,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String templatesPath = "templates.json";
-	private static List<String> keys = List.of("singularTemplates", "pluralTemplates");
+	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
 
 	public RandomTemplateGenerator() throws TemplateLoadException
 	{
@@ -37,12 +36,10 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 			JsonUpdater.addObserver(this);
 		} catch (IOException e) {
 			throw new TemplateLoadException("Failed to load templates", e);
-		} catch (JsonFileAccessException e) {
-			throw new TemplateLoadException("JSON file access error", e);
 		}
 	}
 
-	private void loadTemplates() throws IOException, JsonFileAccessException
+	private void loadTemplates() throws IOException
 	{
 		for(String key : keys)
 		{
@@ -55,27 +52,23 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 			templates.computeIfAbsent(type, k -> new ArrayList<>());
 
-			try {
-				List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
+			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
 
-				if(jsonList == null)
-				{
-					throw new JsonFileAccessException(templatesPath, "Template list for key '" + key + "' is null");
-				}
-
-				if(jsonList.isEmpty())
-				{
-					throw new JsonFileAccessException(templatesPath, "Template list for key '" + key + "' is empty");
-				}
-
-				List<Template> templateList = jsonList.stream()
-					.map(template -> new Template(template, type))
-					.collect(Collectors.toList());
-
-				templates.put(type, templateList);
-			} catch (IOException e) {
-				throw new JsonFileAccessException(templatesPath, "Error reading template list for key '" + key + "'", e);
+			if(jsonList == null)
+			{
+				throw new IOException("Template list for key '" + key + "' is null");
 			}
+
+			if(jsonList.isEmpty())
+			{
+				throw new IOException("Template list for key '" + key + "' is empty");
+			}
+
+			List<Template> templateList = jsonList.stream()
+				.map(template -> new Template(template, type))
+				.collect(Collectors.toList());
+			
+			templates.put(type, templateList);
 		}
 	}
 
@@ -109,7 +102,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 		{
 			loadTemplates();
 		}
-		catch (IOException | JsonFileAccessException e)
+		catch (IOException e)
 		{
 			System.err.println("Error reloading templates: " + e.getMessage());
 			e.printStackTrace();
