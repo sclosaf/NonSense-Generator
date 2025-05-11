@@ -16,12 +16,9 @@ public class ToxicityValidator implements AutoCloseable
 	private final GoogleApiClient apiClient;
 	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
 
-	public ToxicityValidator(GoogleApiClient apiClient)
+	public ToxicityValidator() throws IOException
 	{
-		if(apiClient == null)
-			throw new IllegalArgumentException("GoogleApiClient cannot be null");
-
-		this.apiClient = apiClient;
+		this.apiClient = new GoogleApiClient("/settings.json");
 	}
 
 	public Map<String, Float> getToxicityScores(String text) throws IOException
