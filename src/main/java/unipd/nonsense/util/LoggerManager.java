@@ -3,12 +3,6 @@ import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
 
 /*
- * So che alcune librerie possono usare anche loro dei logger e quindi creano
- * "rumore" nel file di log con stampe loro, vedi se esiste qualche
- * configurazione possibile per mantenere le stampe su file solo per il nostro
- * progetto, a livello trace e magari alzarlo per tutto il resto, ad esempio
- * fino a error pensavo
- *
  * Vedi se esiste un modo per impostare a runtime nella classe il livello di
  * severità ad esempio se da terminale io passo al CLI un comando che imposta
  * l'opzione programmatore, allora abbassa il livello di severità (della sola
@@ -20,9 +14,6 @@ import org.apache.logging.log4j.LogManager;
  * dell'input da cli verrà fatta in un altra classe, a te basta implementare un
  * booleano che definisca se si logga in modalità sviluppatore o meno)
  *
- * Se riesci vedi se si può configurare il file .xml per effettuare log
- * asincroni, in modo tale che il logging non pesi sul carico del programma,
- * potrebbe servire una dipendenza tipo disruptor
  */
 
 public class LoggerManager
