@@ -21,6 +21,8 @@ public class CommandProcessor
 	private static ToxicityValidator validator;
 	private static SentenceGenerator generator;
 
+	private static String lastCachedString;
+
 	public CommandProcessor() throws IOException
 	{
 		treeBuilder = new SyntaxTreePrinter();
@@ -31,20 +33,22 @@ public class CommandProcessor
 
 	public static String generate()
 	{
-		return "";
+		lastCachedString = generator.generateRandomSentence().getPattern();
+
+		return lastCachedString;
 	}
 
-	public static String analyze()
+	public static String analyze(String str)
 	{
 		return "";
 	}
 
 	public static String generateAndAnalyze()
 	{
-		return "";
+		return analyze(generate());
 	}
 
-	public static String printTree()
+	public static String printTree(String str)
 	{
 		return "";
 	}

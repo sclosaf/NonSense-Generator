@@ -172,7 +172,6 @@ public class CLI
 			"Generate and analyze", "Does both operations in one step",
 			"Tree", "Prints the syntactic tree",
 			"Set tolerance", "Change tolerance level (default: X)",
-			"Developer", "Switch on/off developer mode (default: off)",
 			"Clear", "Clears the terminal and shows initial menu",
 			"Help", "Shows this help menu",
 			"Quit", "Exits the program"

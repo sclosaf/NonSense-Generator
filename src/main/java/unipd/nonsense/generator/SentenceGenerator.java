@@ -55,7 +55,7 @@ public class SentenceGenerator
 		return generateSentenceWithTenseAndNumber(randomTense, randomNumber);
 	}
 
-	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList)
+	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
 	{
 		Template template = templateGenerator.getRandomTemplate(convertNumberToTemplateType(getRandomNumber()));
 
