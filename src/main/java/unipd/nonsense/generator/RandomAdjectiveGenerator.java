@@ -57,15 +57,8 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 	}
 
 	@Override
-	public void onJsonUpdate()
+	public void onJsonUpdate() throws IOException
 	{
-		try
-		{
-			loadAdjectives();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+		loadAdjectives();
 	}
 }

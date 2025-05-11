@@ -36,7 +36,7 @@ public class JsonUpdater
 		observers.remove(observer);
 	}
 
-	private static void notifyAllObservers()
+	private static void notifyAllObservers() throws IOException
 	{
 		for(JsonUpdateObserver observer : observers)
 			observer.onJsonUpdate();

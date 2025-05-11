@@ -5,8 +5,7 @@ import unipd.nonsense.util.JsonUpdater;
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Template;
 import unipd.nonsense.model.Template.TemplateType;
-import unipd.nonsense.exception.TemplateLoadException;
-import unipd.nonsense.exception.TemplateNotFoundException;
+import unipd.nonsense.exceptions.InvalidListException;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -26,17 +25,13 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	private static String templatesPath = "templates.json";
 	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
 
-	public RandomTemplateGenerator() throws TemplateLoadException
+	public RandomTemplateGenerator() throws IOException
 	{
 		this.templates = new HashMap<>();
 		this.random = new Random();
 
-		try {
-			loadTemplates();
-			JsonUpdater.addObserver(this);
-		} catch (IOException e) {
-			throw new TemplateLoadException("Failed to load templates", e);
-		}
+		loadTemplates();
+		JsonUpdater.addObserver(this);
 	}
 
 	private void loadTemplates() throws IOException
@@ -54,30 +49,17 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
 
-			if(jsonList == null)
+			if(jsonList != null)
 			{
-				throw new IOException("Template list for key '" + key + "' is null");
+				List<Template> templateList = jsonList.stream().map(template -> new Template(template, type)).collect(Collectors.toList());
+
+				templates.put(type, templateList);
 			}
-
-			if(jsonList.isEmpty())
-			{
-				throw new IOException("Template list for key '" + key + "' is empty");
-			}
-
-			List<Template> templateList = jsonList.stream()
-				.map(template -> new Template(template, type))
-				.collect(Collectors.toList());
-
-			templates.put(type, templateList);
 		}
 	}
 
 	public Template getRandomTemplate()
 	{
-		if (templates.isEmpty()) {
-			throw new TemplateNotFoundException(null);
-		}
-
 		TemplateType[] types = TemplateType.values();
 		TemplateType randomType = types[random.nextInt(types.length)];
 
@@ -89,23 +71,15 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 		List<Template> templateList = templates.get(type);
 
 		if(templateList == null || templateList.isEmpty())
-			throw new TemplateNotFoundException(type);
+			throw new InvalidListException();
 
 		int randomIndex = random.nextInt(templateList.size());
 		return templateList.get(randomIndex);
 	}
 
 	@Override
-	public void onJsonUpdate()
+	public void onJsonUpdate() throws IOException
 	{
-		try
-		{
-			loadTemplates();
-		}
-		catch (IOException e)
-		{
-			System.err.println("Error reloading templates: " + e.getMessage());
-			e.printStackTrace();
-		}
+		loadTemplates();
 	}
 }

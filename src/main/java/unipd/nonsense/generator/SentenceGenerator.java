@@ -16,8 +16,8 @@ import unipd.nonsense.generator.RandomTemplateGenerator;
 
 import unipd.nonsense.util.JsonUpdater;
 
-import unipd.nonsense.exception.TemplateLoadException;
-import unipd.nonsense.exception.TemplateNotFoundException;
+import unipd.nonsense.exceptions.InvalidNumberException;
+import unipd.nonsense.exceptions.InvalidTemplateTypeException;
 
 import java.util.Random;
 import java.util.List;
@@ -34,7 +34,7 @@ public class SentenceGenerator
 
 	private static Random random;
 
-	public SentenceGenerator() throws IOException, TemplateLoadException
+	public SentenceGenerator() throws IOException
 	{
 		this.nounGenerator = new RandomNounGenerator();
 		this.adjectiveGenerator = new RandomAdjectiveGenerator();
@@ -134,7 +134,7 @@ public class SentenceGenerator
 		{
 			case SINGULAR: return TemplateType.SINGULAR;
 			case PLURAL: return TemplateType.PLURAL;
-			default: throw new IllegalArgumentException("Unsupported number: " + number);
+			default: throw new InvalidNumberException();
 		}
 	}
 
@@ -144,7 +144,7 @@ public class SentenceGenerator
 		{
 			case SINGULAR: return Number.SINGULAR;
 			case PLURAL: return Number.PLURAL;
-			default: throw new IllegalArgumentException("Unsupported template type: " + type);
+			default: throw new InvalidTemplateTypeException();
 		}
 	}
 }

@@ -83,15 +83,8 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 	}
 
 	@Override
-	public void onJsonUpdate()
+	public void onJsonUpdate() throws IOException
 	{
-		try
-		{
-			loadVerbs();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+		loadVerbs();
 	}
 }

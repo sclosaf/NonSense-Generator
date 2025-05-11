@@ -81,15 +81,8 @@ public class RandomNounGenerator implements JsonUpdateObserver
 	}
 
 	@Override
-	public void onJsonUpdate()
+	public void onJsonUpdate() throws IOException
 	{
-		try
-		{
-			loadNouns();
-		}
-		catch(IOException e)
-		{
-			e.printStackTrace();
-		}
+		loadNouns();
 	}
 }

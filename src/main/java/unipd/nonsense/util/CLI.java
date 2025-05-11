@@ -122,7 +122,7 @@ public class CLI
 		usage(terminal.writer());
 	}
 
-	private void welcome(PrintWriter writer)
+	private void welcome(PrintWriter writer) throws IOException
 	{
 		int asciiArtWidth = 58;
 		String title = "Welcome to";
@@ -134,23 +134,18 @@ public class CLI
 		String topBorder = "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding);
 		writer.println(new AttributedString(topBorder, BOLD_WHITE_STYLE).toAnsi(terminal));
 
-		try(InputStream stream = getClass().getResourceAsStream("/asciiArt.txt"))
-		{
-			if(stream == null)
-				return;
+		InputStream stream = getClass().getResourceAsStream("/asciiArt.txt");
 
-			try(BufferedReader reader = new BufferedReader(new InputStreamReader(stream)))
-			{
-				String line;
+		if(stream == null)
+			return;
 
-				while((line = reader.readLine()) != null)
-					writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
-			}
-		}
-		catch (IOException e)
-		{
-			 writer.println(new AttributedString("[ERROR] Failed to load ASCII art.", RED_STYLE).toAnsi(terminal));
-		}
+		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+
+		String line;
+
+		while((line = reader.readLine()) != null)
+			writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
+
 
 		writer.println(new AttributedString("=".repeat(asciiArtWidth + 2), BOLD_WHITE_STYLE).toAnsi(terminal));
 		terminal.flush();
@@ -217,14 +212,10 @@ public class CLI
 
 			commandExecuter(cmd);
 			}
-			catch(UserInterruptException e)
+			catch(UserInterruptException | EndOfFileException e)
 			{
-				terminal.writer().println(new AttributedString("Program interrupted.", BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.writer().println(new AttributedString("Program ended.", BOLD_YELLOW_STYLE).toAnsi(terminal));
 				terminal.flush();
-				running = false;
-			}
-			catch(EndOfFileException e)
-			{
 				running = false;
 			}
 
@@ -242,7 +233,7 @@ public class CLI
 		}
 		catch(IOException e)
 		{
-			System.err.println("Failed to close terminal: " + e.getMessage());
+			terminal.writer().println(new AttributedString("Failed to close terminal: " + e.getMessage(), BOLD_RED_STYLE).toAnsi(terminal));
 			e.printStackTrace();
 		}
 	}

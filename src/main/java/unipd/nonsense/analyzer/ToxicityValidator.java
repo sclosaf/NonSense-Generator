@@ -1,5 +1,8 @@
 package unipd.nonsense.analyzer;
 
+import unipd.nonsense.exceptions.InvalidThresholdException;
+import unipd.nonsense.exceptions.InvalidTextException;
+
 import com.google.cloud.language.v1.Document;
 import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.cloud.language.v1.ModerateTextRequest;
@@ -49,7 +52,7 @@ public class ToxicityValidator implements AutoCloseable
 	public ModerateTextResponse moderateText(String text) throws IOException
 	{
 		if(text == null || text.trim().isEmpty())
-			throw new IllegalArgumentException("Text cannot be null or empty");
+			throw new InvalidTextException();
 
 		LanguageServiceClient languageClient = apiClient.getClient();
 
@@ -68,7 +71,7 @@ public class ToxicityValidator implements AutoCloseable
 	public boolean isTextToxic(String text, float threshold) throws IOException
 	{
 		if(threshold < 0 || threshold > 1)
-			throw new IllegalArgumentException("Threshold must be between 0 and 1");
+			throw new InvalidThresholdException(threshold);
 
 		ModerateTextResponse response = moderateText(text);
 		for(ClassificationCategory category : response.getModerationCategoriesList())
