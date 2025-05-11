@@ -14,8 +14,10 @@ import unipd.nonsense.generator.RandomVerbGenerator;
 import unipd.nonsense.generator.RandomAdjectiveGenerator;
 import unipd.nonsense.generator.RandomTemplateGenerator;
 
-import java.util.Random;
+import unipd.nonsense.exception.TemplateLoadException;
+import unipd.nonsense.exception.TemplateNotFoundException;
 
+import java.util.Random;
 import java.io.IOException;
 
 public class SentenceGenerator
@@ -27,7 +29,7 @@ public class SentenceGenerator
 
 	private static Random random;
 
-	public SentenceGenerator() throws IOException
+	public SentenceGenerator() throws IOException, TemplateLoadException
 	{
 		this.nounGenerator = new RandomNounGenerator();
 		this.adjectiveGenerator = new RandomAdjectiveGenerator();
@@ -66,11 +68,11 @@ public class SentenceGenerator
 
 	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
 	{
-		Template template = templateGenerator.getRandomTemplate(convertNumberToTemplateType(number));
+		TemplateType templateType = convertNumberToTemplateType(number);
+		Template template = templateGenerator.getRandomTemplate(templateType);
 
 		for(int i = template.countPlaceholders(Placeholder.NOUN); i > 0; --i)
 			template.replacePlaceholder(Placeholder.NOUN, nounGenerator.getRandomNoun(number).getNoun());
-
 
 		for(int i = template.countPlaceholders(Placeholder.ADJECTIVE); i > 0; --i)
 			template.replacePlaceholder(Placeholder.ADJECTIVE, adjectiveGenerator.getRandomAdjective().getAdjective());
@@ -85,9 +87,9 @@ public class SentenceGenerator
 	{
 		switch(number)
 		{
-			case Number.SINGULAR: return TemplateType.SINGULAR;
-			case Number.PLURAL: return TemplateType.PLURAL;
-			default: throw new IllegalArgumentException();
+			case SINGULAR: return TemplateType.SINGULAR;
+			case PLURAL: return TemplateType.PLURAL;
+			default: throw new IllegalArgumentException("Unsupported number: " + number);
 		}
 	}
 
@@ -95,9 +97,9 @@ public class SentenceGenerator
 	{
 		switch(type)
 		{
-			case TemplateType.SINGULAR: return Number.SINGULAR;
-			case TemplateType.PLURAL: return Number.PLURAL;
-			default: throw new IllegalArgumentException();
+			case SINGULAR: return Number.SINGULAR;
+			case PLURAL: return Number.PLURAL;
+			default: throw new IllegalArgumentException("Unsupported template type: " + type);
 		}
 	}
 }
