@@ -67,7 +67,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 			List<Template> templateList = jsonList.stream()
 				.map(template -> new Template(template, type))
 				.collect(Collectors.toList());
-			
+
 			templates.put(type, templateList);
 		}
 	}

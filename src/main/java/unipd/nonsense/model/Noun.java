@@ -1,5 +1,7 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 public class Noun
 {
 	public static enum Number
@@ -12,6 +14,9 @@ public class Noun
 
 	public Noun(String noun, Number number)
 	{
+		if(noun == null || null.isEmpty())
+			throw new InvalidGrammaticalElementException();
+
 		this.noun = noun;
 		this.number = number;
 	}

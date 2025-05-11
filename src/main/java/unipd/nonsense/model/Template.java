@@ -1,5 +1,7 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 public class Template
 {
 	public static enum TemplateType
@@ -20,6 +22,9 @@ public class Template
 
 	public Template(String pattern, TemplateType type)
 	{
+		if(pattern == null || patter.isEmpty())
+			throw new InvalidGrammaticalElementException();
+
 		this.pattern = pattern;
 		this.type = type;
 	}

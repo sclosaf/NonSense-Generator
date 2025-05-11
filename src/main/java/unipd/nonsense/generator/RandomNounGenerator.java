@@ -7,6 +7,8 @@ import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
 
+import unipd.nonsense.exception.InvalidListException;
+
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -72,7 +74,7 @@ public class RandomNounGenerator implements JsonUpdateObserver
 		List<Noun> nounList = nouns.get(num);
 
 		if(nounList == null || nounList.isEmpty())
-			throw new IllegalStateException("No nouns loaded for number: " + num);
+			throw new InvalidListException();
 
 		int randomIndex = random.nextInt(nounList.size());
 		return nounList.get(randomIndex);

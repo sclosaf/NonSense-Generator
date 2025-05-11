@@ -74,7 +74,7 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 		List<Verb> verbList = verbs.get(tense);
 
 		if(verbList == null || verbList.isEmpty())
-			throw new IllegalStateException("No verbs loaded for tense: " + tense);
+			throw new InvalidListException();
 
 		int randomIndex = random.nextInt(verbList.size());
 		return verbList.get(randomIndex);

@@ -1,5 +1,7 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 public class Verb
 {
 	public static enum Tense
@@ -12,6 +14,9 @@ public class Verb
 
 	public Verb(String verb, Tense tense)
 	{
+		if(verb == null || verb.isEmpty())
+			throw new InvalidGrammaticalElementException();
+
 		this.verb = verb;
 		this.tense = tense;
 	}
