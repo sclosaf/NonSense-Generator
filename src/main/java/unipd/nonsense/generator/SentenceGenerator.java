@@ -59,6 +59,15 @@ public class SentenceGenerator
 	{
 		Template template = templateGenerator.getRandomTemplate(convertNumberToTemplateType(getRandomNumber()));
 
+		for(Noun noun : nounList)
+			JsonUpdater.loadNoun(noun);
+
+		for(Adjective adjective : adjectiveList)
+			JsonUpdater.loadAdjective(adjective);
+
+		for(Verb verb : verbList)
+			JsonUpdater.loadVerb(verb);
+
 		while(!nounList.isEmpty() || template.countPlaceholders(Placeholder.NOUN) != 0)
 			template.replacePlaceholder(Placeholder.NOUN, nounList.removeFirst().getNoun());
 
