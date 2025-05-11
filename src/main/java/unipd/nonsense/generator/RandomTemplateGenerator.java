@@ -25,7 +25,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String templatesPath = "templates.json";
-	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
+	private static List<String> keys = List.of("singularTemplates", "pluralTemplates");
 
 	public RandomTemplateGenerator() throws TemplateLoadException
 	{
@@ -71,7 +71,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 				List<Template> templateList = jsonList.stream()
 					.map(template -> new Template(template, type))
 					.collect(Collectors.toList());
-				
+
 				templates.put(type, templateList);
 			} catch (IOException e) {
 				throw new JsonFileAccessException(templatesPath, "Error reading template list for key '" + key + "'", e);
