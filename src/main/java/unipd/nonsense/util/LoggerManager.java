@@ -45,4 +45,9 @@ public class LoggerManager
 	{
 		logger.fatal(entry);
 	}
+
+	public void logFatal(String entry, Throwable eccept)
+	{
+		logger.fatal(entry, eccept);
+	}
 }
