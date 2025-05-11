@@ -5,17 +5,17 @@ import com.google.cloud.language.v1.AnalyzeSyntaxResponse;
 import com.google.cloud.language.v1.Token;
 import unipd.nonsense.util.GoogleApiClient;
 import java.util.List;
- 
-public class SentenceAnalyzer 
+
+public class SentenceAnalyzer
 {
     /** from the string {@code text}. */
-    public static List<Token> analyzeSyntaxInput(String text) throws Exception 
+    public static List<Token> analyzeSyntaxInput(String text) throws Exception
     {
         GoogleApiClient manager = new GoogleApiClient("/credentials.json");
 
         // [START language_syntax_text]
         // Instantiate the Language client com.google.cloud.language.v1.LanguageServiceClient
-        try (com.google.cloud.language.v1.LanguageServiceClient language = manager.getClient()) 
+        try (com.google.cloud.language.v1.LanguageServiceClient language = manager.getClient())
         {
             com.google.cloud.language.v1.Document doc = com.google.cloud.language.v1.Document.newBuilder()
                 .setContent(text)
@@ -28,7 +28,7 @@ public class SentenceAnalyzer
             // Analyze the syntax in the given text
             AnalyzeSyntaxResponse response = language.analyzeSyntax(request);
             // Print the response
-            for (Token token : response.getTokensList()) 
+            for (Token token : response.getTokensList())
             {
                 System.out.printf("\tText: %s\n", token.getText().getContent());
                 System.out.printf("\tBeginOffset: %d\n", token.getText().getBeginOffset());

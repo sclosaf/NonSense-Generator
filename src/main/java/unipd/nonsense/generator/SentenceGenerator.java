@@ -14,10 +14,15 @@ import unipd.nonsense.generator.RandomVerbGenerator;
 import unipd.nonsense.generator.RandomAdjectiveGenerator;
 import unipd.nonsense.generator.RandomTemplateGenerator;
 
+import unipd.nonsense.util.JsonUpdater;
+
 import unipd.nonsense.exception.TemplateLoadException;
 import unipd.nonsense.exception.TemplateNotFoundException;
 
 import java.util.Random;
+import java.util.List;
+import java.util.ArrayList;
+
 import java.io.IOException;
 
 public class SentenceGenerator
@@ -50,20 +55,39 @@ public class SentenceGenerator
 		return generateSentenceWithTenseAndNumber(randomTense, randomNumber);
 	}
 
+	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList)
+	{
+		Template template = templateGenerator.getRandomTemplate(convertNumberToTemplateType(getRandomNumber()));
+
+		while(!nounList.isEmpty() || template.countPlaceholders(Placeholder.NOUN) != 0)
+			template.replacePlaceholder(Placeholder.NOUN, nounList.removeFirst().getNoun());
+
+		while(template.countPlaceholders(Placeholder.NOUN) != 0)
+			template.replacePlaceholder(Placeholder.NOUN, nounGenerator.getRandomNoun().getNoun());
+
+		while(!adjectiveList.isEmpty() || template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
+			template.replacePlaceholder(Placeholder.ADJECTIVE, adjectiveList.removeFirst().getAdjective());
+
+		while(template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
+			template.replacePlaceholder(Placeholder.ADJECTIVE, adjectiveGenerator.getRandomAdjective().getAdjective());
+
+		while(!verbList.isEmpty() || template.countPlaceholders(Placeholder.VERB) != 0)
+			template.replacePlaceholder(Placeholder.VERB, verbList.removeFirst().getVerb());
+
+		while(template.countPlaceholders(Placeholder.VERB) != 0)
+			template.replacePlaceholder(Placeholder.VERB, verbGenerator.getRandomVerb().getVerb());
+
+		return template;
+	}
+
 	public Template generateSentenceWithTense(Tense tense)
 	{
-		Number[] numbers = Number.values();
-		Number randomNumber = numbers[random.nextInt(numbers.length)];
-
-		return generateSentenceWithTenseAndNumber(tense, randomNumber);
+		return generateSentenceWithTenseAndNumber(tense, getRandomNumber());
 	}
 
 	public Template generateSentenceWithNumber(Number number)
 	{
-		Tense[] tenses = Tense.values();
-		Tense randomTense = tenses[random.nextInt(tenses.length)];
-
-		return generateSentenceWithTenseAndNumber(randomTense, number);
+		return generateSentenceWithTenseAndNumber(getRandomTense(), number);
 	}
 
 	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
@@ -71,16 +95,28 @@ public class SentenceGenerator
 		TemplateType templateType = convertNumberToTemplateType(number);
 		Template template = templateGenerator.getRandomTemplate(templateType);
 
-		for(int i = template.countPlaceholders(Placeholder.NOUN); i > 0; --i)
+		while(template.countPlaceholders(Placeholder.NOUN) != 0)
 			template.replacePlaceholder(Placeholder.NOUN, nounGenerator.getRandomNoun(number).getNoun());
 
-		for(int i = template.countPlaceholders(Placeholder.ADJECTIVE); i > 0; --i)
+		while(template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
 			template.replacePlaceholder(Placeholder.ADJECTIVE, adjectiveGenerator.getRandomAdjective().getAdjective());
 
-		for(int i = template.countPlaceholders(Placeholder.VERB); i > 0; --i)
+		while(template.countPlaceholders(Placeholder.VERB) != 0)
 			template.replacePlaceholder(Placeholder.VERB, verbGenerator.getRandomVerb(tense).getVerb());
 
 		return template;
+	}
+
+	private Number getRandomNumber()
+	{
+		Number[] numbers = Number.values();
+		return numbers[random.nextInt(numbers.length)];
+	}
+
+	private Tense getRandomTense()
+	{
+		Tense[] tenses = Tense.values();
+		return tenses[random.nextInt(tenses.length)];
 	}
 
 	private TemplateType convertNumberToTemplateType(Number number)

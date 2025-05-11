@@ -26,11 +26,6 @@ public class JsonUpdater
 	private static String adjectivesPath = "adjectives.json";
 	private static String templatesPath = "templates.json";
 
-	private JsonUpdater()
-	{
-		throw new UnsupportedOperationException("Utility class: cannot be instantiated.");
-	}
-
 	public static void addObserver(JsonUpdateObserver observer)
 	{
 		observers.add(observer);

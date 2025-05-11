@@ -55,14 +55,14 @@ public class Template
 		return count;
 	}
 
-	public String replacePlaceholder(Placeholder placeholder, String replacement)
+	public void replacePlaceholder(Placeholder placeholder, String replacement)
 	{
-		return pattern.replace("[" + placeholder.name().toLowerCase() + "]", replacement);
+		pattern = pattern.replace("[" + placeholder.name().toLowerCase() + "]", replacement);
 	}
 
 	public Template withReplacement(Placeholder placeholder, String replacement)
 	{
-		return new Template(replacePlaceholder(placeholder, replacement), this.type);
+		return new Template(pattern.replace("[" + placeholder.name().toLowerCase() + "]", replacement), this.type);
 	}
 
 	@Override

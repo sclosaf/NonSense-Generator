@@ -1,5 +1,7 @@
 package unipd.nonsense.util;
 
+import unipd.nonsense.util.CommandProcessor;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.io.InputStream;
@@ -22,7 +24,7 @@ public class CLI
 {
 	private enum Command
 	{
-		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, HELP, CLEAR, QUIT
+		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, DEVELOPER, HELP, CLEAR, QUIT
 	}
 
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
@@ -98,6 +100,8 @@ public class CLI
 		commands.put("t", Command.TREE);
 		commands.put("set tolerance", Command.SETTOLERANCE);
 		commands.put("st", Command.SETTOLERANCE);
+		commands.put("developer", Command.DEVELOPER);
+		commands.put("d", Command.DEVELOPER);
 		commands.put("help", Command.HELP);
 		commands.put("h", Command.HELP);
 		commands.put("clear", Command.CLEAR);
@@ -168,6 +172,7 @@ public class CLI
 			"Generate and analyze", "Does both operations in one step",
 			"Tree", "Prints the syntactic tree",
 			"Set tolerance", "Change tolerance level (default: X)",
+			"Developer", "Switch on/off developer mode (default: off)",
 			"Clear", "Clears the terminal and shows initial menu",
 			"Help", "Shows this help menu",
 			"Quit", "Exits the program"
@@ -283,6 +288,11 @@ public class CLI
 
 			case SETTOLERANCE:
 				terminal.writer().println(new AttributedString("Set new tolerance.", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
+			break;
+
+			case DEVELOPER:
+				terminal.writer().println(new AttributedString("Switch dev mode on/off.", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
