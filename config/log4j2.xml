@@ -2,32 +2,40 @@
 <Configuration status="WARN">
 	<Properties>
 		<Property name="log.dir">logs</Property>
-		<Property name="timestamp">${date:yyyy-MM-dd_HH-mm-ss}</Property>
-		<Property name="log.file">${log.dir}/app_${timestamp}.log</Property>
+		<Property name="log.file">${log.dir}/app.log</Property>
 	</Properties>
 
 	<Appenders>
-		<RollingFile name="FileLogger" fileName="${log.file}" filePattern="${log.dir}/app_%d{yyyy-MM-dd_HH-mm-ss}.log">
+		<RollingFile name="FileLogger" fileName="${log.file}" filePattern="${log.dir}/app_%i.log">
 			<PatternLayout pattern="%d [%t] %-5level %logger{36} - %msg%n" />
 			<Policies>
 				<OnStartupTriggeringPolicy />
+				<SizeBasedTriggeringPolicy size="10MB" />
 			</Policies>
-			<DefaultRolloverStrategy max="6" />
+			<DefaultRolloverStrategy max="5" fileIndex="min"/>
 		</RollingFile>
 		<Console name="ConsoleLogger" target="SYSTEM_OUT">
 			<PatternLayout pattern="[%style{%t}{blue}] %highlight{%-5level} %logger{36} - %msg%n"
 				disableAnsi="false" noConsoleNoAnsi="false" />
 		</Console>
+		<Async name="AsyncFileLogger">
+			<AppenderRef ref="FileLogger"/>
+		</Async>
+		<Async name="AsyncConsoleLogger">
+			<AppenderRef ref="ConsoleLogger"/>
+		</Async>
 	</Appenders>
 
 	<Loggers>
 		<Logger name="FileLogger" level="trace" additivity="false">
-			<AppenderRef ref="FileLogger" />
+			<AppenderRef ref="AsyncFileLogger" />
 		</Logger>
 		<Logger name="ConsoleLogger" level="info" additivity="false">
-			<AppenderRef ref="ConsoleLogger" />
+			<AppenderRef ref="AsyncConsoleLogger" />
 		</Logger>
-		<Root level="trace">
+		<Root level="error">
+			<AppenderRef ref="AsyncFileLogger" />
+			<AppenderRef ref="AsyncConsoleLogger" />
 		</Root>
 	</Loggers>
 </Configuration>
