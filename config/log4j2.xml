@@ -12,7 +12,7 @@
 				<OnStartupTriggeringPolicy />
 				<SizeBasedTriggeringPolicy size="10MB" />
 			</Policies>
-			<DefaultRolloverStrategy max="5" fileIndex="min"/>
+			<DefaultRolloverStrategy max="9" fileIndex="min"/>
 		</RollingFile>
 		<Console name="ConsoleLogger" target="SYSTEM_OUT">
 			<PatternLayout pattern="%highlight{%-5level} - %msg%n"
