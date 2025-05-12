@@ -24,7 +24,7 @@ public class CLI
 {
 	private enum Command
 	{
-		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, DEVELOPER, HELP, CLEAR, QUIT
+		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, DEVELOPER, INFO, HELP, CLEAR, QUIT
 	}
 
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
@@ -102,6 +102,8 @@ public class CLI
 		commands.put("st", Command.SETTOLERANCE);
 		commands.put("developer", Command.DEVELOPER);
 		commands.put("d", Command.DEVELOPER);
+		commands.put("info", Command.INFO);
+		commands.put("i", Command.INFO);
 		commands.put("help", Command.HELP);
 		commands.put("h", Command.HELP);
 		commands.put("clear", Command.CLEAR);
@@ -167,6 +169,7 @@ public class CLI
 			"Generate and analyze", "Does both operations in one step",
 			"Tree", "Prints the syntactic tree",
 			"Set tolerance", "Change tolerance level (default: X)",
+			"Info", "Shows more detailed infos about the commands",
 			"Clear", "Clears the terminal and shows initial menu",
 			"Help", "Shows this help menu",
 			"Quit", "Exits the program"
@@ -283,6 +286,11 @@ public class CLI
 
 			case DEVELOPER:
 				terminal.writer().println(new AttributedString("Switch dev mode on/off.", DEFAULT_STYLE).toAnsi(terminal));
+				terminal.flush();
+			break;
+
+			case INFO:
+				terminal.writer().println(new AttributedString("Showed more infos.", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
