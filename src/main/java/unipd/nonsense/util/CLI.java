@@ -2,6 +2,8 @@ package unipd.nonsense.util;
 
 import unipd.nonsense.util.CommandProcessor;
 
+import unipd.nonsense.exceptions.MissingInternetConnectionException;
+
 import java.util.Map;
 import java.util.HashMap;
 import java.io.InputStream;
@@ -19,6 +21,8 @@ import org.jline.terminal.TerminalBuilder;
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp;
+
+import java.net.InetAddress;
 
 public class CLI
 {
@@ -53,6 +57,7 @@ public class CLI
 		@Override
 		public AttributedString highlight(LineReader reader, String buffer)
 		{
+
 			String trimmedBuffer = buffer.trim().toLowerCase();
 
 			if(trimmedBuffer.isEmpty())
@@ -77,6 +82,9 @@ public class CLI
 
 	public CLI() throws IOException
 	{
+		if(!checkInternetConnection())
+			throw new MissingInternetConnectionException();
+
 		terminal = TerminalBuilder.builder().system(true).build();
 		reader = LineReaderBuilder.builder()
 			.terminal(terminal)
@@ -307,6 +315,28 @@ public class CLI
 				terminal.flush();
 				running = false;
 			break;
+		}
+	}
+
+	private boolean checkInternetConnection()
+	{
+		try
+		{
+			InetAddress.getByName("google.com").isReachable(1000);
+			return true;
+
+		}
+		catch(Exception e)
+		{
+			try
+			{
+				InetAddress.getByName("cloudflare.com").isReachable(1000);
+				return true;
+			}
+			catch (Exception ex)
+			{
+				return false;
+			}
 		}
 	}
 }
