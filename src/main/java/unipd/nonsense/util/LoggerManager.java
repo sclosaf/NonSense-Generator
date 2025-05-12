@@ -37,7 +37,7 @@ public class LoggerManager
 
 	public void logTrace(String entry)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.trace(msg);
 		consoleLogger.trace(msg);
@@ -45,7 +45,7 @@ public class LoggerManager
 
 	public void logDebug(String entry)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.debug(msg);
 		consoleLogger.debug(msg);
@@ -53,7 +53,7 @@ public class LoggerManager
 
 	public void logInfo(String entry)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.info(msg);
 		consoleLogger.info(msg);
@@ -61,7 +61,7 @@ public class LoggerManager
 
 	public void logWarn(String entry)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.warn(msg);
 		consoleLogger.warn(msg);
@@ -69,7 +69,7 @@ public class LoggerManager
 
 	public void logWarn(String entry, Throwable eccept)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.warn(msg, eccept);
 		consoleLogger.warn(msg, eccept);
@@ -77,7 +77,7 @@ public class LoggerManager
 
 	public void logError(String entry)
 	{
-		String msg = "[" +logClass + "]" + entry;
+		String msg = "[" +logClass + "] " + entry;
 
 		fileLogger.error(msg);
 		consoleLogger.error(msg);
@@ -85,7 +85,7 @@ public class LoggerManager
 
 	public void logError(String entry, Throwable eccept)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.error(msg, eccept);
 		consoleLogger.error(msg, eccept);
@@ -93,7 +93,7 @@ public class LoggerManager
 
 	public void logFatal(String entry)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.fatal(msg);
 		consoleLogger.fatal(msg);
@@ -101,7 +101,7 @@ public class LoggerManager
 
 	public void logFatal(String entry, Throwable eccept)
 	{
-		String msg = "[" + logClass + "]" + entry;
+		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.fatal(msg, eccept);
 		consoleLogger.fatal(msg, eccept);

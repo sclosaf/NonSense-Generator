@@ -24,7 +24,7 @@ public class CLI
 {
 	private enum Command
 	{
-		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, DEVELOPER, INFO, HELP, CLEAR, QUIT
+		GENERATE, ANALYZE, GENERATEANALYZE, TREE, SETTOLERANCE, INFO, VERBOSE, HELP, CLEAR, QUIT
 	}
 
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
@@ -100,10 +100,10 @@ public class CLI
 		commands.put("t", Command.TREE);
 		commands.put("set tolerance", Command.SETTOLERANCE);
 		commands.put("st", Command.SETTOLERANCE);
-		commands.put("developer", Command.DEVELOPER);
-		commands.put("d", Command.DEVELOPER);
 		commands.put("info", Command.INFO);
 		commands.put("i", Command.INFO);
+		commands.put("verbose", Command.VERBOSE);
+		commands.put("v", Command.VERBOSE);
 		commands.put("help", Command.HELP);
 		commands.put("h", Command.HELP);
 		commands.put("clear", Command.CLEAR);
@@ -284,13 +284,13 @@ public class CLI
 				terminal.flush();
 			break;
 
-			case DEVELOPER:
-				terminal.writer().println(new AttributedString("Switch dev mode on/off.", DEFAULT_STYLE).toAnsi(terminal));
+			case INFO:
+				terminal.writer().println(new AttributedString("Showed more infos.", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 
-			case INFO:
-				terminal.writer().println(new AttributedString("Showed more infos.", DEFAULT_STYLE).toAnsi(terminal));
+			case VERBOSE:
+				terminal.writer().println(new AttributedString("Verbose mode on/off.", DEFAULT_STYLE).toAnsi(terminal));
 				terminal.flush();
 			break;
 

@@ -6,6 +6,7 @@ import unipd.nonsense.util.JsonUpdater;
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidListException;
 
@@ -28,18 +29,33 @@ public class RandomNounGenerator implements JsonUpdateObserver
 
 	private static String nounsPath = "nouns.json";
 	private static List<String> keys = List.of("singularNouns", "pluralNouns");
+	private LoggerManager logger = new LoggerManager(RandomNounGenerator.class);
 
 	public RandomNounGenerator() throws IOException
 	{
+		logger.logInfo("Initializing RandomNounGenerator");
 		this.nouns = new HashMap<>();
 		this.random = new Random();
 
-		loadNouns();
-		JsonUpdater.addObserver(this);
+		try
+		{
+			loadNouns();
+			JsonUpdater.addObserver(this);
+
+			logger.logInfo("Initialization completed successfully");
+			logger.logDebug("Loaded nouns counts - Singular: " + (nouns.get(Number.SINGULAR) != null ? nouns.get(Number.SINGULAR).size() : 0) + ", Plural: " + (nouns.get(Number.PLURAL) != null ? nouns.get(Number.PLURAL).size() : 0));
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize RandomNounGenerator", e);
+			throw e;
+		}
 	}
 
 	private void loadNouns() throws IOException
 	{
+		logger.logInfo("loadNouns: Loading nouns from JSON file");
+
 		for(String key : keys)
 		{
 			Number num;
@@ -57,32 +73,59 @@ public class RandomNounGenerator implements JsonUpdateObserver
 			{
 				List<Noun> nounList = jsonList.stream().map(noun -> new Noun(noun, num)).collect(Collectors.toList());
 				nouns.put(num, nounList);
+
+				logger.logDebug("loadNouns: Loaded " + nounList.size() + " " + num + " nouns");
 			}
+			else
+				logger.logWarn("loadNouns: No nouns found for key: " + key);
 		}
 	}
 
 	public Noun getRandomNoun()
 	{
+		logger.logInfo("getRandomNoun: Selecting random noun with random number");
+
 		Number[] nums = Number.values();
 		Number randomNumber = nums[random.nextInt(nums.length)];
+
+		logger.logDebug("getRandomNoun: Selected number: " + randomNumber);
 
 		return getRandomNoun(randomNumber);
 	}
 
 	public Noun getRandomNoun(Number num)
 	{
+		logger.logDebug("getRandomNoun: Selecting random " + num + " noun");
 		List<Noun> nounList = nouns.get(num);
 
 		if(nounList == null || nounList.isEmpty())
+		{
+			logger.logError("getRandomNoun: No " + num + " nouns available");
 			throw new InvalidListException();
+		}
 
 		int randomIndex = random.nextInt(nounList.size());
-		return nounList.get(randomIndex);
+		Noun selected = nounList.get(randomIndex);
+
+		logger.logDebug("getRandomNoun: Selected noun: " + selected.getNoun());
+		return selected;
 	}
 
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
-		loadNouns();
+		logger.logInfo("onJsonUpdate: JSON file updated, reloading nouns");
+
+		try
+		{
+			loadNouns();
+			logger.logInfo("onJsonUpdate: Nouns reloaded successfully");
+			logger.logDebug("Reloaded nouns counts - Singular: " + (nouns.get(Number.SINGULAR) != null ? nouns.get(Number.SINGULAR).size() : 0) + ", Plural: " + (nouns.get(Number.PLURAL) != null ? nouns.get(Number.PLURAL).size() : 0));
+		}
+		catch (IOException e)
+		{
+			logger.logError("onJsonUpdate: Failed to reload nouns", e);
+			throw e;
+		}
 	}
 }
