@@ -1,83 +1,98 @@
 package unipd.nonsense.util;
 import org.apache.logging.log4j.Logger;
 import org.apache.logging.log4j.LogManager;
-
-/*
- * Vedi se esiste un modo per impostare a runtime nella classe il livello di
- * severità ad esempio se da terminale io passo al CLI un comando che imposta
- * l'opzione programmatore, allora abbassa il livello di severità (della sola
- * console a debug al posto che di info, per avere più stampe) mentre se lo
- * riseleziono posso reimpostarlo per le successive stampe, come fosse un
- * interruttore essenzialmente se si riesce a creare qualche meccanismo di
- * gestione della verbosità a runtime è possibile che possa servire un'observer
- * affinché se chiamato aggiorni la verbosità da terminale (la gestione
- * dell'input da cli verrà fatta in un altra classe, a te basta implementare un
- * booleano che definisca se si logga in modalità sviluppatore o meno)
- *
- */
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 
 public class LoggerManager
 {
 	private final Logger fileLogger;
 	private final Logger consoleLogger;
+	private final String logClass;
+	private static boolean developer;
 
-	public LoggerManager(Class <?> myClass)
+	public LoggerManager(String myClass)
 	{
 		this.fileLogger = LogManager.getLogger("FileLogger");
 		this.consoleLogger = LogManager.getLogger("ConsoleLogger");
+		this.logClass = myClass;
+		this.developer=false;
+	}
+
+	public void setDeveloperMode(boolean enable){
+		developer=enable;
+		if(developer){
+			Configurator.setLevel("ConsoleLogger", Level.DEBUG);
+		}else{
+			Configurator.setLevel("ConsoleLogger", Level.INFO);
+
+		}
+	}
+
+	public boolean getDeveloperMode(){
+		return developer;
 	}
 
 	public void logTrace(String entry)
 	{
-		fileLogger.trace(entry);
-		consoleLogger.trace(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.trace(msg);
+		consoleLogger.trace(msg);
 	}
 
 	public void logDebug(String entry)
 	{
-		fileLogger.debug(entry);
-		consoleLogger.debug(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.debug(msg);
+		consoleLogger.debug(msg);
 	}
 
 	public void logInfo(String entry)
 	{
-		fileLogger.info(entry);
-		consoleLogger.info(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.info(msg);
+		consoleLogger.info(msg);
 	}
 
 	public void logWarn(String entry)
 	{
-		fileLogger.warn(entry);
-		consoleLogger.warn(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.warn(msg);
+		consoleLogger.warn(msg);
 	}
 
 	public void logWarn(String entry, Throwable eccept)
 	{
-		fileLogger.warn(entry, eccept);
-		consoleLogger.warn(entry, eccept);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.warn(msg, eccept);
+		consoleLogger.warn(msg, eccept);
 	}
 
 	public void logError(String entry)
 	{
-		fileLogger.error(entry);
-		consoleLogger.error(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.error(msg);
+		consoleLogger.error(msg);
 	}
 
 	public void logError(String entry, Throwable eccept)
 	{
-		fileLogger.error(entry, eccept);
-		consoleLogger.error(entry, eccept);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.error(msg, eccept);
+		consoleLogger.error(msg, eccept);
 	}
 
 	public void logFatal(String entry)
 	{
-		fileLogger.fatal(entry);
-		consoleLogger.fatal(entry);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.fatal(msg);
+		consoleLogger.fatal(msg);
 	}
 
 	public void logFatal(String entry, Throwable eccept)
 	{
-		fileLogger.fatal(entry, eccept);
-		consoleLogger.fatal(entry, eccept);
+		String msg ="["+logClass+"] "+entry;
+		fileLogger.fatal(msg, eccept);
+		consoleLogger.fatal(msg, eccept);
 	}
 }

@@ -7,7 +7,7 @@
 
 	<Appenders>
 		<RollingFile name="FileLogger" fileName="${log.file}" filePattern="${log.dir}/app_%i.log">
-			<PatternLayout pattern="%d [%t] %-5level %logger{36} - %msg%n" />
+			<PatternLayout pattern="%d %-5level - %msg%n" />
 			<Policies>
 				<OnStartupTriggeringPolicy />
 				<SizeBasedTriggeringPolicy size="10MB" />
@@ -15,7 +15,7 @@
 			<DefaultRolloverStrategy max="5" fileIndex="min"/>
 		</RollingFile>
 		<Console name="ConsoleLogger" target="SYSTEM_OUT">
-			<PatternLayout pattern="[%style{%t}{blue}] %highlight{%-5level} %logger{36} - %msg%n"
+			<PatternLayout pattern="%highlight{%-5level} - %msg%n"
 				disableAnsi="false" noConsoleNoAnsi="false" />
 		</Console>
 		<Async name="AsyncFileLogger">
