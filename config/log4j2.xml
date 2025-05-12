@@ -30,7 +30,7 @@
 		<Logger name="FileLogger" level="trace" additivity="false">
 			<AppenderRef ref="AsyncFileLogger" />
 		</Logger>
-		<Logger name="ConsoleLogger" level="info" additivity="false">
+		<Logger name="ConsoleLogger" level="warn" additivity="false">
 			<AppenderRef ref="AsyncConsoleLogger" />
 		</Logger>
 		<Root level="error">

@@ -27,7 +27,7 @@ public class LoggerManager
 		if(verbose)
 			Configurator.setLevel("ConsoleLogger", Level.DEBUG);
 		else
-			Configurator.setLevel("ConsoleLogger", Level.INFO);
+			Configurator.setLevel("ConsoleLogger", Level.WARN);
 	}
 
 	public boolean getVerbose()
