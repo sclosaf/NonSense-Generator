@@ -48,6 +48,7 @@ public class CLI
 	private static final int HISTORY_SIZE = 20;
 	private String initialOutput;
 	private boolean running;
+	private CommandProcessor processor;
 
 	private final Terminal terminal;
 	private final LineReader reader;
@@ -96,6 +97,7 @@ public class CLI
 			.highlighter(new CommandHighlighter())
 			.build();
 
+		this.processor = new CommandProcessor();
 		running = true;
 
 		commands.put("generate", Command.GENERATE);
@@ -199,6 +201,101 @@ public class CLI
 		writer.flush();
 	}
 
+	private void extendedUsage(PrintWriter writer)
+	{
+		int totalWidth = 58;
+		String title = "Extended Command Help";
+		int titlePadding = (totalWidth - title.length() - 1) / 2;
+
+		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
+		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
+
+		String[][] commandsInfo =
+		{
+			{
+				"generate (g)",
+					"Generates a random nonsense sentence.\n" +
+					"The sentece even if it has grammatical sense,\n" +
+					"it's missing all the logical sense.\n" +
+					"The sentence is printed and buffered."
+			},
+			{
+				"analyze (a)",
+					"Validates the buffered sentence structure and syntax.\n" +
+					"Via different settings can be analyzed accordingly to its:\n" +
+					"'toxicity', 'sentiment' or 'syntax'.\n" +
+					"If no sentence is buffered, no analysis is performed."
+			},
+			{
+				"generate and analyze (ga)",
+					"Performs both generation and analysis\n" +
+					"in one step. First generates a sentence, then\n" +
+					"analyzes its structure.\n" +
+					"Generated sentence is buffered."
+			},
+			{
+				"tree (t)",
+					"Prints the syntactic tree of the buffered sentence.\n" +
+					"Shows the hierarchical structure of the sentence\n" +
+					"components for better understanding.\n" +
+					"If no sentence is buffered, no analysis is performed.\n" +
+					"This function requires to analyze the sentence."
+			},
+			{
+				"set tolerance (st)",
+					"Changes the tolerance level for the analysis.\n" +
+					"Default: X for toxicity;\n" +
+					"Default: Y for sentiment;\n" +
+					"Default: Z for syntax.\n" +
+					"Higher values analyzed sentences will be blocked.\n" +
+					"A confirmation message is showed asking if the user wants to proceed."
+			},
+			{
+				"info (i)",
+					"Shows detailed information about commands.\n" +
+					"Provides extended help for each available command (even hidden ones)."
+			},
+			{
+				"verbose (v)",
+					"Toggles verbose output mode.\n" +
+					"When enabled, provides more detailed feedback\n" +
+					"during command execution (for debugging).\n" +
+					"Default is off."
+			},
+			{
+				"clear (c)",
+					"Clears the terminal screen.\n" +
+					"Resets the display and shows the initial menu."
+			},
+			{
+				"help (h)",
+					"Displays basic help information."
+			},
+			{
+				"quit (q)",
+					"Exits the program.\n" +
+					"Terminates the application safely."
+			},
+		};
+
+		for(String[] cmdInfo : commandsInfo)
+		{
+			String command = cmdInfo[0];
+			String description = cmdInfo[1];
+
+			writer.println(new AttributedString(command, BOLD_GREEN_STYLE).toAnsi(terminal));
+
+			String[] lines = description.split("\n");
+			for (String line : lines)
+				writer.println(new AttributedString("    " + line, BOLD_WHITE_STYLE).toAnsi(terminal));
+
+			writer.println();
+		}
+
+		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.flush();
+	}
+
 	private void clearTerminal()
 	{
 		terminal.puts(InfoCmp.Capability.clear_screen);
@@ -293,13 +390,11 @@ public class CLI
 			break;
 
 			case INFO:
-				terminal.writer().println(new AttributedString("Showed more infos.", DEFAULT_STYLE).toAnsi(terminal));
-				terminal.flush();
+				extendedUsage(terminal.writer());
 			break;
 
 			case VERBOSE:
-				terminal.writer().println(new AttributedString("Verbose mode on/off.", DEFAULT_STYLE).toAnsi(terminal));
-				terminal.flush();
+				processor.switchVerbosity();
 			break;
 
 			case CLEAR:

@@ -10,6 +10,7 @@ import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidListException;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -27,7 +28,7 @@ public class RandomNounGenerator implements JsonUpdateObserver
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String nounsPath = "nouns.json";
+	private static String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
 	private static List<String> keys = List.of("singularNouns", "pluralNouns");
 	private LoggerManager logger = new LoggerManager(RandomNounGenerator.class);
 

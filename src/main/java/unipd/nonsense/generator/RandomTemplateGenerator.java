@@ -9,7 +9,9 @@ import unipd.nonsense.exceptions.InvalidListException;
 
 import unipd.nonsense.util.LoggerManager;
 
+import java.io.File;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -24,8 +26,8 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String templatesPath = "templates.json";
-	private static List<String> keys = List.of("singularTemplates", "plurarlTemplates");
+	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+	private static List<String> keys = List.of("singularTemplates", "pluralTemplates");
 	private LoggerManager logger = new LoggerManager(RandomTemplateGenerator.class);
 
 	public RandomTemplateGenerator() throws IOException

@@ -8,6 +8,7 @@ import unipd.nonsense.model.Adjective;
 
 import unipd.nonsense.util.LoggerManager;
 
+import java.io.File;
 import java.io.IOException;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String adjectivesPath = "adjectives.json";
+	private static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
 	private static List<String> keys = List.of("adjective");
 
 	private LoggerManager logger = new LoggerManager(RandomAdjectiveGenerator.class);

@@ -1,6 +1,7 @@
 package unipd.nonsense.util;
 
 import unipd.nonsense.util.SyntaxTreePrinter;
+import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.analyzer.SentenceAnalyzer;
 import unipd.nonsense.analyzer.ToxicityValidator;
@@ -20,42 +21,51 @@ public class CommandProcessor
 	private static SentenceAnalyzer analyzer;
 	private static ToxicityValidator validator;
 	private static SentenceGenerator generator;
+	private LoggerManager logger = new LoggerManager(CommandProcessor.class);
 
-	private static String lastCachedString;
+	private static String cachedString;
+
+	private float sentimentTollerance;
+	private float toxicityTollerance;
 
 	public CommandProcessor() throws IOException
 	{
-		treeBuilder = new SyntaxTreePrinter();
-		analyzer = new SentenceAnalyzer();
-		validator = new ToxicityValidator();
-		generator = new SentenceGenerator();
+		this.treeBuilder = new SyntaxTreePrinter();
+		this.analyzer = new SentenceAnalyzer();
+		this.validator = new ToxicityValidator();
+		this.generator = new SentenceGenerator();
+
+		this.cachedString = "";
 	}
 
-	public static String generate()
+	public String generate()
 	{
-		lastCachedString = generator.generateRandomSentence().getPattern();
+		cachedString = generator.generateRandomSentence().getPattern();
 
-		return lastCachedString;
+		return cachedString;
 	}
 
-	public static String analyze(String str)
+	public String analyze(String str)
 	{
+		//
 		return "";
 	}
 
-	public static String generateAndAnalyze()
+	public String generateAndAnalyze()
 	{
 		return analyze(generate());
 	}
 
-	public static String printTree(String str)
+	public String printTree(String str)
 	{
 		return "";
 	}
 
-	public static void setTollerance()
+	public void setTollerance()
 	{}
 
-	public static void switchDevMode()
-	{}
+	public void switchVerbosity()
+	{
+		logger.switchVerboseMode();
+	}
 }
