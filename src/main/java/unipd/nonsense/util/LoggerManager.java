@@ -30,9 +30,9 @@ public class LoggerManager
 			Configurator.setLevel("ConsoleLogger", Level.INFO);
 	}
 
-	public boolean getDeveloperMode()
+	public boolean getVerbose()
 	{
-		return developer;
+		return verbose;
 	}
 
 	public void logTrace(String entry)
