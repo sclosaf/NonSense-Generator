@@ -265,12 +265,14 @@
 
 			<resource>
 				<directory>${project.basedir}/config</directory>
-				<filtering>false</filtering>
 				<includes>
-						<include>**/*.xml</include>
-						<include>**/*.json</include>
-						<include>**/*.txt</include>
+					<include>**/*.json</include>
+					<include>**/*.txt</include>
+					<include>log4j2.xml</include>
 				</includes>
+				<excludes>
+					<exclude>log4j2-test.xml</exclude>
+				</excludes>
 			</resource>
 		</resources>
 
@@ -280,6 +282,16 @@
 				<includes>
 					<include>**/*.json</include>
 				</includes>
+			</testResource>
+
+			<testResource>
+				<directory>${project.basedir}/config</directory>
+				<includes>
+					<include>log4j2-test.xml</include>
+				</includes>
+				<excludes>
+					<exclude>log4j2.xml</exclude>
+				</excludes>
 			</testResource>
 		</testResources>
 
