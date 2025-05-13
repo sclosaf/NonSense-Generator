@@ -1,0 +1,8 @@
+{
+  "cleanText": ["Hello, how are you today?"],
+  "toxicText": ["You're a total idiot!"],
+  "scores": {
+    "clean": ["category0:0.1", "category1:0.2"],
+    "toxic": ["category0:0.9", "category1:0.85"]
+  }
+}

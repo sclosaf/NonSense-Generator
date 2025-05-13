@@ -1,22 +1,183 @@
 package unipd.nonsense.analyzer;
 
-import unipd.nonsense.exceptions.InvalidThresholdException;
+import com.google.cloud.language.v1.*;
+import org.junit.jupiter.api.*;
 import unipd.nonsense.exceptions.InvalidTextException;
+import unipd.nonsense.exceptions.InvalidThresholdException;
 import unipd.nonsense.util.GoogleApiClient;
-import com.google.cloud.language.v1.LanguageServiceClient;
-import com.google.cloud.language.v1.ModerateTextResponse;
-import com.google.cloud.language.v1.ClassificationCategory;
-import com.google.cloud.language.v1.ModerateTextRequest;
-import com.google.cloud.language.v1.Document;
+import unipd.nonsense.util.JsonFileHandler;
+import unipd.nonsense.util.LoggerManager;
 
-import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.AfterEach;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonArray;
+
+import java.util.*;
+
 import static org.junit.jupiter.api.Assertions.*;
-
-import java.io.IOException;
-import java.util.Map;
-
 import static org.mockito.Mockito.*;
 
+@DisplayName("Testing ToxicityValidator")
+class TestToxicityValidator
+{
+	private ToxicityValidator validator;
+	private GoogleApiClient mockApiClient;
+	private LoggerManager mockLogger;
+	private LanguageServiceClient mockLanguageClient;
+
+	private static final String TEST_JSON_PATH = "src/test/resources/TestToxicity.json";
+
+	private static Map<String, Float> cleanScores;
+	private static Map<String, Float> toxicScores;
+	private static String cleanText;
+	private static String toxicText;
+
+	@BeforeAll
+	@DisplayName("Load test data from TestToxicity.json")
+	static void loadTestData() throws Exception
+	{
+		JsonFileHandler handler = JsonFileHandler.getInstance();
+		JsonObject root = handler.getJsonObject(TEST_JSON_PATH);
+
+		JsonObject scores = root.getAsJsonObject("scores");
+
+		JsonArray cleanArray = scores.getAsJsonArray("clean");
+		JsonArray toxicArray = scores.getAsJsonArray("toxic");
+
+		List<String> cleanScoreList = new ArrayList<>();
+		List<String> toxicScoreList = new ArrayList<>();
+
+		for(var e : cleanArray)
+			cleanScoreList.add(e.getAsString());
+
+		for(var e : toxicArray)
+			toxicScoreList.add(e.getAsString());
+
+		cleanScores = parseScoreMap(cleanScoreList);
+		toxicScores = parseScoreMap(toxicScoreList);
+
+		cleanText = root.getAsJsonArray("cleanText").get(0).getAsString();
+		toxicText = root.getAsJsonArray("toxicText").get(0).getAsString();
+	}
+
+	private static Map<String, Float> parseScoreMap(List<String> scoreList)
+	{
+		Map<String, Float> map = new HashMap<>();
+		for(String entry : scoreList)
+		{
+			String[] parts = entry.split(":");
+			map.put(parts[0], Float.parseFloat(parts[1]));
+		}
+		return map;
+	}
+
+	@BeforeEach
+	@DisplayName("Initialize mocks and validator")
+	void setUp()
+	{
+		mockApiClient = mock(GoogleApiClient.class);
+		mockLogger = mock(LoggerManager.class);
+		mockLanguageClient = mock(LanguageServiceClient.class);
+
+		when(mockApiClient.getClient()).thenReturn(mockLanguageClient);
+
+		validator = new ToxicityValidator(mockApiClient, mockLogger);
+	}
+
+	private ModerateTextResponse mockResponse(Map<String, Float> scores)
+	{
+		ModerateTextResponse.Builder responseBuilder = ModerateTextResponse.newBuilder();
+		for(Map.Entry<String, Float> entry : scores.entrySet())
+		{
+			responseBuilder.addModerationCategories(
+				ClassificationCategory.newBuilder()
+					.setName(entry.getKey())
+					.setConfidence(entry.getValue())
+					.build()
+			);
+		}
+		return responseBuilder.build();
+	}
+
+	@AfterEach
+	@DisplayName("Clean up validator resources")
+	void tearDown()
+	{
+		validator.close();
+	}
+
+	@Test
+	@DisplayName("Get toxicity scores from clean text")
+	void testGetToxicityScores_Clean()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(cleanScores));
+
+		Map<String, Float> result = validator.getToxicityScores(cleanText);
+
+		assertEquals(cleanScores.size(), result.size(), "Score size mismatch");
+		cleanScores.forEach((k, v) -> assertEquals(v, result.get(k), "Mismatched score for " + k));
+	}
+
+	@Test
+	@DisplayName("Get toxicity scores from toxic text")
+	void testGetToxicityScores_Toxic()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(toxicScores));
+
+		Map<String, Float> result = validator.getToxicityScores(toxicText);
+
+		assertEquals(toxicScores.size(), result.size(), "Score size mismatch");
+		toxicScores.forEach((k, v) -> assertEquals(v, result.get(k), "Mismatched score for " + k));
+	}
+
+	@Test
+	@DisplayName("Detect toxic text above threshold")
+	void testIsTextToxic_Positive()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(toxicScores));
+
+		assertTrue(validator.isTextToxic(toxicText, 0.7f), "Expected text to be toxic");
+	}
+
+	@Test
+	@DisplayName("Detect clean text below threshold")
+	void testIsTextToxic_Negative()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(cleanScores));
+
+		assertFalse(validator.isTextToxic(cleanText, 0.7f), "Expected text to be non-toxic");
+	}
+
+	@Test
+	@DisplayName("Invalid threshold should throw exception")
+	void testIsTextToxic_InvalidThreshold()
+	{
+		assertThrows(InvalidThresholdException.class, () ->
+			validator.isTextToxic("text", 1.5f),
+			"Should throw InvalidThresholdException"
+		);
+	}
+
+	@Test
+	@DisplayName("Null input to moderateText should throw exception")
+	void testModerateText_NullInput()
+	{
+		assertThrows(InvalidTextException.class, () ->
+			validator.moderateText(null),
+			"Should throw InvalidTextException for null input"
+		);
+	}
+
+	@Test
+	@DisplayName("Empty input to moderateText should throw exception")
+	void testModerateText_EmptyInput()
+	{
+		assertThrows(InvalidTextException.class, () ->
+			validator.moderateText("   "),
+			"Should throw InvalidTextException for empty input"
+		);
+	}
+}
