@@ -204,7 +204,7 @@ public class CLI
 	private void extendedUsage(PrintWriter writer)
 	{
 		int totalWidth = 58;
-		String title = "Extended Command Help";
+		String title = "Extended Commands help";
 		int titlePadding = (totalWidth - title.length() - 1) / 2;
 
 		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);

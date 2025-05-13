@@ -19,231 +19,178 @@ import com.google.cloud.language.v1.AnalyzeSentimentResponse;
 import com.google.cloud.language.v1.LanguageServiceClient;
 import unipd.nonsense.util.GoogleApiClient;
 
+import java.io.IOException;
+
 import java.util.List;
 import java.util.Map;
 
-public class SentenceAnalyzer 
+public class SentenceAnalyzer implements AutoCloseable
 {
-    private LanguageServiceClient languageClient;
+	private LanguageServiceClient languageClient;
+	private String credentialsPath = "/credentials.json";
 
-    public SentenceAnalyzer(String credentialsPath) 
-    {
-        try 
-        {
-            GoogleApiClient manager = new GoogleApiClient(credentialsPath);
-            this.languageClient = manager.getClient();
-        } 
+	public SentenceAnalyzer()
+	{
+		try
+		{
+			GoogleApiClient manager = new GoogleApiClient(credentialsPath);
+			this.languageClient = manager.getClient();
+		}
+		catch (Exception e)
+		{
+			throw new RuntimeException("Failed to initialize LanguageServiceClient: " + e.getMessage(), e);
+		}
+	}
 
-        catch (Exception e) 
-        {
-            throw new RuntimeException("Failed to initialize LanguageServiceClient: " + e.getMessage(), e);
-        }
-    }
+	public String analyzeSyntaxInput(String text) throws IOException
+	{
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
 
-    public String analyzeSyntaxInput(String text) throws Exception //static
-    {
-        Document doc = Document.newBuilder()
-            .setContent(text)
-            .setType(Document.Type.PLAIN_TEXT)
-            .build();
+		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 
-        AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder()
-            .setDocument(doc)
-            .setEncodingType(EncodingType.UTF16)
-            .build();
+		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
 
-        AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
+		StringBuilder report = new StringBuilder();
+		report.append("----------------------------------\n");
+		report.append("Syntax Analysis Report:\n");
+		report.append("----------------------------------\n");
+		report.append("Analyzed Text: ").append(text).append("\n\n");
 
-        StringBuilder report = new StringBuilder();
-        report.append("----------------------------------\n");
-        report.append("Syntax Analysis Report:\n");
-        report.append("----------------------------------\n");
-        report.append("Analyzed Text: ").append(text).append("\n\n");
+		int tokenIndex = 1;
+		for(Token token : response.getTokensList())
+		{
+			report.append("Token ").append(tokenIndex).append(": ").append(token.getText().getContent()).append("\n");
+			report.append("  - Lemma: ").append(token.getLemma()).append("\n");
+			report.append("  - Part of Speech: ").append(token.getPartOfSpeech().getTag()).append("\n");
 
-        int tokenIndex = 1;
-        for (Token token : response.getTokensList()) 
-        {
-            report.append("Token ").append(tokenIndex).append(": ").append(token.getText().getContent()).append("\n");
-            report.append("  - Lemma: ").append(token.getLemma()).append("\n");
-            report.append("  - Part of Speech: ").append(token.getPartOfSpeech().getTag()).append("\n");
+			if(token.getPartOfSpeech().getAspect() != PartOfSpeech.Aspect.ASPECT_UNKNOWN)
+				report.append("  - Aspect: ").append(token.getPartOfSpeech().getAspect()).append("\n");
 
-            // Add only known attributes
-            if (token.getPartOfSpeech().getAspect() != PartOfSpeech.Aspect.ASPECT_UNKNOWN) 
-            {
-                report.append("  - Aspect: ").append(token.getPartOfSpeech().getAspect()).append("\n");
-            }
+			if(token.getPartOfSpeech().getCase() != PartOfSpeech.Case.CASE_UNKNOWN)
+				report.append("  - Case: ").append(token.getPartOfSpeech().getCase()).append("\n");
 
-            if (token.getPartOfSpeech().getCase() != PartOfSpeech.Case.CASE_UNKNOWN) 
-            {
-                report.append("  - Case: ").append(token.getPartOfSpeech().getCase()).append("\n");
-            }
+			if(token.getPartOfSpeech().getForm() != PartOfSpeech.Form.FORM_UNKNOWN)
+				report.append("  - Form: ").append(token.getPartOfSpeech().getForm()).append("\n");
 
-            if (token.getPartOfSpeech().getForm() != PartOfSpeech.Form.FORM_UNKNOWN) 
-            {
-                report.append("  - Form: ").append(token.getPartOfSpeech().getForm()).append("\n");
-            }
+			if(token.getPartOfSpeech().getGender() != PartOfSpeech.Gender.GENDER_UNKNOWN)
+				report.append("  - Gender: ").append(token.getPartOfSpeech().getGender()).append("\n");
 
-            if (token.getPartOfSpeech().getGender() != PartOfSpeech.Gender.GENDER_UNKNOWN) 
-            {
-                report.append("  - Gender: ").append(token.getPartOfSpeech().getGender()).append("\n");
-            }
+			if(token.getPartOfSpeech().getMood() != PartOfSpeech.Mood.MOOD_UNKNOWN)
+				report.append("  - Mood: ").append(token.getPartOfSpeech().getMood()).append("\n");
 
-            if (token.getPartOfSpeech().getMood() != PartOfSpeech.Mood.MOOD_UNKNOWN) 
-            {
-                report.append("  - Mood: ").append(token.getPartOfSpeech().getMood()).append("\n");
-            }
+			if(token.getPartOfSpeech().getNumber() != PartOfSpeech.Number.NUMBER_UNKNOWN)
+				report.append("  - Number: ").append(token.getPartOfSpeech().getNumber()).append("\n");
 
-            if (token.getPartOfSpeech().getNumber() != PartOfSpeech.Number.NUMBER_UNKNOWN) 
-            {
-                report.append("  - Number: ").append(token.getPartOfSpeech().getNumber()).append("\n");
-            }
+			if(token.getPartOfSpeech().getPerson() != PartOfSpeech.Person.PERSON_UNKNOWN)
+				report.append("  - Person: ").append(token.getPartOfSpeech().getPerson()).append("\n");
 
-            if (token.getPartOfSpeech().getPerson() != PartOfSpeech.Person.PERSON_UNKNOWN) 
-            {
-                report.append("  - Person: ").append(token.getPartOfSpeech().getPerson()).append("\n");
-            }
+			if(token.getPartOfSpeech().getProper() != PartOfSpeech.Proper.PROPER_UNKNOWN)
+				report.append("  - Proper: ").append(token.getPartOfSpeech().getProper()).append("\n");
 
-            if (token.getPartOfSpeech().getProper() != PartOfSpeech.Proper.PROPER_UNKNOWN) 
-            {
-                report.append("  - Proper: ").append(token.getPartOfSpeech().getProper()).append("\n");
-            }
+			if(token.getPartOfSpeech().getReciprocity() != PartOfSpeech.Reciprocity.RECIPROCITY_UNKNOWN)
+				report.append("  - Reciprocity: ").append(token.getPartOfSpeech().getReciprocity()).append("\n");
 
-            if (token.getPartOfSpeech().getReciprocity() != PartOfSpeech.Reciprocity.RECIPROCITY_UNKNOWN) 
-            {
-                report.append("  - Reciprocity: ").append(token.getPartOfSpeech().getReciprocity()).append("\n");
-            }
+			if(token.getPartOfSpeech().getTense() != PartOfSpeech.Tense.TENSE_UNKNOWN)
+				report.append("  - Tense: ").append(token.getPartOfSpeech().getTense()).append("\n");
 
-            if (token.getPartOfSpeech().getTense() != PartOfSpeech.Tense.TENSE_UNKNOWN) 
-            {
-                report.append("  - Tense: ").append(token.getPartOfSpeech().getTense()).append("\n");
-            }
+			if(token.getPartOfSpeech().getVoice() != PartOfSpeech.Voice.VOICE_UNKNOWN)
+				report.append("  - Voice: ").append(token.getPartOfSpeech().getVoice()).append("\n");
 
-            if (token.getPartOfSpeech().getVoice() != PartOfSpeech.Voice.VOICE_UNKNOWN) 
-            {
-                report.append("  - Voice: ").append(token.getPartOfSpeech().getVoice()).append("\n");
-            }
+			report.append("  - Dependency\n");
+			report.append("      Head Token Index: ").append(token.getDependencyEdge().getHeadTokenIndex()).append("\n");
+			report.append("      Label: ").append(token.getDependencyEdge().getLabel()).append("\n");
 
-            // Dependency information
-            report.append("  - Dependency\n");
-            report.append("      Head Token Index: ").append(token.getDependencyEdge().getHeadTokenIndex()).append("\n");
-            report.append("      Label: ").append(token.getDependencyEdge().getLabel()).append("\n");
+			report.append("\n");
 
-            report.append("\n");
-            tokenIndex++;
-        }
+			++tokenIndex;
+		}
 
-        return report.toString();
-    }
+		return report.toString();
+	}
 
-    public String analyzeSentimentInput(String text) throws Exception 
-    {
-        // Create a Document for the text
-        Document doc = Document.newBuilder()
-            .setContent(text)
-            .setType(Document.Type.PLAIN_TEXT)
-            .build();
+	public String analyzeSentimentInput(String text) throws IOException
+	{
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
 
-        // Analyze sentiment
-        AnalyzeSentimentResponse response = languageClient.analyzeSentiment(doc);
-        Sentiment sentiment = response.getDocumentSentiment();
+		AnalyzeSentimentResponse response = languageClient.analyzeSentiment(doc);
+		Sentiment sentiment = response.getDocumentSentiment();
 
-        // Build the sentiment analysis report
-        StringBuilder report = new StringBuilder();
-        report.append("----------------------------------\n");
-        report.append("Sentiment Analysis Report:\n");
-        report.append("----------------------------------\n");
-        report.append("Analyzed Text: ").append(text).append("\n\n");
+		StringBuilder report = new StringBuilder();
+		report.append("----------------------------------\n");
+		report.append("Sentiment Analysis Report:\n");
+		report.append("----------------------------------\n");
+		report.append("Analyzed Text: ").append(text).append("\n\n");
 
-        if (sentiment == null) 
-        {
-            // Handle case where no sentiment is detected
-            report.append("No sentiment detected in the provided text.\n\n");
-            return report.toString();
-        }
+		if(sentiment == null)
+		{
+			report.append("No sentiment detected in the provided text.\n\n");
+			return report.toString();
+		}
 
-        // If sentiment is detected, include the sentiment details
-        report.append("Sentiment Score: ").append(sentiment.getScore()).append("\n");
-        report.append("Sentiment Magnitude: ").append(sentiment.getMagnitude()).append("\n\n");
+		report.append("Sentiment Score: ").append(sentiment.getScore()).append("\n");
+		report.append("Sentiment Magnitude: ").append(sentiment.getMagnitude()).append("\n\n");
 
-        return report.toString();
-    }
+		return report.toString();
+	}
 
-    public String analyzeEntitiesInput(String text) throws Exception 
-    {
-        // Create a Document for the text
-        Document doc = Document.newBuilder()
-            .setContent(text)
-            .setType(Document.Type.PLAIN_TEXT)
-            .build();
+	public String analyzeEntitiesInput(String text) throws IOException
+	{
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
 
-        // Build the request
-        AnalyzeEntitiesRequest request = AnalyzeEntitiesRequest.newBuilder()
-            .setDocument(doc)
-            .setEncodingType(EncodingType.UTF16)
-            .build();
+		AnalyzeEntitiesRequest request = AnalyzeEntitiesRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 
-        // Analyze entities
-        AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
+		AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
 
-        // Build the entity analysis report
-        StringBuilder report = new StringBuilder();
-        report.append("----------------------------------\n");
-        report.append("Entity Analysis Report:\n");
-        report.append("----------------------------------\n");
-        report.append("Analyzed Text: ").append(text).append("\n\n");
+		StringBuilder report = new StringBuilder();
+		report.append("----------------------------------\n");
+		report.append("Entity Analysis Report:\n");
+		report.append("----------------------------------\n");
+		report.append("Analyzed Text: ").append(text).append("\n\n");
 
-        List<Entity> entities = response.getEntitiesList();
+		List<Entity> entities = response.getEntitiesList();
 
-        if (entities.isEmpty()) 
-        {
-            // Handle case where no entities are detected
-            report.append("No entities detected in the provided text.\n\n");
-        
-            return report.toString();
-        }
+		if(entities.isEmpty())
+		{
+			report.append("No entities detected in the provided text.\n\n");
+			return report.toString();
+		}
 
-        // Process and print the response
-        int entityIndex = 1;
-        for (Entity entity : entities) 
-        {
-            report.append("Entity ").append(entityIndex).append(": ").append(entity.getName()).append("\n");
-            report.append("  - Type: ").append(entity.getType()).append("\n");
-            report.append("  - Salience: ").append(String.format("%.3f", entity.getSalience())).append("\n");
+		int entityIndex = 1;
+		for(Entity entity : entities)
+		{
+			report.append("Entity ").append(entityIndex).append(": ").append(entity.getName()).append("\n");
+			report.append("  - Type: ").append(entity.getType()).append("\n");
+			report.append("  - Salience: ").append(String.format("%.3f", entity.getSalience())).append("\n");
 
-            // Metadata
-            if (!entity.getMetadataMap().isEmpty()) 
-            {
-                report.append("  - Metadata:\n");
-                for (Map.Entry<String, String> entry : entity.getMetadataMap().entrySet()) 
-                {
-                    report.append("      ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
-                }
-            }
+			if(!entity.getMetadataMap().isEmpty())
+			{
+				report.append("  - Metadata:\n");
+				for (Map.Entry<String, String> entry : entity.getMetadataMap().entrySet())
+					report.append("      ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+			}
 
-            // Mentions
-            if (!entity.getMentionsList().isEmpty()) 
-            {
-                report.append("  - Mentions:\n");
-                for (EntityMention mention : entity.getMentionsList()) 
-                {
-                    report.append("      Mention Content: ").append(mention.getText().getContent()).append("\n");
-                    report.append("      Begin Offset: ").append(mention.getText().getBeginOffset()).append("\n");
-                    report.append("      Mention Type: ").append(mention.getType()).append("\n");
-                }
-            }
+			if(!entity.getMentionsList().isEmpty())
+			{
+				report.append("  - Mentions:\n");
+				for(EntityMention mention : entity.getMentionsList())
+				{
+					report.append("      Mention Content: ").append(mention.getText().getContent()).append("\n");
+					report.append("      Begin Offset: ").append(mention.getText().getBeginOffset()).append("\n");
+					report.append("      Mention Type: ").append(mention.getType()).append("\n");
+				}
+			}
 
-            report.append("\n");
-            entityIndex++;
-        }
+			report.append("\n");
+			++entityIndex;
+		}
 
-        return report.toString();
-    }
+		return report.toString();
+	}
 
-    public void closeClient() 
-    {
-        if (languageClient != null) 
-        {
-            languageClient.close();
-        }
-    }
+	@Override
+	public void close()
+	{
+		if(languageClient != null)
+			languageClient.close();
+	}
 }
