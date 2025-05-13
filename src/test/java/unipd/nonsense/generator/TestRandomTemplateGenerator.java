@@ -16,11 +16,15 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.io.InputStream;
 import java.lang.reflect.Field;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.StandardCopyOption;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
+import com.google.gson.JsonParser;
 
 @DisplayName("Testing RandomTemplateGenerator")
 class TestRandomTemplateGenerator {
@@ -29,22 +33,14 @@ class TestRandomTemplateGenerator {
     private File testFile;
     
     @BeforeEach
-    @DisplayName("Setup environment: Create and fill up temporary json test file")
+    @DisplayName("Setup environment: Copy and use testTemplates.json for tests")
     void setUp(@TempDir Path tempDir) throws Exception {
         testFile = tempDir.resolve("templates.json").toFile();
         
-        JsonObject json = new JsonObject();
-        JsonArray singular = new JsonArray();
-        JsonArray plural = new JsonArray();
-        
-        singular.add("Test singular template [noun]");
-        plural.add("Test plural templates [noun]");
-        
-        json.add("singularTemplates", singular);
-        json.add("pluralTemplates", plural);
+        JsonObject testTemplates = readAndModifyTestTemplatesJson();
         
         try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(json.toString());
+            writer.write(testTemplates.toString());
         }
         
         Field field = RandomTemplateGenerator.class.getDeclaredField("templatesPath");
@@ -52,6 +48,54 @@ class TestRandomTemplateGenerator {
         field.set(null, testFile.getAbsolutePath());
         
         generator = new RandomTemplateGenerator();
+    }
+    
+    private JsonObject readAndModifyTestTemplatesJson() throws IOException {
+        String resourcePath = "/testTemplates.json";
+        
+        String content;
+        try (InputStream inputStream = getClass().getResourceAsStream(resourcePath)) {
+            if (inputStream == null) {
+                JsonObject json = new JsonObject();
+                JsonArray singularTemplates = new JsonArray();
+                JsonArray pluralTemplates = new JsonArray();
+                
+                singularTemplates.add("Test singular template [noun]");
+                singularTemplates.add("This is a [noun] template");
+                singularTemplates.add("A [noun] for testing");
+                
+                pluralTemplates.add("Test plural templates [noun]");
+                pluralTemplates.add("These are [noun] templates");
+                pluralTemplates.add("Many [noun] for testing");
+                
+                json.add("singularTemplates", singularTemplates);
+                json.add("pluralTemplates", pluralTemplates);
+                
+                return json;
+            }
+            
+            content = new String(inputStream.readAllBytes());
+        }
+        
+        JsonObject json = JsonParser.parseString(content).getAsJsonObject();
+        
+        if (!json.has("singularTemplates")) {
+            JsonArray singularTemplates = new JsonArray();
+            singularTemplates.add("Test singular template [noun]");
+            singularTemplates.add("This is a [noun] template");
+            singularTemplates.add("A [noun] for testing");
+            json.add("singularTemplates", singularTemplates);
+        }
+        
+        if (!json.has("pluralTemplates")) {
+            JsonArray pluralTemplates = new JsonArray();
+            pluralTemplates.add("Test plural templates [noun]");
+            pluralTemplates.add("These are [noun] templates");
+            pluralTemplates.add("Many [noun] for testing");
+            json.add("pluralTemplates", pluralTemplates);
+        }
+        
+        return json;
     }
     
     @Test
@@ -109,5 +153,24 @@ class TestRandomTemplateGenerator {
         
         assertThrows(InvalidJsonStateException.class, () -> new RandomTemplateGenerator(), 
             "Should throw InvalidJsonStateException when JSON is invalid");
+    }
+    
+    @Test
+    @DisplayName("Test templates count matches JSON file content")
+    void testTemplatesCount() throws Exception {
+        Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
+        templatesField.setAccessible(true);
+        
+        @SuppressWarnings("unchecked")
+        var templatesMap = (java.util.Map<TemplateType, java.util.List<Template>>)templatesField.get(generator);
+        
+        JsonObject testTemplates = readAndModifyTestTemplatesJson();
+        int expectedSingularCount = testTemplates.getAsJsonArray("singularTemplates").size();
+        int expectedPluralCount = testTemplates.getAsJsonArray("pluralTemplates").size();
+        
+        assertEquals(expectedSingularCount, templatesMap.get(TemplateType.SINGULAR).size(), 
+            "Number of singular templates should match the JSON file");
+        assertEquals(expectedPluralCount, templatesMap.get(TemplateType.PLURAL).size(), 
+            "Number of plural templates should match the JSON file");
     }
 }
