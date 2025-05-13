@@ -18,126 +18,146 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ToxicityValidator implements AutoCloseable {
+public class ToxicityValidator implements AutoCloseable
+{
+	private final GoogleApiClient apiClient;
+	private final LoggerManager logger;
+	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
 
-    private final GoogleApiClient apiClient;
-    private final LoggerManager logger;
-    private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
+	public ToxicityValidator(GoogleApiClient apiClient, LoggerManager logger)
+	{
+		if(logger == null)
+			throw new IllegalArgumentException("LoggerManager cannot be null.");
 
-    public ToxicityValidator(GoogleApiClient apiClient, LoggerManager logger) {
-        if (logger == null) {
-            throw new IllegalArgumentException("LoggerManager cannot be null.");
-        }
-        this.logger = logger;
+		this.logger = logger;
 
-        if (apiClient == null) {
-            this.logger.logError("GoogleApiClient cannot be null.");
-            throw new IllegalArgumentException("GoogleApiClient cannot be null.");
-        }
-        this.apiClient = apiClient;
-        this.logger.logInfo("ToxicityValidator initialized with provided dependencies.");
-    }
+		if (apiClient == null)
+		{
+			this.logger.logError("GoogleApiClient cannot be null.");
+			throw new IllegalArgumentException("GoogleApiClient cannot be null.");
+		}
 
-    public ToxicityValidator() throws IOException {
-        this(
-            new GoogleApiClient("/credentials.json"),
-            new LoggerManager(ToxicityValidator.class)
-        );
-        this.logger.logInfo("ToxicityValidator initialized using default constructor.");
-    }
+		this.apiClient = apiClient;
+		this.logger.logInfo("ToxicityValidator initialized with provided dependencies.");
+	}
 
-    public Map<String, Float> getToxicityScores(String text) {
-        logger.logDebug("getToxicityScores: Analyzing text of length " + (text != null ? text.length() : 0));
+	public ToxicityValidator() throws IOException
+	{
+		this(new GoogleApiClient("/credentials.json"), new LoggerManager(ToxicityValidator.class));
+		this.logger.logInfo("ToxicityValidator initialized using default constructor.");
+	}
 
-        ModerateTextResponse response = moderateText(text);
-        Map<String, Float> scores = new HashMap<>();
+	public Map<String, Float> getToxicityScores(String text)
+	{
+		logger.logDebug("getToxicityScores: Analyzing text of length " + (text != null ? text.length() : 0));
 
-        for (ClassificationCategory category : response.getModerationCategoriesList()) {
-            scores.put(category.getName(), category.getConfidence());
-        }
+		ModerateTextResponse response = moderateText(text);
+		Map<String, Float> scores = new HashMap<>();
 
-        logger.logDebug("getToxicityScores: Analysis completed. Categories found: " + scores.size());
-        if (!scores.isEmpty()) {
-            StringBuilder details = new StringBuilder("Scores: ");
-            scores.forEach((cat, score) -> details.append(cat).append("=").append(String.format("%.2f", score)).append(" "));
-            logger.logDebug(details.toString().trim());
-        }
-        return scores;
-    }
+		for(ClassificationCategory category : response.getModerationCategoriesList())
+			scores.put(category.getName(), category.getConfidence());
 
-    public String getToxicityReport(String text) {
-        logger.logInfo("getToxicityReport: Generating report.");
-        Map<String, Float> scores = getToxicityScores(text);
-        StringBuilder report = new StringBuilder("Toxicity Analysis Report:\n");
-        report.append("------------------------\n");
+		logger.logDebug("getToxicityScores: Analysis completed. Categories found: " + scores.size());
 
-        if (scores.isEmpty()) {
-            report.append("No toxicity categories found or scores available.\n");
-        } else {
-            for (Map.Entry<String, Float> entry : scores.entrySet()) {
-                report.append(String.format("%-25s: %.1f%%\n", entry.getKey(), entry.getValue() * 100));
-            }
-        }
-        logger.logInfo("getToxicityReport: Report generated.");
-        return report.toString();
-    }
+		if(!scores.isEmpty())
+		{
+			StringBuilder details = new StringBuilder("Scores: ");
+			scores.forEach((cat, score) -> details.append(cat).append("=").append(String.format("%.2f", score)).append(" "));
+			logger.logDebug(details.toString().trim());
+		}
 
-    public ModerateTextResponse moderateText(String text) {
-        logger.logInfo("moderateText: Preparing to moderate text.");
-        if (text == null || text.trim().isEmpty()) {
-            String errorMsg = "Input text cannot be null or empty.";
-            logger.logError("moderateText: " + errorMsg);
-            throw new InvalidTextException(errorMsg);
-        }
+		return scores;
+	}
 
-        LanguageServiceClient languageClient = apiClient.getClient();
-        Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
-        ModerateTextRequest request = ModerateTextRequest.newBuilder().setDocument(doc).build();
+	public String getToxicityReport(String text)
+	{
+		logger.logInfo("getToxicityReport: Generating report.");
 
-        logger.logDebug("moderateText: Sending request to Google Natural Language API.");
-        ModerateTextResponse response = languageClient.moderateText(request);
-        logger.logDebug("moderateText: Response received. Categories count: " + response.getModerationCategoriesCount());
-        return response;
-    }
+		Map<String, Float> scores = getToxicityScores(text);
+		StringBuilder report = new StringBuilder("Toxicity Analysis Report:\n");
+		report.append("------------------------\n");
 
-    public boolean isTextToxic(String text) {
-        logger.logDebug("isTextToxic: Checking toxicity with default threshold " + DEFAULT_TOXICITY_THRESHOLD);
-        return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
-    }
+		if(scores.isEmpty())
+			report.append("No toxicity categories found or scores available.\n");
+		else
+			for(Map.Entry<String, Float> entry : scores.entrySet())
+				report.append(String.format("%-25s: %.1f%%\n", entry.getKey(), entry.getValue() * 100));
 
-    public boolean isTextToxic(String text, float threshold) {
-        logger.logDebug("isTextToxic: Verifying toxicity with threshold " + threshold);
+		logger.logInfo("getToxicityReport: Report generated.");
+		return report.toString();
+	}
 
-        if (threshold < 0.0f || threshold > 1.0f) {
-            String errorMsg = "Threshold must be between 0.0 and 1.0, inclusive. Received: " + threshold;
-            logger.logError("isTextToxic: " + errorMsg);
-            throw new InvalidThresholdException(threshold, errorMsg);
-        }
+	public ModerateTextResponse moderateText(String text)
+	{
+		logger.logInfo("moderateText: Preparing to moderate text.");
 
-        ModerateTextResponse response = moderateText(text);
-        
-        for (ClassificationCategory category : response.getModerationCategoriesList()) {
-            if (category.getConfidence() > threshold) {
-                logger.logDebug("isTextToxic: Text identified as toxic. Category: " + category.getName() +
-                               ", Confidence: " + String.format("%.2f", category.getConfidence()) + 
-                               ", Threshold: " + String.format("%.2f", threshold));
-                return true;
-            }
-        }
-        logger.logDebug("isTextToxic: Text not considered toxic for threshold " + threshold);
-        return false;
-    }
+		if(text == null || text.trim().isEmpty())
+		{
+			String errorMsg = "Input text cannot be null or empty.";
+			logger.logError("moderateText: " + errorMsg);
+			throw new InvalidTextException(errorMsg);
+		}
 
-    @Override
-    public void close() {
-        logger.logInfo("close: Closing ToxicityValidator resources.");
-        if (apiClient != null) {
-            try {
-                apiClient.close(); 
-                logger.logInfo("close: GoogleApiClient closed successfully.");
-            } catch (Exception e) { 
-                logger.logError("close: Error encountered while closing GoogleApiClient.", e);
-            }
-        }
-    }
+		LanguageServiceClient languageClient = apiClient.getClient();
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		ModerateTextRequest request = ModerateTextRequest.newBuilder().setDocument(doc).build();
+
+		logger.logDebug("moderateText: Sending request to Google Natural Language API.");
+		ModerateTextResponse response = languageClient.moderateText(request);
+		logger.logDebug("moderateText: Response received. Categories count: " + response.getModerationCategoriesCount());
+		return response;
+	}
+
+	public boolean isTextToxic(String text)
+	{
+		logger.logDebug("isTextToxic: Checking toxicity with default threshold " + DEFAULT_TOXICITY_THRESHOLD);
+		return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
+	}
+
+	public boolean isTextToxic(String text, float threshold)
+	{
+		logger.logDebug("isTextToxic: Verifying toxicity with threshold " + threshold);
+
+		if(threshold < 0.0f || threshold > 1.0f)
+		{
+			String errorMsg = "Threshold must be between 0.0 and 1.0, inclusive. Received: " + threshold;
+			logger.logError("isTextToxic: " + errorMsg);
+			throw new InvalidThresholdException(threshold, errorMsg);
+		}
+
+		ModerateTextResponse response = moderateText(text);
+
+		for(ClassificationCategory category : response.getModerationCategoriesList())
+		{
+			if(category.getConfidence() > threshold)
+			{
+				logger.logDebug("isTextToxic: Text identified as toxic. Category: " + category.getName() +
+								", Confidence: " + String.format("%.2f", category.getConfidence()) +
+								", Threshold: " + String.format("%.2f", threshold));
+				return true;
+			}
+		}
+
+		logger.logDebug("isTextToxic: Text not considered toxic for threshold " + threshold);
+		return false;
+	}
+
+	@Override
+	public void close()
+	{
+		logger.logInfo("close: Closing ToxicityValidator resources.");
+
+		if (apiClient != null)
+		{
+			try
+			{
+				apiClient.close();
+				logger.logInfo("close: GoogleApiClient closed successfully.");
+			}
+			catch (Exception e)
+			{
+				logger.logError("close: Error encountered while closing GoogleApiClient.", e);
+			}
+		}
+	}
 }

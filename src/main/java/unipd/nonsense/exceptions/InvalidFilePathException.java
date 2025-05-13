@@ -6,25 +6,25 @@ public final class InvalidFilePathException extends IllegalArgumentException
 
 	public InvalidFilePathException(String path)
 	{
-		super("Invalid path used. Path: '" + path + "'.");
+		super("Invalid path used. Path: '" + path + "'");
 		invalidPath = path;
 	}
 
 	public InvalidFilePathException(String path, String msg)
 	{
-		super(msg + " Path: '" + path + "'.");
+		super(msg + " Path: '" + path + "'");
 		invalidPath = path;
 	}
 
 	public InvalidFilePathException(String path, Throwable cause)
 	{
-		super("Invalid path used. Path: '" + path + "'.", cause);
+		super("Invalid path used. Path: '" + path + "'", cause);
 		invalidPath = path;
 	}
 
 	public InvalidFilePathException(String path, String msg, Throwable cause)
 	{
-		super(msg + " Path: '" + path + "'.", cause);
+		super(msg + " Path: '" + path + "'", cause);
 		invalidPath = path;
 	}
 

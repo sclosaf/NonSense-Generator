@@ -6,7 +6,7 @@ public final class FailedOpeningInputStreamException extends IOException
 {
 	public FailedOpeningInputStreamException()
 	{
-		super("Failed to open input stream.");
+		super("Failed to open input stream");
 	}
 
 	public FailedOpeningInputStreamException(String msg)

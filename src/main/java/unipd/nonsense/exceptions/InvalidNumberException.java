@@ -4,7 +4,7 @@ public class InvalidNumberException extends IllegalArgumentException
 {
 	public InvalidNumberException()
 	{
-		super("Unsupported number.");
+		super("Unsupported number");
 	}
 
 	public InvalidNumberException(String msg)

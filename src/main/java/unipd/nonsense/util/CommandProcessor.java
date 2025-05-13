@@ -1,6 +1,8 @@
 package unipd.nonsense.util;
 
-import unipd.nonsense.util.SyntaxTreePrinter;
+import unipd.nonsense.generator.SyntaxTreeBuilder;
+import unipd.nonsense.model.SyntaxToken;
+
 import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.analyzer.SentenceAnalyzer;
@@ -9,15 +11,34 @@ import unipd.nonsense.analyzer.ToxicityValidator;
 import unipd.nonsense.generator.SentenceGenerator;
 
 import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Noun.Number;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Verb.Tense;
 import unipd.nonsense.model.Template;
+
+import unipd.nonsense.exceptions.SentenceNotCachedException;
+import unipd.nonsense.exceptions.IllegalToleranceException;
+import unipd.nonsense.exceptions.InvalidNumberException;
+import unipd.nonsense.exceptions.InvalidTenseException;
+
+import java.util.List;
+import java.util.ArrayList;
 
 import java.io.IOException;
 
-public class CommandProcessor
+import com.google.cloud.language.v1.PartOfSpeech;
+
+import static com.google.cloud.language.v1.PartOfSpeech.Number.SINGULAR;
+import static com.google.cloud.language.v1.PartOfSpeech.Number.PLURAL;
+
+import static com.google.cloud.language.v1.PartOfSpeech.Tense.PAST;
+import static com.google.cloud.language.v1.PartOfSpeech.Tense.PRESENT;
+import static com.google.cloud.language.v1.PartOfSpeech.Tense.FUTURE;
+
+public class CommandProcessor implements AutoCloseable
 {
-	private static SyntaxTreePrinter treeBuilder;
+	private static SyntaxTreeBuilder treeBuilder;
 	private static SentenceAnalyzer analyzer;
 	private static ToxicityValidator validator;
 	private static SentenceGenerator generator;
@@ -25,47 +46,205 @@ public class CommandProcessor
 
 	private static String cachedString;
 
-	private float sentimentTollerance;
-	private float toxicityTollerance;
+	private float toxicityTolerance;
 
 	public CommandProcessor() throws IOException
 	{
-		this.treeBuilder = new SyntaxTreePrinter();
+		this.treeBuilder = new SyntaxTreeBuilder();
 		this.analyzer = new SentenceAnalyzer();
 		this.validator = new ToxicityValidator();
 		this.generator = new SentenceGenerator();
 
 		this.cachedString = "";
+		toxicityTolerance = 0.7f;
 	}
 
-	public String generate()
+	public String generateRandom()
 	{
-		cachedString = generator.generateRandomSentence().getPattern();
-
-		return cachedString;
+		return generator.generateRandomSentence().getPattern();
 	}
 
-	public String analyze(String str)
+	public String generateFrom(String str) throws IOException
 	{
-		//
-		return "";
+		List<SyntaxToken> analysis = analyzer.getSyntaxTokens(str);
+
+		List<Noun> nounList = new ArrayList<>();
+		List<Adjective> adjectiveList = new ArrayList<>();
+		List<Verb> verbList = new ArrayList<>();
+
+		for(SyntaxToken token : analysis)
+		{
+			String posTag = token.getPosTag();
+			if(posTag.equals("NOUN"))
+			{
+				PartOfSpeech.Number number = token.getPartOfSpeech().getNumber();
+				if(number == PartOfSpeech.Number.SINGULAR || number == PartOfSpeech.Number.PLURAL)
+					nounList.add(new Noun(token.getText(), fromPartOfSpeechNumberToNumber(number)));
+			}
+			else if(posTag.equals("ADJ"))
+				adjectiveList.add(new Adjective(token.getText()));
+			else if(posTag.equals("VERB"))
+			{
+				PartOfSpeech.Tense tense = token.getPartOfSpeech().getTense();
+				if(tense == PartOfSpeech.Tense.PAST || tense == PartOfSpeech.Tense.PRESENT || tense == PartOfSpeech.Tense.FUTURE)
+					verbList.add(new Verb(token.getText(), fromPartOfSpeechTenseToTense(tense)));
+			}
+		}
+
+		return generator.generateSentenceWith(nounList, adjectiveList, verbList).getPattern();
 	}
 
-	public String generateAndAnalyze()
+	private Number fromPartOfSpeechNumberToNumber(PartOfSpeech.Number num)
 	{
-		return analyze(generate());
+		switch(num)
+		{
+			case SINGULAR: return Number.SINGULAR;
+			case PLURAL: return Number.PLURAL;
+			default: throw new InvalidNumberException();
+		}
 	}
 
-	public String printTree(String str)
+	private Tense fromPartOfSpeechTenseToTense(PartOfSpeech.Tense tense)
 	{
-		return "";
+		switch(tense)
+		{
+			case PAST: return Tense.PAST;
+			case PRESENT: return Tense.PRESENT;
+			case FUTURE: return Tense.FUTURE;
+			default: throw new InvalidTenseException();
+		}
 	}
 
-	public void setTollerance()
-	{}
+	public String generateSyntaxTree(String str) throws IOException
+	{
+		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokens(str));
+	}
+
+	public String analyzeSyntax(String str)
+	{
+		try
+		{
+			String report = analyzer.analyzeSyntaxInput(str);
+
+			StringBuilder result = new StringBuilder();
+			result.append("----------------------------------\n");
+			result.append("Syntax Analysis:\n");
+			result.append("----------------------------------\n");
+			result.append("Analyzed Text: ").append(str).append("\n\n");
+			result.append(report);
+
+			result.append("\n\n");
+
+			return result.toString();
+		}
+		catch(IOException e)
+		{
+			return "Error during syntax analysis: " + e.getMessage();
+		}
+	}
+
+	public String analyzeSentiment(String str)
+	{
+		try
+		{
+			String report = analyzer.analyzeSentimentInput(str);
+
+			StringBuilder result = new StringBuilder();
+			result.append("----------------------------------\n");
+			result.append("Sentiment Analysis:\n");
+			result.append("----------------------------------\n");
+			result.append("Analyzed Text: ").append(str).append("\n\n");
+			result.append(report);
+
+			result.append("\n\n");
+
+			return result.toString();
+		}
+		catch(IOException e)
+		{
+			return "Error during sentiment analysis: " + e.getMessage();
+		}
+	}
+
+	public String analyzeEntity(String str)
+	{
+		try
+		{
+			String report = analyzer.analyzeEntitiesInput(str);
+
+			StringBuilder result = new StringBuilder();
+			result.append("----------------------------------\n");
+			result.append("Entity Analysis:\n");
+			result.append("----------------------------------\n");
+			result.append("Analyzed Text: ").append(str).append("\n\n");
+			result.append(report);
+
+			result.append("\n\n");
+
+			return result.toString();
+		}
+		catch(IOException e)
+		{
+			return "Error during entity analysis: " + e.getMessage();
+		}
+	}
+
+	public String analyzeToxicity(String str)
+	{
+		String report = validator.getToxicityReport(cachedString);
+
+		boolean isToxic = validator.isTextToxic(cachedString, toxicityTolerance);
+
+		StringBuilder result = new StringBuilder();
+		result.append("----------------------------------\n");
+		result.append("Toxicity Analysis:\n");
+		result.append("----------------------------------\n");
+		result.append("Analyzed Text: ").append(cachedString).append("\n\n");
+		result.append(report);
+
+		result.append("\nTolerance threshold set to: ").append(toxicityTolerance).append("\n");
+		result.append("Overall Assessment: ");
+		result.append(isToxic ? "TEXT FLAGGED AS POTENTIALLY INAPPROPRIATE" : "Text within acceptable parameters");
+		result.append("\n\n");
+
+		return result.toString();
+	}
+
+	public void setTollerance(float newTolerance)
+	{
+		if(newTolerance < 0.0f || newTolerance > 1.0f)
+			throw new IllegalToleranceException();
+
+		toxicityTolerance = newTolerance;
+	}
+
+	public String getCurrentSentence()
+	{
+		if(cachedString == null || cachedString.isEmpty())
+			return "No sentence currently cached. Use 'generate' first.";
+
+		return "Current sentence: " + cachedString;
+	}
 
 	public void switchVerbosity()
 	{
 		logger.switchVerboseMode();
+	}
+
+	@Override
+	public void close()
+	{
+		try
+		{
+			if(analyzer != null)
+				analyzer.close();
+
+			if(validator != null)
+				validator.close();
+		}
+		catch(Exception e)
+		{
+			logger.logError("Error closing resources", e);
+		}
 	}
 }

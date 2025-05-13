@@ -4,7 +4,7 @@ public class MissingInternetConnectionException extends RuntimeException
 {
 	public MissingInternetConnectionException()
 	{
-		super("The device is not connected.");
+		super("The device is not connected");
 	}
 
 	public MissingInternetConnectionException(String msg)

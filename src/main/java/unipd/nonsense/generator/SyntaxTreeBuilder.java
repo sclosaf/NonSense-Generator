@@ -1,21 +1,20 @@
-package unipd.nonsense.util;
+package unipd.nonsense.generator;
 
-import java.util.*;
+import java.util.List;
+import java.util.Map;
+import java.util.HashMap;
+import java.util.ArrayList;
+import java.util.Collections;
+
+import unipd.nonsense.model.SyntaxToken;
 
 import unipd.nonsense.util.LoggerManager;
 
-public class SyntaxTreePrinter
+public class SyntaxTreeBuilder
 {
-	private static final LoggerManager logger = new LoggerManager(SyntaxTreePrinter.class);
+	private static final LoggerManager logger = new LoggerManager(SyntaxTreeBuilder.class);
 
-	public interface TokenElement
-	{
-		String getText();
-		String getPosTag();
-		int getHeadIndex();
-	}
-
-	public static <T extends TokenElement> String getSyntaxTree(List<T> tokens)
+	public static <T extends SyntaxToken> String getSyntaxTree(List<T> tokens)
 	{
 		logger.logInfo("getSyntaxTree: Starting syntax tree generation");
 
@@ -61,7 +60,7 @@ public class SyntaxTreePrinter
 		}
 	}
 
-	private static <T extends TokenElement> Map<Integer, T> createIndexTokenMap(List<T> tokens)
+	private static <T extends SyntaxToken> Map<Integer, T> createIndexTokenMap(List<T> tokens)
 	{
 		logger.logDebug("createIndexTokenMap: Creating token index map for " + tokens.size() + " tokens");
 		Map<Integer, T> map = new HashMap<>();
@@ -76,7 +75,7 @@ public class SyntaxTreePrinter
 		return map;
 	}
 
-	private static <T extends TokenElement> Map<Integer, List<Integer>> buildDependencyMap(List<T> tokens)
+	private static <T extends SyntaxToken> Map<Integer, List<Integer>> buildDependencyMap(List<T> tokens)
 	{
 		logger.logDebug("buildDependencyMap: Preparing dependency map for " + tokens.size() + " tokens");
 		Map<Integer, List<Integer>> dependencyMap = new HashMap<>();
@@ -90,7 +89,7 @@ public class SyntaxTreePrinter
 		for(int i = 0; i < tokens.size(); i++)
 		{
 			T token = tokens.get(i);
-			int headIdx = token.getHeadIndex();
+			int headIdx = token.getHeadTokenIndex();
 
 			dependencyMap.computeIfAbsent(headIdx, k -> new ArrayList<>()).add(i);
 			logger.logInfo("buildDependencyMap: Added dependency from head " + headIdx + " to child " + i);
@@ -101,13 +100,13 @@ public class SyntaxTreePrinter
 		return dependencyMap;
 	}
 
-	private static <T extends TokenElement> T findRootToken(List<T> tokens)
+	private static <T extends SyntaxToken> T findRootToken(List<T> tokens)
 	{
 		logger.logDebug("findRootToken: Searching for root token");
 
 		for (T token : tokens)
 		{
-			int headIdx = token.getHeadIndex();
+			int headIdx = token.getHeadTokenIndex();
 
 			if(headIdx == -1)
 			{
@@ -118,7 +117,7 @@ public class SyntaxTreePrinter
 
 		for(T token : tokens)
 		{
-			int headIdx = token.getHeadIndex();
+			int headIdx = token.getHeadTokenIndex();
 
 			if(headIdx >= tokens.size() || headIdx < -1)
 			{
@@ -132,7 +131,7 @@ public class SyntaxTreePrinter
 		return null;
 	}
 
-	private static <T extends TokenElement> void buildTreeString(int tokenIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
+	private static <T extends SyntaxToken> void buildTreeString(int tokenIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
 	{
 		logger.logDebug("buildTreeString: Building tree string for token index: " + tokenIndex);
 

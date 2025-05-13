@@ -17,11 +17,15 @@ import com.google.cloud.language.v1.Sentiment;
 import com.google.cloud.language.v1.AnalyzeSentimentResponse;
 
 import com.google.cloud.language.v1.LanguageServiceClient;
+
 import unipd.nonsense.util.GoogleApiClient;
+
+import unipd.nonsense.model.SyntaxToken;
 
 import java.io.IOException;
 
 import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 
 public class SentenceAnalyzer implements AutoCloseable
@@ -51,10 +55,6 @@ public class SentenceAnalyzer implements AutoCloseable
 		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
 
 		StringBuilder report = new StringBuilder();
-		report.append("----------------------------------\n");
-		report.append("Syntax Analysis Report:\n");
-		report.append("----------------------------------\n");
-		report.append("Analyzed Text: ").append(text).append("\n\n");
 
 		int tokenIndex = 1;
 		for(Token token : response.getTokensList())
@@ -116,10 +116,6 @@ public class SentenceAnalyzer implements AutoCloseable
 		Sentiment sentiment = response.getDocumentSentiment();
 
 		StringBuilder report = new StringBuilder();
-		report.append("----------------------------------\n");
-		report.append("Sentiment Analysis Report:\n");
-		report.append("----------------------------------\n");
-		report.append("Analyzed Text: ").append(text).append("\n\n");
 
 		if(sentiment == null)
 		{
@@ -142,9 +138,6 @@ public class SentenceAnalyzer implements AutoCloseable
 		AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
 
 		StringBuilder report = new StringBuilder();
-		report.append("----------------------------------\n");
-		report.append("Entity Analysis Report:\n");
-		report.append("----------------------------------\n");
 		report.append("Analyzed Text: ").append(text).append("\n\n");
 
 		List<Entity> entities = response.getEntitiesList();
@@ -185,6 +178,31 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 
 		return report.toString();
+	}
+
+	public List<SyntaxToken> getSyntaxTokens(String text) throws IOException
+	{
+		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+
+		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
+
+		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
+
+		List<SyntaxToken> tokens = new ArrayList<>();
+		for (Token googleToken : response.getTokensList())
+		{
+			SyntaxToken token = new SyntaxToken
+				(
+					googleToken.getText().getContent(),
+					googleToken.getText().getBeginOffset(),
+					googleToken.getLemma(),
+					googleToken.getPartOfSpeech(),
+					googleToken.getDependencyEdge().getHeadTokenIndex(),
+					googleToken.getDependencyEdge().getLabel()
+				 );
+			tokens.add(token);
+		}
+		return tokens;
 	}
 
 	@Override

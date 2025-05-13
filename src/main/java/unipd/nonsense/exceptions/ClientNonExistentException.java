@@ -4,7 +4,7 @@ public final class ClientNonExistentException extends IllegalStateException
 {
 	public ClientNonExistentException()
 	{
-		super("Client not found.");
+		super("Client not found");
 	}
 
 	public ClientNonExistentException(String msg)

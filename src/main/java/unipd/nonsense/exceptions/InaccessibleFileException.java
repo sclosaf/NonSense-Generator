@@ -6,7 +6,7 @@ public final class InaccessibleFileException extends IOException
 {
 	public InaccessibleFileException()
 	{
-		super("Unable to open file.");
+		super("Unable to open file");
 	}
 
 	public InaccessibleFileException(String msg)

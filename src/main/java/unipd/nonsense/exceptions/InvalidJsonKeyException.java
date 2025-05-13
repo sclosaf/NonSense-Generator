@@ -6,25 +6,25 @@ public final class InvalidJsonKeyException extends IllegalArgumentException
 
 	public InvalidJsonKeyException(String key)
 	{
-		super("Used a json key: '" + key + "' that was't part of the json file.");
+		super("Used a json key: '" + key + "' that was't part of the json file");
 		invalidKey = key;
 	}
 
 	public InvalidJsonKeyException(String key, String msg)
 	{
-		super(msg + " Key: '" + key + "'.");
+		super(msg + " Key: '" + key + "'");
 		invalidKey = key;
 	}
 
 	public InvalidJsonKeyException(String key, Throwable cause)
 	{
-		super("Used a json key: '" + key + "' that wasn't part of the json file.", cause);
+		super("Used a json key: '" + key + "' that wasn't part of the json file", cause);
 		invalidKey = key;
 	}
 
 	public InvalidJsonKeyException(String key, String msg, Throwable cause)
 	{
-		super(msg + " Key: '" + key + "'.", cause);
+		super(msg + " Key: '" + key + "'", cause);
 		invalidKey = key;
 	}
 

@@ -4,7 +4,7 @@ public final class NullFilePathException extends IllegalArgumentException
 {
 	public NullFilePathException()
 	{
-		super("Invalid null file path argument.");
+		super("Invalid null file path argument");
 	}
 
 	public NullFilePathException(String msg)

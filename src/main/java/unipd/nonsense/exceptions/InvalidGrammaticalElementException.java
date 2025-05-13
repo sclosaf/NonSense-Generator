@@ -4,7 +4,7 @@ public class InvalidGrammaticalElementException extends IllegalArgumentException
 {
 	public InvalidGrammaticalElementException()
 	{
-		super("Attempted to create and invalid grammatical element.");
+		super("Attempted to create and invalid grammatical element");
 	}
 
 	public InvalidGrammaticalElementException(String msg)

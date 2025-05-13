@@ -6,7 +6,7 @@ public final class UnreadableFileException extends IOException
 {
 	public UnreadableFileException()
 	{
-		super("Unable to read file.");
+		super("Unable to read file");
 	}
 
 	public UnreadableFileException(String msg)

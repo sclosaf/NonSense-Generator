@@ -4,7 +4,7 @@ public class InvalidTextException extends IllegalArgumentException
 {
 	public InvalidTextException()
 	{
-		super("Invalid text inserted.");
+		super("Invalid text inserted");
 	}
 
 	public InvalidTextException(String msg)

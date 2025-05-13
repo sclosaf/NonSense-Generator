@@ -4,7 +4,7 @@ public final class InvalidJsonStateException extends IllegalStateException
 {
 	public InvalidJsonStateException()
 	{
-		super("Json file is in a invalid state.");
+		super("Json file is in a invalid state");
 	}
 
 	public InvalidJsonStateException(String msg)

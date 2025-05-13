@@ -6,7 +6,7 @@ public final class UnwritableFileException extends IOException
 {
 	public UnwritableFileException()
 	{
-		super("Unable to write file.");
+		super("Unable to write file");
 	}
 
 	public UnwritableFileException(String msg)

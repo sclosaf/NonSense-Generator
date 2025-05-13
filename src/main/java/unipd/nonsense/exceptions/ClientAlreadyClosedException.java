@@ -4,7 +4,7 @@ public final class ClientAlreadyClosedException extends IllegalStateException
 {
 	public ClientAlreadyClosedException()
 	{
-		super("Client is already closed.");
+		super("Client is already closed");
 	}
 
 	public ClientAlreadyClosedException(String msg)

@@ -4,7 +4,7 @@ public class InvalidTemplateTypeException extends IllegalArgumentException
 {
 	public InvalidTemplateTypeException()
 	{
-		super("Invalid template type.");
+		super("Invalid template type");
 	}
 
 	public InvalidTemplateTypeException(String msg)

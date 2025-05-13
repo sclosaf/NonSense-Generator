@@ -4,7 +4,7 @@ public final class NullJsonKeyException extends IllegalArgumentException
 {
 	public NullJsonKeyException()
 	{
-		super("Invalid null key argument.");
+		super("Invalid null key argument");
 	}
 
 	public NullJsonKeyException(String msg)

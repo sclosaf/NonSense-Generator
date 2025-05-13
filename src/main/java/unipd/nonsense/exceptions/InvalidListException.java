@@ -4,7 +4,7 @@ public class InvalidListException extends IllegalStateException
 {
 	public InvalidListException()
 	{
-		super("Unable to load elements on the list.");
+		super("Unable to load elements on the list");
 	}
 
 	public InvalidListException(String msg)
