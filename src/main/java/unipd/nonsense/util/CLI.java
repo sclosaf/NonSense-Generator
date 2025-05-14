@@ -339,6 +339,7 @@ public class CLI
 
 	private void personalizedHandler() throws IOException
 	{
+		printTitleSeparator("Personalized procedure", BOLD_BLUE_STYLE);
 		printWhite("Proceding with the personalized process.", true);
 
 		extendHandler();
@@ -358,6 +359,7 @@ public class CLI
 
 	private void generateHandler() throws IOException
 	{
+		printTitleSeparator("Generation procedure", BOLD_BLUE_STYLE);
 		printBlue("Proceeding generating a random sentence, select one of the following options:", true);
 		printWhite("    Randomized", true);
 		printWhite("      Each parameter (number and tense) used in the generated sentence, are selected randomly", true);
@@ -543,6 +545,7 @@ public class CLI
 
 	private void analyzeHandler()
 	{
+		printTitleSeparator("Analyze procedure", BOLD_BLUE_STYLE);
 		printBlue("Proceeding to analyze select one of the following options:", true);
 		printWhite("    Random", true);
 		printWhite("      Performs one random of the available options", true);
@@ -736,6 +739,7 @@ public class CLI
 
 	private void treeHandler() throws IOException
 	{
+		printTitleSeparator("Syntax tree procedure", BOLD_BLUE_STYLE);
 		printBlue("Select if do you want to print the syntactic tree of a generate sentence or input a new one", true);
 		printWhite("(Generate/Input)", false);
 
@@ -794,6 +798,7 @@ public class CLI
 
 	private void extendHandler() throws IOException
 	{
+		printTitleSeparator("Extension procedure", BOLD_BLUE_STYLE);
 		printBlue("Enter the part of speech taht you want to add (press Enter to confirm the new terms):", true);
 		printWhite("Noun, adjective or verb", true);
 
@@ -900,6 +905,7 @@ public class CLI
 
 	private void setToleranceHandler()
 	{
+		printTitleSeparator("Tolerance procedure", BOLD_BLUE_STYLE);
 		printWhite("Enter tolerance value (0.0 - 1.0): ", true);
 		printWhite("Current tolerance value is " + processor.getTolerance(), true);
 
@@ -935,7 +941,7 @@ public class CLI
 
 	private void extendedUsage()
 	{
-		printTitleSeparator("Extended Commands help", BOLD_MAGENTA_STYLE);
+		printTitleSeparator("Extended commands help", BOLD_MAGENTA_STYLE);
 
 		String[][] commandsInfo =
 		{
@@ -945,11 +951,13 @@ public class CLI
 					"This is a default combination of commands, for a more specific settings\n" +
 					"use the other commands."
 			},
+
 			{
 				"Personalized (p)",
 					"Performs the whole process, but every part of it is personalizable\n" +
 					"acordingly to the user choice."
 			},
+
 			{
 				"Generate (g)",
 					"Generates a random nonsense sentence.\n" +
@@ -957,6 +965,7 @@ public class CLI
 					"it's missing all the logical sense.\n" +
 					"The sentence is printed and buffered."
 			},
+
 			{
 				"Analyze (a)",
 					"Validates the buffered sentence structure and syntax.\n" +
@@ -964,6 +973,7 @@ public class CLI
 					"'toxicity', 'sentiment' or 'syntax'.\n" +
 					"If no sentence is buffered, no analysis is performed."
 			},
+
 			{
 				"Tree (t)",
 					"Prints the syntactic tree of the buffered sentence.\n" +
@@ -972,22 +982,26 @@ public class CLI
 					"If no sentence is buffered, no analysis is performed.\n" +
 					"This function requires to analyze the sentence."
 			},
+
 			{
 				"Extend",
 					"Gives the opportunity to the user to input a Noun, an Adjective or a Verb\n" +
 					"to the data dictionaries used by the program."
 			},
+
 			{
 				"Set tolerance (st)",
 					"Changes the tolerance level for the analysis.\n" +
 					"Default 0.7 for toxicity (ranges from 0.0 to 1.0),\n" +
 					"  Defines the level over which a text is considered offensive.\n"
 			},
+
 			{
 				"Info (i)",
 					"Shows detailed information about commands.\n" +
 					"Provides extended help for each available command (even hidden ones)."
 			},
+
 			{
 				"Verbose (v)",
 					"Toggles verbose output mode.\n" +
@@ -995,15 +1009,18 @@ public class CLI
 					"during command execution (for debugging).\n" +
 					"Default is off."
 			},
+
 			{
 				"Clear (c)",
 					"Clears the terminal screen.\n" +
 					"Resets the display and shows the initial menu."
 			},
+
 			{
 				"Help (h)",
 					"Displays basic help information."
 			},
+
 			{
 				"Quit (q)",
 					"Exits the program.\n" +
@@ -1028,7 +1045,7 @@ public class CLI
 
 	private void verboseHandler()
 	{
-		printTitleSeparator("Settings verbosity", BOLD_BLUE_STYLE);
+		printTitleSeparator("Verbosity procedure", BOLD_BLUE_STYLE);
 		printBlue("Currently verbosity is set to " + processor.isVerbose(), true);
 		printBlue("Switching verbosity", true);
 
