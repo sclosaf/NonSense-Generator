@@ -79,6 +79,7 @@ public class CLI
 
 	private static final int HISTORY_SIZE = 20;
 	private static final int MAX_ATTEMPTS = 5;
+	private static final int MAX_WIDTH = 106;
 
 	private boolean running;
 	private final String initialOutput;
@@ -208,10 +209,9 @@ public class CLI
 
 	private void welcome(PrintWriter writer) throws IOException
 	{
-		int asciiArtWidth = 58;
 		String title = "Welcome to";
 
-		int totalPadding = asciiArtWidth - title.length() - 2;
+		int totalPadding = MAX_WIDTH - title.length() - 4;
 		int leftPadding = totalPadding / 2;
 		int rightPadding = totalPadding - leftPadding;
 
@@ -230,8 +230,7 @@ public class CLI
 		while((line = reader.readLine()) != null)
 			writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
 
-
-		writer.println(new AttributedString("=".repeat(asciiArtWidth + 2), BOLD_WHITE_STYLE).toAnsi(terminal));
+		writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_WHITE_STYLE).toAnsi(terminal));
 		writer.flush();
 	}
 
@@ -276,7 +275,7 @@ public class CLI
 			case TREE: treeHandler(); break;
 			case EXTEND: extendHandler(); break;
 			case SETTOLERANCE: setToleranceHandler(); break;
-			case INFO: extendedUsage(terminal.writer()); break;
+			case INFO: extendedUsage(); break;
 			case VERBOSE: verboseHandler(); break;
 			case CLEAR: clearTerminal(); break;
 			case HELP: usage(terminal.writer()); break;
@@ -288,65 +287,73 @@ public class CLI
 	{
 		try
 		{
+			printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
 			printWhite("Proceding with default process.", true);
-			printWhite("Enter a sentence to process (or press Enter to generate one automatically and skip the elabotation process):", true);
+			printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the elabotation of the input):", true);
 
 			String userInput = read(false);
-			String syntax = "";
-			String toxicity = "";
 
 			if(userInput.isEmpty())
 			{
+				printWhite("Sentence input skipped, proceding by generating one from scratch", true);
 				userInput = processor.generateRandom();
-				printGreen("Generated sentence: " + userInput, false);
+				printWhite("Generated sentence: '" + userInput + "'", false);
 
-				printWhite("Proceding with the standard analyze of the generated sentence.", true);
+				printWhite("Proceding with a standard analysis of the generated sentence", true);
+				printWhite("which includes analysis of the syntax and its toxicity", true);
 
-				syntax = processor.analyzeSyntax(userInput);
-				printWhite(syntax, true);
+				analyzeSyntax(userInput);
 
-				toxicity = processor.analyzeToxicity(userInput);
-				printWhite(toxicity, true);
+				analyzeToxicity(userInput);
+
+				printWhite("Proceding generating the syntactic tree of the generated sentence", true);
+				printTree(userInput);
 
 			}
 			else
 			{
-				printWhite("Proceding with the standard analyze of the sentence.", true);
-				syntax = processor.analyzeSyntax(userInput);
-				printWhite("Analysis result:\n" + syntax, false);
+				printWhite("Proceding with the standard analyze of the given sentence", true);
+				analyzeSyntax(userInput);
 
+				printWhite("Generating a new sentence using the inserted one", true);
 				String generated = processor.generateFrom(userInput);
 
-				printWhite("Proceding with the standard analyze of the generated sentence.", true);
+				printWhite("Generated sentence: '" + generated + "'", false);
 
-				syntax = processor.analyzeSyntax(generated);
-				printWhite(syntax, true);
+				printWhite("Proceding with a standard analysis of the generated sentence", true);
 
-				toxicity = processor.analyzeToxicity(generated);
-				printWhite(toxicity, true);
+				analyzeSyntax(generated);
 
-				String syntaxTree = processor.generateSyntaxTree(generated);
-				printWhite("Syntax tree:\n" + syntaxTree, true);
+				analyzeToxicity(generated);
+
+				printTree(generated);
 			}
 		}
 		catch(IOException e)
 		{
 			printRed("Error processing input: " + e.getMessage(), true);
 		}
+
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void personalizedHandler() throws IOException
 	{
 		printWhite("Proceding with the personalized process.", true);
-		printWhite("Enter a sentence to process (or press Enter to generate one automatically and skip the elabotation process):", true);
+
+		extendHandler();
+
+		printWhite("Enter a sentence to process (or press Enter to generate one automatically)", true);
 
 		String userInput = read(false);
 
 		if(userInput.isEmpty())
 			generateHandler();
 
+		setToleranceHandler();
 		analyzeHandler();
 		treeHandler();
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void generateHandler() throws IOException
@@ -384,16 +391,20 @@ public class CLI
 			case TENSE: generateTense(); break;
 			case BOTH: generateBoth(); break;
 		}
+
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void generateRandom()
 	{
+		printTitleSeparator("Random generation", BOLD_BLUE_STYLE);
 		String generated = processor.generateRandom();
 		printGreen("Generated sentence: " + generated, false);
 	}
 
 	private void generateNumber()
 	{
+		printTitleSeparator("Random generation (with number)", BOLD_BLUE_STYLE);
 		printBlue("Specify the number among the available:", true);
 		printWhite("    Singular", true);
 		printWhite("    Pluralar", true);
@@ -428,6 +439,7 @@ public class CLI
 
 	private void generateTense()
 	{
+		printTitleSeparator("Random generation (with tense)", BOLD_BLUE_STYLE);
 		printBlue("Specify the tense among the available:", true);
 		printWhite("    Past", true);
 		printWhite("    Present", true);
@@ -468,6 +480,8 @@ public class CLI
 
 	private void generateBoth()
 	{
+		printTitleSeparator("Random generation (with number and tense)", BOLD_BLUE_STYLE);
+
 		printBlue("Specify the number among the available:", true);
 		printWhite("    Singular", true);
 		printWhite("    Pluralar", true);
@@ -616,10 +630,13 @@ public class CLI
 			case ENTITY: analyzeEntity(userInput); break;
 			case COMBINED: analyzeCombined(userInput); break;
 		}
+
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void analyzeRandom(String input)
 	{
+		printTitleSeparator("Random analysis", BOLD_BLUE_STYLE);
 		Random random = new Random();
 
 		AnalyzeOptions[] opts = { AnalyzeOptions.SYNTAX, AnalyzeOptions.SENTIMENT, AnalyzeOptions.TOXICITY, AnalyzeOptions.ENTITY };
@@ -639,6 +656,7 @@ public class CLI
 
 	private void analyzeAll(String input)
 	{
+		printTitleSeparator("Complete analysis", BOLD_BLUE_STYLE);
 		printWhite("Proceding analyzing all the analysis", true);
 
 		analyzeSyntax(input);
@@ -649,30 +667,31 @@ public class CLI
 
 	private void analyzeSyntax(String input)
 	{
-		printWhite("Syntax analysis: ", true);
+		printTitleSeparator("Analyze syntax", BOLD_BLUE_STYLE);
 		printWhite(processor.analyzeSyntax(input), false);
 	}
 
 	private void analyzeSentiment(String input)
 	{
-		printWhite("Sentiment analysis: ", true);
+		printTitleSeparator("Analyze sentiment", BOLD_BLUE_STYLE);
 		printWhite(processor.analyzeSentiment(input), false);
 	}
 
 	private void analyzeToxicity(String input)
 	{
-		printWhite("Toxicity analysis: ", true);
+		printTitleSeparator("Analyze toxicity", BOLD_BLUE_STYLE);
 		printWhite(processor.analyzeToxicity(input), false);
 	}
 
 	private void analyzeEntity(String input)
 	{
-		printWhite("Entity analysis", true);
+		printTitleSeparator("Analyze entity", BOLD_BLUE_STYLE);
 		printWhite(processor.analyzeEntity(input), false);
 	}
 
 	private void analyzeCombined(String input)
 	{
+		printTitleSeparator("Combined analysis", BOLD_BLUE_STYLE);
 		printBlue("Select the desired analysis (press enter to confirm the combination choice):", true);
 		printWhite("Syntax, sentiment, toxicity, entity", false);
 
@@ -762,8 +781,15 @@ public class CLI
 			}
 		}
 
-		printBlue("Proceeding printing the syntactic tree of the chosen sentence", true);
-		printWhite(processor.generateSyntaxTree(userInput), false);
+		printTree(userInput);
+
+		printSeparator(BOLD_BLUE_STYLE);
+	}
+
+	private void printTree(String input) throws IOException
+	{
+		printTitleSeparator("Syntax tree", BOLD_BLUE_STYLE);
+		printWhite(processor.generateSyntaxTree(input), false);
 	}
 
 	private void extendHandler() throws IOException
@@ -868,11 +894,13 @@ public class CLI
 
 		printBlue("Adding the new elements", true);
 		processor.append(nounList, adjectiveList, verbList);
+
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void setToleranceHandler()
 	{
-		printWhite("Enter tolerance value (0.0-1.0): ", true);
+		printWhite("Enter tolerance value (0.0 - 1.0): ", true);
 		printWhite("Current tolerance value is " + processor.getTolerance(), true);
 
 		String newTolerance = read(true);
@@ -901,16 +929,13 @@ public class CLI
 
 		float tolerance = Float.parseFloat(newTolerance);
 		processor.setTolerance(tolerance);
+
+		printSeparator(BOLD_BLUE_STYLE);
 	}
 
-	private void extendedUsage(PrintWriter writer)
+	private void extendedUsage()
 	{
-		int totalWidth = 58;
-		String title = "Extended Commands help";
-		int titlePadding = (totalWidth - title.length() - 1) / 2;
-
-		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
-		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		printTitleSeparator("Extended Commands help", BOLD_MAGENTA_STYLE);
 
 		String[][] commandsInfo =
 		{
@@ -991,19 +1016,19 @@ public class CLI
 			String command = cmdInfo[0];
 			String description = cmdInfo[1];
 
-			writer.println(new AttributedString(command, BOLD_GREEN_STYLE).toAnsi(terminal));
+			printGreen(command, true);
 
 			String[] lines = description.split("\n");
 			for (String line : lines)
-				writer.println(new AttributedString("    " + line, BOLD_WHITE_STYLE).toAnsi(terminal));
+				printWhite("    " + line, true);
 		}
 
-		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
-		writer.flush();
+		printSeparator(BOLD_MAGENTA_STYLE);
 	}
 
 	private void verboseHandler()
 	{
+		printTitleSeparator("Settings verbosity", BOLD_BLUE_STYLE);
 		printBlue("Currently verbosity is set to " + processor.isVerbose(), true);
 		printBlue("Switching verbosity", true);
 
@@ -1020,10 +1045,9 @@ public class CLI
 
 	private void usage(PrintWriter writer)
 	{
-		int totalWidth = 58;
 		String title = "Available Commands";
 
-		int titlePadding = (totalWidth - title.length() - 2) / 2;
+		int titlePadding = (MAX_WIDTH - title.length() - 4) / 2;
 		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
 		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
 
@@ -1053,14 +1077,14 @@ public class CLI
 			writer.println(styledCommand.toAnsi(terminal) + styledDescription.toAnsi(terminal));
 		}
 
-		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_MAGENTA_STYLE).toAnsi(terminal));
 		writer.println(new AttributedString("Enter a command or type 'Help' to see this again:", BOLD_MAGENTA_STYLE).toAnsi(terminal));
 		writer.flush();
 	}
 
 	private void quit()
 	{
-		printWhite("Exiting.", true);
+		printTitleSeparator("Terminating", BOLD_BLUE_STYLE);
 		running = false;
 	}
 
@@ -1163,8 +1187,25 @@ public class CLI
 			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 		else
 			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ");
+	}
 
+	private void printSeparator(AttributedStyle style)
+	{
+		terminal.writer().println(new AttributedString("=".repeat(MAX_WIDTH), style).toAnsi(terminal));
+		terminal.flush();
+	}
 
+	private void printTitleSeparator(String title, AttributedStyle style)
+	{
+		int availableSpace = MAX_WIDTH - title.length() - 4;
+
+		int rightPadding = availableSpace / 2;
+		int leftPadding = availableSpace - rightPadding;
+
+		String separator = "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding);
+
+		terminal.writer().println(new AttributedString(separator, style).toAnsi(terminal));
+		terminal.flush();
 	}
 
 	public void closeResources()
