@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
+
 import java.io.InputStream;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -24,11 +25,16 @@ import java.io.StringWriter;
 
 import java.util.Random;
 
-import org.jline.reader.*;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.reader.EndOfFileException;
 import org.jline.reader.Highlighter;
 import org.jline.reader.impl.completer.StringsCompleter;
+
 import org.jline.terminal.Terminal;
 import org.jline.terminal.TerminalBuilder;
+
 import org.jline.utils.AttributedString;
 import org.jline.utils.AttributedStyle;
 import org.jline.utils.InfoCmp;
@@ -49,7 +55,7 @@ public class CLI
 
 	private enum AnalyzeOptions
 	{
-		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, COMBINED
+		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, ENTITY, COMBINED
 	}
 
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
@@ -70,14 +76,18 @@ public class CLI
 	private static Map<String, Command> commands = new HashMap<>();
 	private static Map<String, GenerateOptions> generateOptions = new HashMap<>();
 	private static Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
+
 	private static final int HISTORY_SIZE = 20;
 	private static final int MAX_ATTEMPTS = 5;
-	private String initialOutput;
-	private boolean running;
-	private CommandProcessor processor;
 
+	private boolean running;
+	private final String initialOutput;
+
+	private final CommandProcessor processor;
 	private final Terminal terminal;
-	private final LineReader reader;
+
+	private LineReader commandReader;
+	private LineReader plainReader;
 
 	private static class CommandHighlighter implements Highlighter
 	{
@@ -113,7 +123,8 @@ public class CLI
 			throw new MissingInternetConnectionException();
 
 		terminal = TerminalBuilder.builder().system(true).build();
-		reader = LineReaderBuilder.builder()
+
+		commandReader = LineReaderBuilder.builder()
 			.terminal(terminal)
 			.completer(new StringsCompleter(commands.keySet()))
 			.option(LineReader.Option.HISTORY_BEEP, false)
@@ -121,6 +132,13 @@ public class CLI
 			.option(LineReader.Option.AUTO_FRESH_LINE, true)
 			.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
 			.highlighter(new CommandHighlighter())
+			.build();
+
+		plainReader = LineReaderBuilder.builder()
+			.terminal(terminal)
+			.option(LineReader.Option.HISTORY_BEEP, false)
+			.option(LineReader.Option.AUTO_FRESH_LINE, true)
+			.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
 			.build();
 
 		this.processor = new CommandProcessor();
@@ -170,6 +188,8 @@ public class CLI
 		analyzeOptions.put("se", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("toxicity", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("t", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("entity", AnalyzeOptions.ENTITY);
+		analyzeOptions.put("e", AnalyzeOptions.ENTITY);
 		analyzeOptions.put("combined", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("c", AnalyzeOptions.RANDOM);
 
@@ -215,165 +235,20 @@ public class CLI
 		writer.flush();
 	}
 
-	private void usage(PrintWriter writer)
-	{
-		int totalWidth = 58;
-		String title = "Available Commands";
-
-		int titlePadding = (totalWidth - title.length() - 2) / 2;
-		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
-		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
-
-		String[] commands =
-		{
-			"Default", "Performs a basic combination of generation and analysis",
-			"Personalized", "Performs the full process, with each step personalizable",
-			"Generate", "Generates a random nonsense sentence",
-			"Analyze", "Validates sentence structure and syntax",
-			"Tree", "Prints the syntactic tree",
-			"Extend", "User can insert a noun, adjective or verb to the dicionaries",
-			"Set tolerance", "Change tolerance level for the analysis",
-			"Info", "Shows more detailed infos about the commands",
-			"Clear", "Clears the terminal and shows initial menu",
-			"Help", "Shows this help menu",
-			"Quit", "Exits the program"
-		};
-
-		for(int i = 0; i < commands.length; i += 2)
-		{
-			String command = String.format("%-22s", commands[i]);
-			String description = String.format("%-33s", commands[i + 1]);
-
-			AttributedString styledCommand = new AttributedString(command, BOLD_GREEN_STYLE);
-			AttributedString styledDescription = new AttributedString(description, BOLD_WHITE_STYLE);
-
-			writer.println(styledCommand.toAnsi(terminal) + styledDescription.toAnsi(terminal));
-		}
-
-		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
-		writer.println(new AttributedString("Enter a command or type 'Help' to see this again:", BOLD_MAGENTA_STYLE).toAnsi(terminal));
-		writer.flush();
-	}
-
-	private void extendedUsage(PrintWriter writer)
-	{
-		int totalWidth = 58;
-		String title = "Extended Commands help";
-		int titlePadding = (totalWidth - title.length() - 1) / 2;
-
-		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
-		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
-
-		String[][] commandsInfo =
-		{
-			{
-				"Default (d)",
-					"Performs both procedures of generation and analysis in one step.\n" +
-					"This is a default combination of commands, for a more specific settings\n" +
-					"use the other commands."
-			},
-			{
-				"Personalized (p)",
-					"Performs the whole process, but every part of it is personalizable\n" +
-					"acordingly to the user choice."
-			},
-			{
-				"Generate (g)",
-					"Generates a random nonsense sentence.\n" +
-					"The sentece even if it has grammatical sense,\n" +
-					"it's missing all the logical sense.\n" +
-					"The sentence is printed and buffered."
-			},
-			{
-				"Analyze (a)",
-					"Validates the buffered sentence structure and syntax.\n" +
-					"Via different settings can be analyzed accordingly to its:\n" +
-					"'toxicity', 'sentiment' or 'syntax'.\n" +
-					"If no sentence is buffered, no analysis is performed."
-			},
-			{
-				"Tree (t)",
-					"Prints the syntactic tree of the buffered sentence.\n" +
-					"Shows the hierarchical structure of the sentence\n" +
-					"components for better understanding.\n" +
-					"If no sentence is buffered, no analysis is performed.\n" +
-					"This function requires to analyze the sentence."
-			},
-			{
-				"Extend",
-					"Gives the opportunity to the user to input a Noun, an Adjective or a Verb\n" +
-					"to the data dictionaries used by the program."
-			},
-			{
-				"Set tolerance (st)",
-					"Changes the tolerance level for the analysis.\n" +
-					"Default 0.7 for toxicity (ranges from 0.0 to 1.0),\n" +
-					"  Defines the level over which a text is considered offensive.\n"
-			},
-			{
-				"Info (i)",
-					"Shows detailed information about commands.\n" +
-					"Provides extended help for each available command (even hidden ones)."
-			},
-			{
-				"Verbose (v)",
-					"Toggles verbose output mode.\n" +
-					"When enabled, provides more detailed feedback\n" +
-					"during command execution (for debugging).\n" +
-					"Default is off."
-			},
-			{
-				"Clear (c)",
-					"Clears the terminal screen.\n" +
-					"Resets the display and shows the initial menu."
-			},
-			{
-				"Help (h)",
-					"Displays basic help information."
-			},
-			{
-				"Quit (q)",
-					"Exits the program.\n" +
-					"Terminates the application safely."
-			},
-		};
-
-		for(String[] cmdInfo : commandsInfo)
-		{
-			String command = cmdInfo[0];
-			String description = cmdInfo[1];
-
-			writer.println(new AttributedString(command, BOLD_GREEN_STYLE).toAnsi(terminal));
-
-			String[] lines = description.split("\n");
-			for (String line : lines)
-				writer.println(new AttributedString("    " + line, BOLD_WHITE_STYLE).toAnsi(terminal));
-
-			writer.println();
-		}
-
-		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
-		writer.flush();
-	}
-
-	private void clearTerminal()
-	{
-		terminal.puts(InfoCmp.Capability.clear_screen);
-		print("\033[3J");
-
-		print(initialOutput);
-	}
-
 	public boolean inputCatcher() throws IOException
 	{
 		try
 		{
-			String cmd = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			String cmd = commandReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 
 			if(!cmd.isEmpty() && !commands.containsKey(cmd))
+			{
 				printRed("Invalid command: " + cmd, true);
-
-			commandExecuter(cmd);
+				printRed("Type 'Help' for available commands.", true);
+				return running;
+			}
+			else
+				commandExecuter(cmd);
 		}
 		catch(UserInterruptException | EndOfFileException e)
 		{
@@ -384,33 +259,11 @@ public class CLI
 		return running;
 	}
 
-	public void closeResources()
-	{
-		if(running)
-			running = false;
-
-		try
-		{
-			terminal.close();
-		}
-		catch(IOException e)
-		{
-			printRed("Failed to close terminal: " + e.getMessage(), true);
-			e.printStackTrace();
-		}
-	}
-
 	private void commandExecuter(String cmd) throws IOException
 	{
 		if(cmd.isEmpty())
 		{
 			printYellow("Please enter a command.", true);
-			return;
-		}
-
-		if(!commands.containsKey(cmd))
-		{
-			printRed("Type 'Help' for available commands.", true);
 			return;
 		}
 
@@ -424,7 +277,7 @@ public class CLI
 			case EXTEND: extendHandler(); break;
 			case SETTOLERANCE: setToleranceHandler(); break;
 			case INFO: extendedUsage(terminal.writer()); break;
-			case VERBOSE: processor.switchVerbosity(); break;
+			case VERBOSE: verboseHandler(); break;
 			case CLEAR: clearTerminal(); break;
 			case HELP: usage(terminal.writer()); break;
 			case QUIT: quit(); break;
@@ -480,7 +333,6 @@ public class CLI
 		{
 			printRed("Error processing input: " + e.getMessage(), true);
 		}
-
 	}
 
 	private void personalizedHandler() throws IOException
@@ -688,6 +540,8 @@ public class CLI
 		printWhite("      Performs the sentiment analysis", true);
 		printWhite("    Toxicity", true);
 		printWhite("      Performs the toxicity analysis", true);
+		printWhite("    Entity", true);
+		printWhite("      Performs the entity analysis", true);
 		printWhite("    Combined", true);
 		printWhite("      Allows to choose a combination of the options", true);
 
@@ -744,7 +598,7 @@ public class CLI
 
 				if(userInput.isEmpty())
 				{
-					printYellow("Please enter a valid Sentence. Remaining attempts " + i, true);
+					printYellow("Please enter a valid sentence. Remaining attempts " + i, true);
 					userInput = read(false);
 				}
 				else
@@ -759,6 +613,7 @@ public class CLI
 			case SYNTAX: analyzeSyntax(userInput); break;
 			case SENTIMENT: analyzeSentiment(userInput); break;
 			case TOXICITY: analyzeToxicity(userInput); break;
+			case ENTITY: analyzeEntity(userInput); break;
 			case COMBINED: analyzeCombined(userInput); break;
 		}
 	}
@@ -767,7 +622,7 @@ public class CLI
 	{
 		Random random = new Random();
 
-		AnalyzeOptions[] opts = { AnalyzeOptions.SYNTAX, AnalyzeOptions.SENTIMENT, AnalyzeOptions.TOXICITY };
+		AnalyzeOptions[] opts = { AnalyzeOptions.SYNTAX, AnalyzeOptions.SENTIMENT, AnalyzeOptions.TOXICITY, AnalyzeOptions.ENTITY };
 
 		AnalyzeOptions opt = opts[random.nextInt(opts.length)];
 
@@ -778,6 +633,7 @@ public class CLI
 			case SYNTAX: analyzeSyntax(input); break;
 			case SENTIMENT: analyzeSentiment(input); break;
 			case TOXICITY: analyzeToxicity(input); break;
+			case ENTITY: analyzeEntity(input); break;
 		}
 	}
 
@@ -788,6 +644,7 @@ public class CLI
 		analyzeSyntax(input);
 		analyzeSentiment(input);
 		analyzeToxicity(input);
+		analyzeEntity(input);
 	}
 
 	private void analyzeSyntax(String input)
@@ -798,20 +655,26 @@ public class CLI
 
 	private void analyzeSentiment(String input)
 	{
-		printWhite("Sentiment analysis: ", false);
+		printWhite("Sentiment analysis: ", true);
 		printWhite(processor.analyzeSentiment(input), false);
 	}
 
 	private void analyzeToxicity(String input)
 	{
-		printWhite("Toxicity analysis: ", false);
+		printWhite("Toxicity analysis: ", true);
 		printWhite(processor.analyzeToxicity(input), false);
+	}
+
+	private void analyzeEntity(String input)
+	{
+		printWhite("Entity analysis", true);
+		printWhite(processor.analyzeEntity(input), false);
 	}
 
 	private void analyzeCombined(String input)
 	{
 		printBlue("Select the desired analysis (press enter to confirm the combination choice):", true);
-		printWhite("Syntax, sentiment, toxicity", false);
+		printWhite("Syntax, sentiment, toxicity, entity", false);
 
 		String mode = read(true);
 		List<AnalyzeOptions> opts = new ArrayList<>();
@@ -823,7 +686,7 @@ public class CLI
 
 			if(mode.isEmpty())
 				break;
-			else if((!mode.equals("syntax") && !mode.equals("sy") && !mode.equals("sentiment") && !mode.equals("se") && !mode.equals("toxicity") && !mode.equals("t")))
+			else if(!mode.equals("syntax") && !mode.equals("sy") && !mode.equals("sentiment") && !mode.equals("se") && !mode.equals("toxicity") && !mode.equals("t") && !mode.equals("entity") && !mode.equals("e"))
 			{
 				printYellow("Please enter a valid option. Remaining attempts " + i, true);
 				mode = read(true);
@@ -834,6 +697,8 @@ public class CLI
 				opts.add(AnalyzeOptions.SENTIMENT);
 			else if(mode.equals("toxicity") || mode.equals("t"))
 				opts.add(AnalyzeOptions.TOXICITY);
+			else if(mode.equals("entity") || mode.equals("e"))
+				opts.add(AnalyzeOptions.ENTITY);
 		}
 
 		for(AnalyzeOptions opt : opts)
@@ -845,6 +710,7 @@ public class CLI
 				case SYNTAX: analyzeSyntax(input); break;
 				case SENTIMENT: analyzeSentiment(input); break;
 				case TOXICITY: analyzeToxicity(input); break;
+				case ENTITY: analyzeEntity(input); break;
 			}
 		}
 	}
@@ -1037,6 +903,161 @@ public class CLI
 		processor.setTolerance(tolerance);
 	}
 
+	private void extendedUsage(PrintWriter writer)
+	{
+		int totalWidth = 58;
+		String title = "Extended Commands help";
+		int titlePadding = (totalWidth - title.length() - 1) / 2;
+
+		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
+		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
+
+		String[][] commandsInfo =
+		{
+			{
+				"Default (d)",
+					"Performs both procedures of generation and analysis in one step.\n" +
+					"This is a default combination of commands, for a more specific settings\n" +
+					"use the other commands."
+			},
+			{
+				"Personalized (p)",
+					"Performs the whole process, but every part of it is personalizable\n" +
+					"acordingly to the user choice."
+			},
+			{
+				"Generate (g)",
+					"Generates a random nonsense sentence.\n" +
+					"The sentece even if it has grammatical sense,\n" +
+					"it's missing all the logical sense.\n" +
+					"The sentence is printed and buffered."
+			},
+			{
+				"Analyze (a)",
+					"Validates the buffered sentence structure and syntax.\n" +
+					"Via different settings can be analyzed accordingly to its:\n" +
+					"'toxicity', 'sentiment' or 'syntax'.\n" +
+					"If no sentence is buffered, no analysis is performed."
+			},
+			{
+				"Tree (t)",
+					"Prints the syntactic tree of the buffered sentence.\n" +
+					"Shows the hierarchical structure of the sentence\n" +
+					"components for better understanding.\n" +
+					"If no sentence is buffered, no analysis is performed.\n" +
+					"This function requires to analyze the sentence."
+			},
+			{
+				"Extend",
+					"Gives the opportunity to the user to input a Noun, an Adjective or a Verb\n" +
+					"to the data dictionaries used by the program."
+			},
+			{
+				"Set tolerance (st)",
+					"Changes the tolerance level for the analysis.\n" +
+					"Default 0.7 for toxicity (ranges from 0.0 to 1.0),\n" +
+					"  Defines the level over which a text is considered offensive.\n"
+			},
+			{
+				"Info (i)",
+					"Shows detailed information about commands.\n" +
+					"Provides extended help for each available command (even hidden ones)."
+			},
+			{
+				"Verbose (v)",
+					"Toggles verbose output mode.\n" +
+					"When enabled, provides more detailed feedback\n" +
+					"during command execution (for debugging).\n" +
+					"Default is off."
+			},
+			{
+				"Clear (c)",
+					"Clears the terminal screen.\n" +
+					"Resets the display and shows the initial menu."
+			},
+			{
+				"Help (h)",
+					"Displays basic help information."
+			},
+			{
+				"Quit (q)",
+					"Exits the program.\n" +
+					"Terminates the application safely."
+			},
+		};
+
+		for(String[] cmdInfo : commandsInfo)
+		{
+			String command = cmdInfo[0];
+			String description = cmdInfo[1];
+
+			writer.println(new AttributedString(command, BOLD_GREEN_STYLE).toAnsi(terminal));
+
+			String[] lines = description.split("\n");
+			for (String line : lines)
+				writer.println(new AttributedString("    " + line, BOLD_WHITE_STYLE).toAnsi(terminal));
+		}
+
+		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.flush();
+	}
+
+	private void verboseHandler()
+	{
+		printBlue("Currently verbosity is set to " + processor.isVerbose(), true);
+		printBlue("Switching verbosity", true);
+
+		processor.switchVerbosity();
+	}
+
+	private void clearTerminal()
+	{
+		terminal.puts(InfoCmp.Capability.clear_screen);
+		print("\033[3J");
+
+		print(initialOutput);
+	}
+
+	private void usage(PrintWriter writer)
+	{
+		int totalWidth = 58;
+		String title = "Available Commands";
+
+		int titlePadding = (totalWidth - title.length() - 2) / 2;
+		String titleLine = "=".repeat(titlePadding) + "< " + title + " >" + "=".repeat(titlePadding);
+		writer.println(new AttributedString(titleLine, BOLD_MAGENTA_STYLE).toAnsi(terminal));
+
+		String[] commands =
+		{
+			"Default", "Performs a basic combination of generation and analysis",
+			"Personalized", "Performs the full process, with each step personalizable",
+			"Generate", "Generates a random nonsense sentence",
+			"Analyze", "Validates sentence structure and syntax",
+			"Tree", "Prints the syntactic tree",
+			"Extend", "User can insert a noun, adjective or verb to the dicionaries",
+			"Set tolerance", "Change tolerance level for the analysis",
+			"Info", "Shows more detailed infos about the commands",
+			"Clear", "Clears the terminal and shows initial menu",
+			"Help", "Shows this help menu",
+			"Quit", "Exits the program"
+		};
+
+		for(int i = 0; i < commands.length; i += 2)
+		{
+			String command = String.format("%-22s", commands[i]);
+			String description = String.format("%-33s", commands[i + 1]);
+
+			AttributedString styledCommand = new AttributedString(command, BOLD_GREEN_STYLE);
+			AttributedString styledDescription = new AttributedString(description, BOLD_WHITE_STYLE);
+
+			writer.println(styledCommand.toAnsi(terminal) + styledDescription.toAnsi(terminal));
+		}
+
+		writer.println(new AttributedString("=".repeat(totalWidth + 2), BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.println(new AttributedString("Enter a command or type 'Help' to see this again:", BOLD_MAGENTA_STYLE).toAnsi(terminal));
+		writer.flush();
+	}
+
 	private void quit()
 	{
 		printWhite("Exiting.", true);
@@ -1139,10 +1160,26 @@ public class CLI
 	private String read(boolean demangled)
 	{
 		if(demangled)
-			return reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 		else
-			return reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ");
+			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ");
 
 
+	}
+
+	public void closeResources()
+	{
+		if(running)
+			running = false;
+
+		try
+		{
+			terminal.close();
+		}
+		catch(IOException e)
+		{
+			printRed("Failed to close terminal: " + e.getMessage(), true);
+			e.printStackTrace();
+		}
 	}
 }

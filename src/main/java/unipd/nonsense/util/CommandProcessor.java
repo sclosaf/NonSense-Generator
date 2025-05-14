@@ -283,6 +283,11 @@ public class CommandProcessor implements AutoCloseable
 		logger.switchVerboseMode();
 	}
 
+	public boolean isVerbose()
+	{
+		return logger.getVerbose();
+	}
+
 	@Override
 	public void close()
 	{
