@@ -61,7 +61,7 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateRandom()
 	{
-		return generator.generateRandomSentence().getPattern();
+		return cachedString = generator.generateRandomSentence().getPattern();
 	}
 
 	public String generateFrom(String str) throws IOException
@@ -91,7 +91,22 @@ public class CommandProcessor implements AutoCloseable
 			}
 		}
 
-		return generator.generateSentenceWith(nounList, adjectiveList, verbList).getPattern();
+		return cachedString = generator.generateSentenceWith(nounList, adjectiveList, verbList).getPattern();
+	}
+
+	public String generateWithNumber(Number num)
+	{
+		return cachedString = generator.generateSentenceWithNumber(num).getPattern();
+	}
+
+	public String generateWithTense(Tense tense)
+	{
+		return cachedString = generator.generateSentenceWithTense(tense).getPattern();
+	}
+
+	public String generateWithBoth(Number num, Tense tense)
+	{
+		return cachedString = generator.generateSentenceWithTenseAndNumber(tense, num).getPattern();
 	}
 
 	private Number fromPartOfSpeechNumberToNumber(PartOfSpeech.Number num)
@@ -120,6 +135,11 @@ public class CommandProcessor implements AutoCloseable
 		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokens(str));
 	}
 
+	public String analyzeSyntax()
+	{
+		return analyzeSyntax(cachedString);
+	}
+
 	public String analyzeSyntax(String str)
 	{
 		try
@@ -141,6 +161,11 @@ public class CommandProcessor implements AutoCloseable
 		{
 			return "Error during syntax analysis: " + e.getMessage();
 		}
+	}
+
+	public String analyzeSentiment()
+	{
+		return analyzeSentiment(cachedString);
 	}
 
 	public String analyzeSentiment(String str)
@@ -166,6 +191,11 @@ public class CommandProcessor implements AutoCloseable
 		}
 	}
 
+	public String analyzeEntity()
+	{
+		return analyzeEntity(cachedString);
+	}
+
 	public String analyzeEntity(String str)
 	{
 		try
@@ -189,6 +219,11 @@ public class CommandProcessor implements AutoCloseable
 		}
 	}
 
+	public String analyzeToxicity()
+	{
+		return analyzeToxicity(cachedString);
+	}
+
 	public String analyzeToxicity(String str)
 	{
 		String report = validator.getToxicityReport(cachedString);
@@ -210,7 +245,24 @@ public class CommandProcessor implements AutoCloseable
 		return result.toString();
 	}
 
-	public void setTollerance(float newTolerance)
+	public void append(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
+	{
+		for(Noun noun : nounList)
+			JsonUpdater.loadNoun(noun);
+
+		for(Adjective adjective : adjectiveList)
+			JsonUpdater.loadAdjective(adjective);
+
+		for(Verb verb : verbList)
+			JsonUpdater.loadVerb(verb);
+	}
+
+	public float getTolerance()
+	{
+		return toxicityTolerance;
+	}
+
+	public void setTolerance(float newTolerance)
 	{
 		if(newTolerance < 0.0f || newTolerance > 1.0f)
 			throw new IllegalToleranceException();

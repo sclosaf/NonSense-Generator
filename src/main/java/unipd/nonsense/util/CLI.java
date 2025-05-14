@@ -2,9 +2,17 @@ package unipd.nonsense.util;
 
 import unipd.nonsense.util.CommandProcessor;
 
+import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Adjective;
+import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Verb.Tense;
+
 import unipd.nonsense.exceptions.MissingInternetConnectionException;
 import unipd.nonsense.exceptions.IllegalToleranceException;
 
+import java.util.List;
+import java.util.ArrayList;
 import java.util.Map;
 import java.util.HashMap;
 import java.io.InputStream;
@@ -13,6 +21,8 @@ import java.io.InputStreamReader;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+
+import java.util.Random;
 
 import org.jline.reader.*;
 import org.jline.reader.Highlighter;
@@ -32,6 +42,16 @@ public class CLI
 		DEFAULT, PERSONALIZED, GENERATE, ANALYZE, TREE, EXTEND, SETTOLERANCE, INFO, VERBOSE, HELP, CLEAR, QUIT
 	}
 
+	private enum GenerateOptions
+	{
+		RANDOM, NUMBER, TENSE, BOTH
+	}
+
+	private enum AnalyzeOptions
+	{
+		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, COMBINED
+	}
+
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
 	private static final AttributedStyle BLUE_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE);
 	private static final AttributedStyle GREEN_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN);
@@ -48,7 +68,10 @@ public class CLI
 
 
 	private static Map<String, Command> commands = new HashMap<>();
+	private static Map<String, GenerateOptions> generateOptions = new HashMap<>();
+	private static Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 	private static final int HISTORY_SIZE = 20;
+	private static final int MAX_ATTEMPTS = 5;
 	private String initialOutput;
 	private boolean running;
 	private CommandProcessor processor;
@@ -105,39 +128,50 @@ public class CLI
 
 		commands.put("default", Command.DEFAULT);
 		commands.put("d", Command.DEFAULT);
-
 		commands.put("personalized", Command.PERSONALIZED);
 		commands.put("p", Command.PERSONALIZED);
-
 		commands.put("generate", Command.GENERATE);
 		commands.put("g", Command.GENERATE);
-
 		commands.put("analyze", Command.ANALYZE);
 		commands.put("a", Command.ANALYZE);
-
 		commands.put("tree", Command.TREE);
 		commands.put("t", Command.TREE);
-
 		commands.put("extends", Command.EXTEND);
 		commands.put("e", Command.EXTEND);
-
 		commands.put("set tolerance", Command.SETTOLERANCE);
 		commands.put("st", Command.SETTOLERANCE);
-
 		commands.put("info", Command.INFO);
 		commands.put("i", Command.INFO);
-
 		commands.put("verbose", Command.VERBOSE);
 		commands.put("v", Command.VERBOSE);
-
 		commands.put("help", Command.HELP);
 		commands.put("h", Command.HELP);
-
 		commands.put("clear", Command.CLEAR);
 		commands.put("c", Command.CLEAR);
-
 		commands.put("quit", Command.QUIT);
 		commands.put("q", Command.QUIT);
+
+		generateOptions.put("random", GenerateOptions.RANDOM);
+		generateOptions.put("r", GenerateOptions.RANDOM);
+		generateOptions.put("number", GenerateOptions.NUMBER);
+		generateOptions.put("n", GenerateOptions.NUMBER);
+		generateOptions.put("tense", GenerateOptions.TENSE);
+		generateOptions.put("t", GenerateOptions.TENSE);
+		generateOptions.put("both", GenerateOptions.BOTH);
+		generateOptions.put("b", GenerateOptions.BOTH);
+
+		analyzeOptions.put("random", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("r", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("all", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("a", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("syntax", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("sy", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("sentiment", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("se", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("toxicity", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("t", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("combined", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("c", AnalyzeOptions.RANDOM);
 
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter tempWriter = new PrintWriter(stringWriter);
@@ -332,7 +366,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	public boolean inputCatcher()
+	public boolean inputCatcher() throws IOException
 	{
 		try
 		{
@@ -372,7 +406,7 @@ public class CLI
 		}
 	}
 
-	private void commandExecuter(String cmd)
+	private void commandExecuter(String cmd) throws IOException
 	{
 		if(cmd.isEmpty())
 		{
@@ -415,7 +449,7 @@ public class CLI
 			break;
 
 			case SETTOLERANCE:
-				setTolleranceHandler();
+				setToleranceHandler();
 			break;
 
 			case INFO:
@@ -444,10 +478,11 @@ public class CLI
 	{
 		try
 		{
+			terminal.writer().println(new AttributedString("Proceding with default process.", BOLD_WHITE_STYLE).toAnsi(terminal));
 			terminal.writer().println(new AttributedString("Enter a sentence to process (or press Enter to generate one automatically and skip the elabotation process):", BOLD_WHITE_STYLE).toAnsi(terminal));
 			terminal.flush();
 
-			String userInput = reader.readLine(">> ").trim();
+			String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
 			String syntax = "";
 			String toxicity = "";
 
@@ -492,54 +527,577 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void personalizedHandler()
-	{}
-
-	private void generateHandler()
+	private void personalizedHandler() throws IOException
 	{
-			terminal.writer().println(new AttributedString("Proceeding generating a random sentence, select one of the options:", BOLD_BLUE_STYLE).toAnsi(terminal));
-			terminal.writer().println(new AttributedString("    Randomized", BOLD_WHITE_STYLE).toAnsi(terminal));
-			terminal.writer().println(new AttributedString("    Number", BOLD_WHITE_STYLE).toAnsi(terminal));
-			terminal.writer().println(new AttributedString("    Tense", BOLD_WHITE_STYLE).toAnsi(terminal));
-			terminal.writer().println(new AttributedString("    Both", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("Proceding with the personalized process.", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("Enter a sentence to process (or press Enter to generate one automatically and skip the elabotation process):", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.flush();
 
-			terminal.flush();
+		String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
 
+		if(userInput.isEmpty())
+			generateHandler();
 
+		analyzeHandler();
+		treeHandler();
+	}
+
+	private void generateHandler() throws IOException
+	{
+		terminal.writer().println(new AttributedString("Proceeding generating a random sentence, select one of the following options:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Randomized", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Each parameter (number and tense) used in the generated sentence, are selected randomly", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Number", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      User can choose the number used into the generated sentence, the tense is selected randomly", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Tense", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      User can choose the tense used into the generated sentence, the number is selected randomly", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Both", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      User can choose both tense and number used in the generated sentence", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.flush();
+
+		String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(userInput.isEmpty() || !generateOptions.containsKey(userInput))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		switch(generateOptions.get(userInput))
+		{
+			case RANDOM: generateRandom(); break;
+			case NUMBER: generateNumber(); break;
+			case TENSE: generateTense(); break;
+			case BOTH: generateBoth(); break;
+		}
+	}
+
+	private void generateRandom()
+	{
+		String generated = processor.generateRandom();
+		terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+	}
+
+	private void generateNumber()
+	{
+		terminal.writer().println(new AttributedString("Specify the number among the available:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Singular", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Pluralar", BOLD_WHITE_STYLE).toAnsi(terminal));
+
+		String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(userInput.isEmpty() || (!userInput.equals("singular") && !userInput.equals("s") && !userInput.equals("plural") && !userInput.equals("p")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		if(userInput.equals("singular") || userInput.equals("s"))
+		{
+			String generated = processor.generateWithNumber(Number.SINGULAR);
+			terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+		}
+		else if(userInput.equals("plural") || userInput.equals("p"))
+		{
+			String generated = processor.generateWithNumber(Number.PLURAL);
+			terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+		}
+	}
+
+	private void generateTense()
+	{
+		terminal.writer().println(new AttributedString("Specify the tense among the available:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Past", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Present", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Future", BOLD_WHITE_STYLE).toAnsi(terminal));
+
+		String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = 0; i <= MAX_ATTEMPTS; ++i)
+		{
+			if(i == MAX_ATTEMPTS)
+				return;
+
+			if(userInput.isEmpty() || (!userInput.equals("past") && !userInput.equals("pa") && !userInput.equals("present") && !userInput.equals("pr") && !userInput.equals("future") && !userInput.equals("f")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		if(userInput.equals("past") || userInput.equals("pa"))
+		{
+			String generated = processor.generateWithTense(Tense.PAST);
+		terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+		}
+		else if(userInput.equals("present") || userInput.equals("pr"))
+		{
+			String generated = processor.generateWithTense(Tense.PRESENT);
+			terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+		}
+		else if(userInput.equals("future") || userInput.equals("f"))
+		{
+			String generated = processor.generateWithTense(Tense.FUTURE);
+			terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
+		}
+	}
+
+	private void generateBoth()
+	{
+		terminal.writer().println(new AttributedString("Specify the number among the available:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Singular", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Pluralar", BOLD_WHITE_STYLE).toAnsi(terminal));
+
+		String userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(userInput.isEmpty() || (!userInput.equals("singular") && !userInput.equals("s") && !userInput.equals("plural") && !userInput.equals("p")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		Number number;
+		if(userInput.equals("singular") && userInput.equals("s"))
+			number = Number.SINGULAR;
+		else
+			number = Number.PLURAL;
+
+		terminal.writer().println(new AttributedString("Specify the tense among the available:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Past", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Present", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Future", BOLD_WHITE_STYLE).toAnsi(terminal));
+
+		userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = 0; i <= MAX_ATTEMPTS; ++i)
+		{
+			if(i == MAX_ATTEMPTS)
+				return;
+
+			if(userInput.isEmpty() || (!userInput.equals("past") && !userInput.equals("pa") && !userInput.equals("present") && !userInput.equals("pr") && !userInput.equals("future") && !userInput.equals("f")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		Tense tense;
+		if(userInput.equals("past") || userInput.equals("pa"))
+			tense = Tense.PAST;
+		else if(userInput.equals("present") || userInput.equals("pr"))
+			tense = Tense.PRESENT;
+		else
+			tense = Tense.FUTURE;
+
+		String generated = processor.generateWithBoth(number, tense);
+		terminal.writer().println(new AttributedString("Generated sentence: " + generated, GREEN_STYLE).toAnsi(terminal));
 	}
 
 	private void analyzeHandler()
-	{}
-
-	private void treeHandler()
-	{}
-
-	private void extendHandler()
-	{}
-
-	private void setTolleranceHandler()
 	{
-		try
+		terminal.writer().println(new AttributedString("Proceeding to analyze select one of the following options:", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Random", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Performs one random of the available options", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    All", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Performs all the analysis available", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Syntax", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Performs the syntactic analysis", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Sentiment", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Performs the sentiment analysis", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Toxicity", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Performs the toxicity analysis", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("    Combined", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("      Allows to choose a combination of the options", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.flush();
+
+		String analysis = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
 		{
-			String toleranceInput = reader.readLine(new AttributedString("Enter tolerance value (0.0-1.0): ", BOLD_WHITE_STYLE).toAnsi(terminal));
+			if(i == 0)
+				return;
+
+			if(analysis.isEmpty() || !analyzeOptions.containsKey(analysis))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				analysis = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		terminal.writer().println(new AttributedString("Select if do you want to analyze a generate sentence or input a new one", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("(Generate/Input)", DEFAULT_STYLE).toAnsi(terminal));
+
+		String mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		String userInput = new String();
+
+		if(mode.equals("generate") || mode.equals("g"))
+		{
+			userInput = processor.generateRandom();
+			terminal.writer().println(new AttributedString("Generated sentence: " + userInput, GREEN_STYLE).toAnsi(terminal));
+		}
+		else if(mode.equals("input") || mode.equals("i"))
+		{
+			userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
+
+			for(int i = MAX_ATTEMPTS; i >= 0; --i)
+			{
+				if(i == 0)
+					return;
+
+				if(userInput.isEmpty())
+				{
+					terminal.writer().println(new AttributedString("Please enter a valid Sentence. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+					terminal.flush();
+					userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
+				}
+				else
+					break;
+			}
+		}
+
+		switch(analyzeOptions.get(analysis))
+		{
+			case RANDOM: analyzeRandom(userInput); break;
+			case ALL: analyzeAll(userInput); break;
+			case SYNTAX: analyzeSyntax(userInput); break;
+			case SENTIMENT: analyzeSentiment(userInput); break;
+			case TOXICITY: analyzeToxicity(userInput); break;
+			case COMBINED: analyzeCombined(userInput); break;
+		}
+	}
+
+	private void analyzeRandom(String input)
+	{
+		Random random = new Random();
+
+		AnalyzeOptions[] opts = { AnalyzeOptions.SYNTAX, AnalyzeOptions.SENTIMENT, AnalyzeOptions.TOXICITY };
+
+		AnalyzeOptions opt = opts[random.nextInt(opts.length)];
+
+		terminal.writer().println(new AttributedString("Random analysis chosen is " + opt, DEFAULT_STYLE).toAnsi(terminal));
+
+		switch(opt)
+		{
+			case SYNTAX: analyzeSyntax(input); break;
+			case SENTIMENT: analyzeSentiment(input); break;
+			case TOXICITY: analyzeToxicity(input); break;
+		}
+	}
+
+	private void analyzeAll(String input)
+	{
+		terminal.writer().println(new AttributedString("Proceding analyzing all the analysis", DEFAULT_STYLE).toAnsi(terminal));
+
+		analyzeSyntax(input);
+		analyzeSentiment(input);
+		analyzeToxicity(input);
+	}
+
+	private void analyzeSyntax(String input)
+	{
+		terminal.writer().println(new AttributedString("Syntax analysis: ", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString(processor.analyzeSyntax(input), DEFAULT_STYLE).toAnsi(terminal));
+	}
+
+	private void analyzeSentiment(String input)
+	{
+		terminal.writer().println(new AttributedString("Sentiment analysis: ", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString(processor.analyzeSentiment(input), DEFAULT_STYLE).toAnsi(terminal));
+	}
+
+	private void analyzeToxicity(String input)
+	{
+		terminal.writer().println(new AttributedString("Toxicity analysis: ", DEFAULT_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString(processor.analyzeToxicity(input), DEFAULT_STYLE).toAnsi(terminal));
+	}
+
+	private void analyzeCombined(String input)
+	{
+		terminal.writer().println(new AttributedString("Select the desired analysis (press enter to confirm the combination choice):", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("Syntax, sentiment, toxicity", DEFAULT_STYLE).toAnsi(terminal));
+
+		String mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+		List<AnalyzeOptions> opts = new ArrayList<>();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(mode.isEmpty())
+				break;
+			else if((!mode.equals("syntax") && !mode.equals("sy") && !mode.equals("sentiment") && !mode.equals("se") && !mode.equals("toxicity") && !mode.equals("t")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else if(mode.equals("syntax") || mode.equals("sy"))
+				opts.add(AnalyzeOptions.SYNTAX);
+			else if(mode.equals("sentiment") || mode.equals("se"))
+				opts.add(AnalyzeOptions.SENTIMENT);
+			else if(mode.equals("toxicity") || mode.equals("t"))
+				opts.add(AnalyzeOptions.TOXICITY);
+		}
+
+		for(AnalyzeOptions opt : opts)
+		{
+			terminal.writer().println(new AttributedString("Proceeding with " + opt, BOLD_BLUE_STYLE).toAnsi(terminal));
+
+			switch(opt)
+			{
+				case SYNTAX: analyzeSyntax(input); break;
+				case SENTIMENT: analyzeSentiment(input); break;
+				case TOXICITY: analyzeToxicity(input); break;
+			}
+		}
+	}
+
+	private void treeHandler() throws IOException
+	{
+		terminal.writer().println(new AttributedString("Select if do you want to print the syntactic tree of a generate sentence or input a new one", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("(Generate/Input)", DEFAULT_STYLE).toAnsi(terminal));
+
+		String mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
+
+			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i")))
+			{
+				terminal.writer().println(new AttributedString("Please enter a valid option. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				mode = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+			}
+			else
+				break;
+		}
+
+		String userInput = new String();
+
+		if(mode.equals("generate") || mode.equals("g"))
+		{
+			userInput = processor.generateRandom();
+			terminal.writer().println(new AttributedString("Generated sentence: " + userInput, GREEN_STYLE).toAnsi(terminal));
+		}
+		else if(mode.equals("input") || mode.equals("i"))
+		{
+			userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
+
+			for(int i = MAX_ATTEMPTS; i >= 0; --i)
+			{
+				if(i == 0)
+					return;
+
+				if(userInput.isEmpty())
+				{
+					terminal.writer().println(new AttributedString("Please enter a valid Sentence. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+					terminal.flush();
+					userInput = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim();
+				}
+				else
+					break;
+			}
+		}
+
+		terminal.writer().println(new AttributedString("Proceeding printing the syntactic tree of the chosen sentence", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString(processor.generateSyntaxTree(userInput), DEFAULT_STYLE).toAnsi(terminal));
+	}
+
+	private void extendHandler() throws IOException
+	{
+		terminal.writer().println(new AttributedString("Enter the part of speech taht you want to add (press Enter to confirm the new terms):", BOLD_BLUE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("Noun, adjective or verb", BOLD_BLUE_STYLE).toAnsi(terminal));
+
+		String partOfSpeech = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+		List<Noun> nounList = new ArrayList<>();
+		List<Adjective> adjectiveList = new ArrayList<>();
+		List<Verb> verbList = new ArrayList<>();
+
+		while(!partOfSpeech.isEmpty())
+		{
+			for(int i = MAX_ATTEMPTS; i >= 0; --i)
+			{
+				if(i == 0)
+					return;
+
+				if((!partOfSpeech.equals("noun") && !partOfSpeech.equals("n") && !partOfSpeech.equals("adjective") && !partOfSpeech.equals("a") && !partOfSpeech.equals("verb") && !partOfSpeech.equals("v")))
+				{
+					terminal.writer().println(new AttributedString("Please enter a valid value. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+					terminal.flush();
+					partOfSpeech = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+				}
+				else
+					break;
+			}
+
+			if(partOfSpeech.equals("noun") || partOfSpeech.equals("n"))
+			{
+				terminal.writer().println(new AttributedString("Enter the number for the noun: ", BOLD_BLUE_STYLE).toAnsi(terminal));
+				terminal.writer().println(new AttributedString("Singular or plural ", BOLD_BLUE_STYLE).toAnsi(terminal));
+				String num = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
+				{
+					if(i == 0)
+						return;
+
+					if(num.isEmpty() || (!num.equals("singular") && !num.equals("s") && !num.equals("plural") && !num.equals("p")))
+					{
+						terminal.writer().println(new AttributedString("Please enter a valid value. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+						terminal.flush();
+						num = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+					}
+					else
+						break;
+				}
+
+				Number number;
+				if(num.equals("singular") || num.equals("s"))
+					number = Number.SINGULAR;
+				else
+					number = Number.PLURAL;
+
+				terminal.writer().println(new AttributedString("Insert the new noun:", BOLD_BLUE_STYLE).toAnsi(terminal));
+				String text = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+				nounList.add(new Noun(text, number));
+			}
+			else if(partOfSpeech.equals("adjective") || partOfSpeech.equals("a"))
+			{
+				terminal.writer().println(new AttributedString("Insert the new adjective:", BOLD_BLUE_STYLE).toAnsi(terminal));
+				String text = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+				adjectiveList.add(new Adjective(text));
+			}
+			else if(partOfSpeech.equals("verb") || partOfSpeech.equals("v"))
+			{
+				terminal.writer().println(new AttributedString("Enter the tense for the verb: ", BOLD_BLUE_STYLE).toAnsi(terminal));
+				terminal.writer().println(new AttributedString("past, present or future ", BOLD_BLUE_STYLE).toAnsi(terminal));
+				String textTense = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
+				{
+					if(i == 0)
+						return;
+
+					if(textTense.isEmpty() || (!textTense.equals("present") && !textTense.equals("pr") && !textTense.equals("past") && !textTense.equals("pa") && !textTense.equals("future") && !textTense.equals("f")))
+					{
+						terminal.writer().println(new AttributedString("Please enter a valid tense. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+						terminal.flush();
+						textTense = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+					}
+					else
+						break;
+				}
+
+				Tense tense;
+				if(textTense.equals("past") || textTense.equals("pa"))
+					tense = Tense.PAST;
+				else if(textTense.equals("present") || textTense.equals("pr"))
+					tense = Tense.PRESENT;
+				else
+					tense = Tense.FUTURE;
+
+				terminal.writer().println(new AttributedString("Insert the new verb:", BOLD_BLUE_STYLE).toAnsi(terminal));
+				String text = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().toLowerCase();
+
+				verbList.add(new Verb(text, tense));
+			}
+		}
+
+		terminal.writer().println(new AttributedString("Adding the new elements", BOLD_BLUE_STYLE).toAnsi(terminal));
+		processor.append(nounList, adjectiveList, verbList);
+	}
+
+	private void setToleranceHandler()
+	{
+		terminal.writer().println(new AttributedString("Enter tolerance value (0.0-1.0): ", BOLD_WHITE_STYLE).toAnsi(terminal));
+		terminal.writer().println(new AttributedString("Current tolerance value is " + processor.getTolerance(), BOLD_WHITE_STYLE).toAnsi(terminal));
+
+		String newTolerance = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
+		{
+			if(i == 0)
+				return;
 
 			try
 			{
-				float tolerance = Float.parseFloat(toleranceInput);
-				// terminal.writer().println(new AttributedString(processor.setTollerance(tolerance), DEFAULT_STYLE).toAnsi(terminal));
+				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f && (Float.parseFloat(newTolerance) > 1.0f))))
+				{
+					terminal.writer().println(new AttributedString("Please enter a valid value. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+					terminal.flush();
+					newTolerance = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+				}
+				else
+					break;
 			}
-			catch(IllegalToleranceException e)
+			catch(NumberFormatException e)
 			{
-				terminal.writer().println(new AttributedString("Invalid value. Please enter a value between 0.0 and 1.0", BOLD_RED_STYLE).toAnsi(terminal));
-
+				terminal.writer().println(new AttributedString("Please enter a valid value. Remaining attempts " + i, BOLD_YELLOW_STYLE).toAnsi(terminal));
+				terminal.flush();
+				newTolerance = reader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 			}
 		}
-		catch(UserInterruptException | EndOfFileException e)
-		{
-			terminal.writer().println(new AttributedString("Tolerance setting cancelled.", BOLD_YELLOW_STYLE).toAnsi(terminal));
-		}
 
-		terminal.flush();
+		float tolerance = Float.parseFloat(newTolerance);
+		processor.setTolerance(tolerance);
 	}
 
 	private void quit()
