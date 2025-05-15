@@ -144,18 +144,7 @@ public class CommandProcessor implements AutoCloseable
 	{
 		try
 		{
-			String report = analyzer.analyzeSyntaxInput(str);
-
-			StringBuilder result = new StringBuilder();
-			result.append("----------------------------------\n");
-			result.append("Syntax Analysis:\n");
-			result.append("----------------------------------\n");
-			result.append("Analyzed Text: ").append(str).append("\n\n");
-			result.append(report);
-
-			result.append("\n\n");
-
-			return result.toString();
+			return analyzer.analyzeSyntaxInput(str);
 		}
 		catch(IOException e)
 		{
@@ -172,18 +161,7 @@ public class CommandProcessor implements AutoCloseable
 	{
 		try
 		{
-			String report = analyzer.analyzeSentimentInput(str);
-
-			StringBuilder result = new StringBuilder();
-			result.append("----------------------------------\n");
-			result.append("Sentiment Analysis:\n");
-			result.append("----------------------------------\n");
-			result.append("Analyzed Text: ").append(str).append("\n\n");
-			result.append(report);
-
-			result.append("\n\n");
-
-			return result.toString();
+			return analyzer.analyzeSentimentInput(str);
 		}
 		catch(IOException e)
 		{
@@ -200,18 +178,7 @@ public class CommandProcessor implements AutoCloseable
 	{
 		try
 		{
-			String report = analyzer.analyzeEntitiesInput(str);
-
-			StringBuilder result = new StringBuilder();
-			result.append("----------------------------------\n");
-			result.append("Entity Analysis:\n");
-			result.append("----------------------------------\n");
-			result.append("Analyzed Text: ").append(str).append("\n\n");
-			result.append(report);
-
-			result.append("\n\n");
-
-			return result.toString();
+			return analyzer.analyzeEntitiesInput(str);
 		}
 		catch(IOException e)
 		{
@@ -240,7 +207,7 @@ public class CommandProcessor implements AutoCloseable
 		result.append("\nTolerance threshold set to: ").append(toxicityTolerance).append("\n");
 		result.append("Overall Assessment: ");
 		result.append(isToxic ? "TEXT FLAGGED AS POTENTIALLY INAPPROPRIATE" : "Text within acceptable parameters");
-		result.append("\n\n");
+		result.append("\n");
 
 		return result.toString();
 	}

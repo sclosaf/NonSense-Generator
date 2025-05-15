@@ -192,6 +192,9 @@ public class CLI
 		analyzeOptions.put("combined", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("c", AnalyzeOptions.RANDOM);
 
+		if(!checkInternetConnection())
+			throw new MissingInternetConnectionException();
+
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter tempWriter = new PrintWriter(stringWriter);
 
@@ -202,10 +205,6 @@ public class CLI
 		initialOutput = stringWriter.toString();
 
 		welcome(terminal.writer());
-
-		if(!checkInternetConnection())
-			throw new MissingInternetConnectionException();
-
 		usage(terminal.writer());
 	}
 
@@ -303,8 +302,7 @@ public class CLI
 			if(userInput.isEmpty())
 			{
 				printWhite("Sentence input skipped, proceding by generating one from scratch", true);
-				userInput = processor.generateRandom();
-				printWhite("Generated sentence: '" + userInput + "'", false);
+				printWhite("Generated sentence: '" + userInput = processor.generateRandom() + "'", false);
 
 				printWhite("Proceding with a standard analysis of the generated sentence", true);
 				printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
@@ -349,7 +347,7 @@ public class CLI
 		printWhite("Proceding with the personalized process.", true);
 		printWhite("This procedure lets the user go through several options that this program offers", true);
 
-		printWhite("As option the user can add new nouns, adjectives and verbs to the dictionaries", true);
+		printWhite("As option the user can add new nouns, adjectives and verbs to the dictionaries", true)
 		extendHandler();
 
 		printWhite("Enter a sentence to process (or press Enter to generate one automatically)", true);
@@ -589,10 +587,9 @@ public class CLI
 				break;
 		}
 
-		printWhite("Select what sentence do you want to analyze:", true);
+		printWhite("Select if do you want to analyze a generate sentence or input a new one", true);
 		printWhite(" - Generate", true);
 		printWhite(" - Input", true);
-		printWhite(" - Cached", true);
 
 		String mode = read(true);
 
@@ -601,7 +598,7 @@ public class CLI
 			if(i == 0)
 				return;
 
-			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i") && !mode.equals("cached") && !mode.equals("c")))
+			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i")))
 			{
 				printYellow("Please enter a valid option. Remaining attempts " + i, true);
 				mode = read(true);
@@ -634,11 +631,6 @@ public class CLI
 				else
 					break;
 			}
-		}
-		else if(mode.equals("cached") || mode.equals("c"))
-		{
-			printWhite("Proceding analyzing the cached sentence", true);
-			userInput = processor.getCachedSentence();
 		}
 
 		switch(analyzeOptions.get(analysis))
@@ -759,10 +751,9 @@ public class CLI
 	private void treeHandler() throws IOException
 	{
 		printTitleSeparator("Syntax tree procedure", BOLD_BLUE_STYLE);
-		printWhite("Select what sentence do you want to print the syntactic tree:", true);
+		printWhite("Select if do you want to print the syntactic tree of a generate sentence or input a new one", true);
 		printWhite(" - Generate", true);
 		printWhite(" - Input", true);
-		printWhite(" - Cached", true);
 
 		String mode = read(true);
 
@@ -771,7 +762,7 @@ public class CLI
 			if(i == 0)
 				return;
 
-			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i") && !mode.equals("cached") && !mode.equals("c")))
+			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i")))
 			{
 				printYellow("Please enter a valid option. Remaining attempts " + i, true);
 				mode = read(true);
@@ -784,14 +775,11 @@ public class CLI
 
 		if(mode.equals("generate") || mode.equals("g"))
 		{
-			printWhite("Proceding generating a random sentence", true);
 			userInput = processor.generateRandom();
 			printGreen("Generated sentence: '" + userInput + "'", false);
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
-			printWhite("Insert the desired sentence", true);
-
 			userInput = read(false);
 
 			for(int i = MAX_ATTEMPTS; i >= 0; --i)
@@ -807,11 +795,6 @@ public class CLI
 				else
 					break;
 			}
-		}
-		else if(mode.equals("cached") || mode.equals("c"))
-		{
-			printWhite("Proceding with the cached sentence", true);
-			userInput = processor.getCachedSentence();
 		}
 
 		printTree(userInput);
@@ -969,8 +952,6 @@ public class CLI
 
 				verbList.add(new Verb(text, tense));
 			}
-
-			printWhite("Enter your next choice", true);
 		}
 
 		printWhite("Proceding adding the new elements", true);
@@ -981,7 +962,7 @@ public class CLI
 	{
 		printTitleSeparator("Tolerance procedure", BOLD_BLUE_STYLE);
 		printWhite("Current tolerance value is " + processor.getTolerance(), true);
-		printWhite("The tolerance parameter specifies which is the value over which an analyzed sentence is considered toxic", true);
+		printWhite("The tolerance parameter specifies which is the lower bound over which an analyzed sentence is considered toxic", true);
 		printWhite("Enter a new tolerance value (0.0 - 1.0): ", true);
 
 		String newTolerance = read(true);
