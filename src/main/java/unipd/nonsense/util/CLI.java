@@ -391,7 +391,7 @@ public class CLI
 
 			if(userInput.isEmpty() || !generateOptions.containsKey(userInput.toLowerCase()))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				userInput = read(true);
 			}
 			else
@@ -429,7 +429,7 @@ public class CLI
 
 			if(userInput.isEmpty() || (!userInput.equals("singular") && !userInput.equals("s") && !userInput.equals("plural") && !userInput.equals("p")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				userInput = read(true);
 			}
 			else
@@ -465,7 +465,7 @@ public class CLI
 
 			if(userInput.isEmpty() || (!userInput.equals("past") && !userInput.equals("pa") && !userInput.equals("present") && !userInput.equals("pr") && !userInput.equals("future") && !userInput.equals("f")))
 			{
-				printYellow("Please enter a valid option among the available. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option among the available. Remaining attempts " + (i - 1), true);
 				userInput = read(true);
 			}
 			else
@@ -506,7 +506,7 @@ public class CLI
 
 			if(userInput.isEmpty() || (!userInput.equals("singular") && !userInput.equals("s") && !userInput.equals("plural") && !userInput.equals("p")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				userInput = read(true);
 			}
 			else
@@ -534,7 +534,7 @@ public class CLI
 
 			if(userInput.isEmpty() || (!userInput.equals("past") && !userInput.equals("pa") && !userInput.equals("present") && !userInput.equals("pr") && !userInput.equals("future") && !userInput.equals("f")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				userInput = read(true);
 			}
 			else
@@ -582,7 +582,7 @@ public class CLI
 
 			if(analysis.isEmpty() || !analyzeOptions.containsKey(analysis.toLowerCase()))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				analysis = read(true);
 			}
 			else
@@ -603,7 +603,7 @@ public class CLI
 
 			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i") && !mode.equals("cached") && !mode.equals("c")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				mode = read(true);
 			}
 			else
@@ -628,7 +628,7 @@ public class CLI
 
 				if(userInput.isEmpty())
 				{
-					printYellow("Please enter a valid sentence. Remaining attempts " + i, true);
+					printYellow("Please enter a valid sentence. Remaining attempts " + (i - 1), true);
 					userInput = read(false);
 				}
 				else
@@ -743,7 +743,7 @@ public class CLI
 				opts.add(AnalyzeOptions.ENTITY);
 			else
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				mode = read(true);
 			}
 		}
@@ -779,7 +779,7 @@ public class CLI
 
 			if(mode.isEmpty() || (!mode.equals("generate") && !mode.equals("g") && !mode.equals("input") && !mode.equals("i") && !mode.equals("cached") && !mode.equals("c")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option. Remaining attempts " + (i - 1), true);
 				mode = read(true);
 			}
 			else
@@ -807,7 +807,7 @@ public class CLI
 
 				if(userInput.isEmpty())
 				{
-					printYellow("Please enter a valid Sentence. Remaining attempts " + i, true);
+					printYellow("Please enter a valid Sentence. Remaining attempts " + (i - 1), true);
 					userInput = read(false);
 				}
 				else
@@ -858,7 +858,7 @@ public class CLI
 
 				if((!partOfSpeech.equals("noun") && !partOfSpeech.equals("n") && !partOfSpeech.equals("adjective") && !partOfSpeech.equals("a") && !partOfSpeech.equals("verb") && !partOfSpeech.equals("v")))
 				{
-					printYellow("Please enter a valid value. Remaining attempts " + i, true);
+					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 					partOfSpeech = read(true);
 				}
 				else
@@ -879,7 +879,7 @@ public class CLI
 
 					if(num.isEmpty() || (!num.equals("singular") && !num.equals("s") && !num.equals("plural") && !num.equals("p")))
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 						num = read(true);
 					}
 					else
@@ -902,7 +902,7 @@ public class CLI
 
 					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 						text = read(false);
 					}
 					else
@@ -923,7 +923,7 @@ public class CLI
 
 					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 						text = read(false);
 					}
 					else
@@ -947,7 +947,7 @@ public class CLI
 
 					if(textTense.isEmpty() || (!textTense.equals("present") && !textTense.equals("pr") && !textTense.equals("past") && !textTense.equals("pa") && !textTense.equals("future") && !textTense.equals("f")))
 					{
-						printYellow("Please enter a valid tense. Remaining attempts " + i, true);
+						printYellow("Please enter a valid tense. Remaining attempts " + (i - 1), true);
 						textTense = read(true);
 					}
 					else
@@ -972,7 +972,7 @@ public class CLI
 
 					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 						text = read(false);
 					}
 					else
@@ -1007,7 +1007,7 @@ public class CLI
 			{
 				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f && (Float.parseFloat(newTolerance) > 1.0f))))
 				{
-					printYellow("Please enter a valid value. Remaining attempts " + i, true);
+					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 					newTolerance = read(true);
 				}
 				else
@@ -1015,7 +1015,7 @@ public class CLI
 			}
 			catch(NumberFormatException e)
 			{
-				printYellow("Please enter a valid value. Remaining attempts " + i, true);
+				printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
 				newTolerance = read(true);
 			}
 		}

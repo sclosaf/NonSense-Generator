@@ -5,13 +5,34 @@ import java.util.Map;
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Stack;
+import java.util.Deque;
+import java.util.ArrayDeque;
 
 import unipd.nonsense.model.SyntaxToken;
 
 import unipd.nonsense.util.LoggerManager;
 
+import com.google.cloud.language.v1.DependencyEdge;
+
 public class SyntaxTreeBuilder
 {
+	private static class TreeNodeInfo
+	{
+		int tokenIndex;
+		String indent;
+		boolean isLast;
+		int depth;
+
+		TreeNodeInfo(int tokenIndex, String indent, boolean isLast, int depth)
+		{
+			this.tokenIndex = tokenIndex;
+			this.indent = indent;
+			this.isLast = isLast;
+			this.depth = depth;
+		}
+	}
+
 	private static final LoggerManager logger = new LoggerManager(SyntaxTreeBuilder.class);
 
 	public static <T extends SyntaxToken> String getSyntaxTree(List<T> tokens)
@@ -41,6 +62,21 @@ public class SyntaxTreeBuilder
 				StringBuilder treeBuilder = new StringBuilder("Syntax Tree:\n");
 				int rootIndex = tokens.indexOf(root);
 
+				List<Integer> punctuationTokens = findPunctuationTokens(tokens);
+
+				for(Integer punctIndex : punctuationTokens)
+				{
+					if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
+					{
+						int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+
+						if(!dependencyMap.containsKey(newHead))
+							dependencyMap.put(newHead, new ArrayList<>());
+
+						dependencyMap.get(newHead).add(punctIndex);
+					}
+				}
+
 				logger.logInfo("getSyntaxTree: Building tree string representation");
 				buildTreeString(rootIndex, indexToToken, dependencyMap, "", true, treeBuilder);
 
@@ -60,6 +96,18 @@ public class SyntaxTreeBuilder
 		}
 	}
 
+
+	private static <T extends SyntaxToken> List<Integer> findPunctuationTokens(List<T> tokens)
+	{
+		List<Integer> punctuationIndices = new ArrayList<>();
+
+		for(int i = 0; i < tokens.size(); ++i)
+			if (tokens.get(i).getPosTag().equals("PUNCT"))
+				punctuationIndices.add(i);
+
+		return punctuationIndices;
+	}
+
 	private static <T extends SyntaxToken> Map<Integer, T> createIndexTokenMap(List<T> tokens)
 	{
 		logger.logDebug("createIndexTokenMap: Creating token index map for " + tokens.size() + " tokens");
@@ -75,6 +123,25 @@ public class SyntaxTreeBuilder
 		return map;
 	}
 
+	private static boolean isConnectedToTree(int tokenIndex, int rootIndex, Map<Integer, List<Integer>> dependencyMap)
+	{
+		if(dependencyMap.containsKey(rootIndex) && dependencyMap.get(rootIndex).contains(tokenIndex))
+			return true;
+
+		for(List<Integer> children : dependencyMap.values())
+			if(children.contains(tokenIndex))
+				return true;
+
+		return false;
+	}
+
+	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, List<T> tokens)
+	{
+		if (punctIndex > 0)
+			return punctIndex - 1;
+		return -1;
+	}
+
 	private static <T extends SyntaxToken> Map<Integer, List<Integer>> buildDependencyMap(List<T> tokens)
 	{
 		logger.logDebug("buildDependencyMap: Preparing dependency map for " + tokens.size() + " tokens");
@@ -86,10 +153,16 @@ public class SyntaxTreeBuilder
 			logger.logInfo("buildDependencyMap: Initialized dependencies for index: " + i);
 		}
 
-		for(int i = 0; i < tokens.size(); i++)
+		for(int i = 0; i < tokens.size(); ++i)
 		{
 			T token = tokens.get(i);
 			int headIdx = token.getHeadTokenIndex();
+
+			if(headIdx == i)
+			{
+				logger.logDebug("buildDependencyMap: Detected self-referencing token at index " + i + ". Setting to -1.");
+				headIdx = -1;
+			}
 
 			dependencyMap.computeIfAbsent(headIdx, k -> new ArrayList<>()).add(i);
 			logger.logInfo("buildDependencyMap: Added dependency from head " + headIdx + " to child " + i);
@@ -103,6 +176,15 @@ public class SyntaxTreeBuilder
 	private static <T extends SyntaxToken> T findRootToken(List<T> tokens)
 	{
 		logger.logDebug("findRootToken: Searching for root token");
+
+		for(T token : tokens)
+		{
+			if(token.getDependencyLabel() == DependencyEdge.Label.ROOT)
+			{
+				logger.logDebug("findRootToken: Found root token by dependency label ROOT: " + token.getText());
+				return token;
+            }
+		}
 
 		for (T token : tokens)
 		{
@@ -131,30 +213,80 @@ public class SyntaxTreeBuilder
 		return null;
 	}
 
-	private static <T extends SyntaxToken> void buildTreeString(int tokenIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
+	private static <T extends SyntaxToken> void buildTreeString(int rootIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
 	{
-		logger.logDebug("buildTreeString: Building tree string for token index: " + tokenIndex);
+		logger.logDebug("buildTreeString: Building tree string for token index: " + rootIndex);
 
-		T token = indexToToken.get(tokenIndex);
-		String nodeLabel = String.format("%s (%s)", token.getText(), token.getPosTag());
+		Deque<TreeNodeInfo> stack = new ArrayDeque<>();
 
-		builder.append(indent).append(isLast ? "└─ " : "├─ ").append(nodeLabel).append("\n");
-		logger.logDebug("buildTreeString: Added node to tree: " + nodeLabel);
+		stack.push(new TreeNodeInfo(rootIndex, "", true, 0));
 
-		List<Integer> childrenIndices = dependencyMap.getOrDefault(tokenIndex, Collections.emptyList());
-		Collections.sort(childrenIndices);
+		Map<Integer, Boolean> visited = new HashMap<>();
 
-		logger.logDebug("buildTreeString: Found " + childrenIndices.size() + " children for token index: " + tokenIndex);
-
-		String childIndent = indent + (isLast ? "   " : "│  ");
-
-		for (int i = 0; i < childrenIndices.size(); i++)
+		while(!stack.isEmpty())
 		{
-			boolean childIsLast = (i == childrenIndices.size() - 1);
+			TreeNodeInfo current = stack.pop();
 
-			logger.logDebug("buildTreeString: Processing child " + i + " of " + tokenIndex + ", isLast: " + childIsLast);
+			if(visited.containsKey(current.tokenIndex))
+			{
+				logger.logDebug("buildTreeString: Cycle detected at token index: " + current.tokenIndex);
+				continue;
+			}
 
-			buildTreeString(childrenIndices.get(i), indexToToken, dependencyMap, childIndent, childIsLast, builder);
+			visited.put(current.tokenIndex, true);
+
+			T token = indexToToken.get(current.tokenIndex);
+			if (token == null)
+			{
+				logger.logDebug("buildTreeString: No token found for index: " + current.tokenIndex);
+				continue;
+			}
+
+			String nodeLabel = String.format("%s (%s)", token.getText(), token.getPosTag());
+
+			StringBuilder line = new StringBuilder();
+			line.append(current.indent);
+
+			if(current.depth > 0)
+			{
+				if(current.isLast)
+					line.append("└─");
+				else
+					line.append("├─");
+			}
+
+			line.append(nodeLabel);
+
+			builder.append(line).append("\n");
+
+			logger.logDebug("buildTreeString: Added node to tree: " + nodeLabel);
+
+			List<Integer> childrenIndices = dependencyMap.getOrDefault(current.tokenIndex, Collections.emptyList());
+			Collections.sort(childrenIndices);
+
+			List<Integer> unvisitedChildren = new ArrayList<>();
+
+			for(int childIndex : childrenIndices)
+				if(!visited.containsKey(childIndex))
+					unvisitedChildren.add(childIndex);
+
+			String nextIndent = current.indent;
+
+			if(current.depth > 0)
+				nextIndent += current.isLast ? "  " : "│ ";
+
+			for(int i = childrenIndices.size() - 1; i >= 0; --i)
+			{
+				int childIndex = childrenIndices.get(i);
+
+				boolean childIsLast = (i == childrenIndices.size() - 1);
+
+				T childToken = indexToToken.get(childIndex);
+
+				stack.push(new TreeNodeInfo(childIndex, nextIndent, childIsLast, current.depth + 1));
+			}
 		}
+
+		logger.logDebug("buildTreeString: Completed iterative tree building");
 	}
 }
