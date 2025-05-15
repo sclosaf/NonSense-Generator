@@ -179,18 +179,18 @@ public class CLI
 
 		analyzeOptions.put("random", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("r", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("all", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("a", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("syntax", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("sy", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("sentiment", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("se", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("toxicity", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("t", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("all", AnalyzeOptions.ALL);
+		analyzeOptions.put("a", AnalyzeOptions.ALL);
+		analyzeOptions.put("syntax", AnalyzeOptions.SYNTAX);
+		analyzeOptions.put("sy", AnalyzeOptions.SYNTAX);
+		analyzeOptions.put("sentiment", AnalyzeOptions.SENTIMENT);
+		analyzeOptions.put("se", AnalyzeOptions.SENTIMENT);
+		analyzeOptions.put("toxicity", AnalyzeOptions.TOXICITY);
+		analyzeOptions.put("t", AnalyzeOptions.TOXICITY);
 		analyzeOptions.put("entity", AnalyzeOptions.ENTITY);
 		analyzeOptions.put("e", AnalyzeOptions.ENTITY);
-		analyzeOptions.put("combined", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("c", AnalyzeOptions.RANDOM);
+		analyzeOptions.put("combined", AnalyzeOptions.COMBINED);
+		analyzeOptions.put("c", AnalyzeOptions.COMBINED);
 
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter tempWriter = new PrintWriter(stringWriter);
@@ -637,6 +637,12 @@ public class CLI
 		}
 		else if(mode.equals("cached") || mode.equals("c"))
 		{
+			if(!processor.isSentenceCached())
+			{
+				printYellow("No sentence is cached, try generating one first", true);
+				return;
+			}
+
 			printWhite("Proceding analyzing the cached sentence", true);
 			userInput = processor.getCachedSentence();
 		}
@@ -810,6 +816,12 @@ public class CLI
 		}
 		else if(mode.equals("cached") || mode.equals("c"))
 		{
+			if(!processor.isSentenceCached())
+			{
+				printYellow("No sentence is cached, try generating one first", true);
+				return;
+			}
+
 			printWhite("Proceding with the cached sentence", true);
 			userInput = processor.getCachedSentence();
 		}

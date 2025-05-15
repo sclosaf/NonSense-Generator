@@ -237,6 +237,11 @@ public class CommandProcessor implements AutoCloseable
 		toxicityTolerance = newTolerance;
 	}
 
+	public boolean isSentenceCached()
+	{
+		return cachedString != null && !cachedString.isEmpty();
+	}
+
 	public String getCachedSentence()
 	{
 		if(cachedString == null || cachedString.isEmpty())
