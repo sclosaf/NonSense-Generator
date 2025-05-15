@@ -78,7 +78,7 @@ public class CLI
 	private static Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 
 	private static final int HISTORY_SIZE = 20;
-	private static final int MAX_ATTEMPTS = 5;
+	private static final int MAX_ATTEMPTS = 3;
 	private static final int MAX_WIDTH = 106;
 
 	private boolean running;
@@ -120,8 +120,6 @@ public class CLI
 
 	public CLI() throws IOException
 	{
-		if(!checkInternetConnection())
-			throw new MissingInternetConnectionException();
 
 		terminal = TerminalBuilder.builder().system(true).build();
 
@@ -194,6 +192,9 @@ public class CLI
 		analyzeOptions.put("combined", AnalyzeOptions.RANDOM);
 		analyzeOptions.put("c", AnalyzeOptions.RANDOM);
 
+		if(!checkInternetConnection())
+			throw new MissingInternetConnectionException();
+
 		StringWriter stringWriter = new StringWriter();
 		PrintWriter tempWriter = new PrintWriter(stringWriter);
 
@@ -238,12 +239,13 @@ public class CLI
 	{
 		try
 		{
+			printWhite("Enter a command or type 'help'", true);
 			String cmd = commandReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
 
 			if(!cmd.isEmpty() && !commands.containsKey(cmd))
 			{
 				printRed("Invalid command: " + cmd, true);
-				printRed("Type 'Help' for available commands.", true);
+				printRed("Type 'help' for available commands.", true);
 				return running;
 			}
 			else
@@ -281,6 +283,9 @@ public class CLI
 			case HELP: usage(terminal.writer()); break;
 			case QUIT: quit(); break;
 		}
+
+		if(commands.get(cmd) != Command.HELP && commands.get(cmd) != Command.CLEAR && commands.get(cmd) != Command.QUIT)
+			printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void defaultHandler()
@@ -288,8 +293,9 @@ public class CLI
 		try
 		{
 			printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
-			printWhite("Proceding with default process.", true);
-			printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the elabotation of the input):", true);
+
+			printWhite("Proceding with the default process.", true);
+			printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elabotation):", true);
 
 			String userInput = read(false);
 
@@ -300,7 +306,7 @@ public class CLI
 				printWhite("Generated sentence: '" + userInput + "'", false);
 
 				printWhite("Proceding with a standard analysis of the generated sentence", true);
-				printWhite("which includes analysis of the syntax and its toxicity", true);
+				printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
 
 				analyzeSyntax(userInput);
 
@@ -308,19 +314,20 @@ public class CLI
 
 				printWhite("Proceding generating the syntactic tree of the generated sentence", true);
 				printTree(userInput);
-
 			}
 			else
 			{
-				printWhite("Proceding with the standard analyze of the given sentence", true);
+				printWhite("Proceding with the standard synctactic analysis of the given sentence", true);
 				analyzeSyntax(userInput);
 
-				printWhite("Generating a new sentence using the inserted one", true);
+				printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
 				String generated = processor.generateFrom(userInput);
 
 				printWhite("Generated sentence: '" + generated + "'", false);
 
 				printWhite("Proceding with a standard analysis of the generated sentence", true);
+				printWhite("This passage includes the syntactic and toxicity analysis of the generated sentence", true);
+				printWhite("Followed by the creation of its synctactic tree", true);
 
 				analyzeSyntax(generated);
 
@@ -333,14 +340,13 @@ public class CLI
 		{
 			printRed("Error processing input: " + e.getMessage(), true);
 		}
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void personalizedHandler() throws IOException
 	{
 		printTitleSeparator("Personalized procedure", BOLD_BLUE_STYLE);
 		printWhite("Proceding with the personalized process.", true);
+		printWhite("This procedure lets the user go through several options that this program offers", true);
 
 		extendHandler();
 
@@ -351,33 +357,31 @@ public class CLI
 		if(userInput.isEmpty())
 			generateHandler();
 
-		setToleranceHandler();
 		analyzeHandler();
 		treeHandler();
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void generateHandler() throws IOException
 	{
 		printTitleSeparator("Generation procedure", BOLD_BLUE_STYLE);
-		printBlue("Proceeding generating a random sentence, select one of the following options:", true);
-		printWhite("    Randomized", true);
-		printWhite("      Each parameter (number and tense) used in the generated sentence, are selected randomly", true);
-		printWhite("    Number", true);
-		printWhite("      User can choose the number used into the generated sentence, the tense is selected randomly", true);
-		printWhite("    Tense", true);
-		printWhite("      User can choose the tense used into the generated sentence, the number is selected randomly", true);
-		printWhite("    Both", true);
-		printWhite("      User can choose both tense and number used in the generated sentence", true);
+		printWhite("Proceeding generating a random sentence, select one of the following generation settings:", true);
+		printWhite(" - Randomized", true);
+		printWhite("    Each parameter (number and tense) used in the generated sentence, is selected randomly", true);
+		printWhite(" - Number", true);
+		printWhite("    User can choose the number used into the generated sentence, the tense is selected randomly", true);
+		printWhite(" - Tense", true);
+		printWhite("    User can choose the tense used into the generated sentence, the number is selected randomly", true);
+		printWhite(" - Both", true);
+		printWhite("    User can choose both tense and number used in the generated sentence", true);
 
-		String userInput = read(true);;
+		String userInput = read(true);
 
 		for(int i = MAX_ATTEMPTS; i >= 0; --i)
 		{
 			if(i == 0)
 				return;
 
-			if(userInput.isEmpty() || !generateOptions.containsKey(userInput))
+			if(userInput.isEmpty() || !generateOptions.containsKey(userInput.toLowerCase()))
 			{
 				printYellow("Please enter a valid option. Remaining attempts " + i, true);
 				userInput = read(true);
@@ -393,23 +397,20 @@ public class CLI
 			case TENSE: generateTense(); break;
 			case BOTH: generateBoth(); break;
 		}
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void generateRandom()
 	{
 		printTitleSeparator("Random generation", BOLD_BLUE_STYLE);
-		String generated = processor.generateRandom();
-		printGreen("Generated sentence: " + generated, false);
+		printGreen("Generated sentence: " + processor.generateRandom(), false);
 	}
 
 	private void generateNumber()
 	{
 		printTitleSeparator("Random generation (with number)", BOLD_BLUE_STYLE);
-		printBlue("Specify the number among the available:", true);
-		printWhite("    Singular", true);
-		printWhite("    Pluralar", true);
+		printBlue("Specify the desired number among the available:", true);
+		printWhite(" - Singular", true);
+		printWhite(" - Plural", true);
 
 		String userInput = read(true);
 
@@ -429,23 +430,23 @@ public class CLI
 
 		if(userInput.equals("singular") || userInput.equals("s"))
 		{
-			String generated = processor.generateWithNumber(Number.SINGULAR);
-			printGreen("Generated sentence: " + generated, false);
+			printWhite("Proceding generating a sentence with singular nouns", true);
+			printWhite("Generated sentence: " + processor.generateWithNumber(Number.SINGULAR), false);
 		}
 		else if(userInput.equals("plural") || userInput.equals("p"))
 		{
-			String generated = processor.generateWithNumber(Number.PLURAL);
-			printGreen("Generated sentence: " + generated, false);
+			printWhite("Proceding generating a sentence with plural nouns", true);
+			printWhite("Generated sentence: " + processor.generateWithNumber(Number.PLURAL), false);
 		}
 	}
 
 	private void generateTense()
 	{
 		printTitleSeparator("Random generation (with tense)", BOLD_BLUE_STYLE);
-		printBlue("Specify the tense among the available:", true);
-		printWhite("    Past", true);
-		printWhite("    Present", true);
-		printWhite("    Future", true);
+		printWhite("Specify the desired tense among the available:", true);
+		printWhite(" - Past", true);
+		printWhite(" - Present", true);
+		printWhite(" - Future", true);
 
 		String userInput = read(true);
 
@@ -456,7 +457,7 @@ public class CLI
 
 			if(userInput.isEmpty() || (!userInput.equals("past") && !userInput.equals("pa") && !userInput.equals("present") && !userInput.equals("pr") && !userInput.equals("future") && !userInput.equals("f")))
 			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				printYellow("Please enter a valid option among the available. Remaining attempts " + i, true);
 				userInput = read(true);
 			}
 			else
@@ -465,18 +466,18 @@ public class CLI
 
 		if(userInput.equals("past") || userInput.equals("pa"))
 		{
-			String generated = processor.generateWithTense(Tense.PAST);
-			printGreen("Generated sentence: " + generated, false);
+			printWhite("Proceding generating a sentence with past tense", true);
+			printWhite("Generated sentence: " + processor.generateWithTense(Tense.PAST), false);
 		}
 		else if(userInput.equals("present") || userInput.equals("pr"))
 		{
-			String generated = processor.generateWithTense(Tense.PRESENT);
-			printGreen("Generated sentence: " + generated, false);
+			printWhite("Proceding generating a sentence with present tense", true);
+			printWhite("Generated sentence: " + processor.generateWithTense(Tense.PRESENT), false);
 		}
 		else if(userInput.equals("future") || userInput.equals("f"))
 		{
-			String generated = processor.generateWithTense(Tense.FUTURE);
-			printGreen("Generated sentence: " + generated, false);
+			printWhite("Proceding generating a sentence with future tense", true);
+			printWhite("Generated sentence: " + processor.generateWithTense(Tense.FUTURE), false);
 		}
 	}
 
@@ -484,9 +485,9 @@ public class CLI
 	{
 		printTitleSeparator("Random generation (with number and tense)", BOLD_BLUE_STYLE);
 
-		printBlue("Specify the number among the available:", true);
-		printWhite("    Singular", true);
-		printWhite("    Pluralar", true);
+		printWhite("Specify the desired number among the available:", true);
+		printWhite(" - Singular", true);
+		printWhite(" - Plural", true);
 
 		String userInput = read(true);
 
@@ -505,15 +506,16 @@ public class CLI
 		}
 
 		Number number;
+
 		if(userInput.equals("singular") && userInput.equals("s"))
 			number = Number.SINGULAR;
 		else
 			number = Number.PLURAL;
 
-		printBlue("Specify the tense among the available:", true);
-		printWhite("    Past", true);
-		printWhite("    Present", true);
-		printWhite("    Future", true);
+		printWhite("Specify the desired tense among the available:", true);
+		printWhite(" - Past", true);
+		printWhite(" - Present", true);
+		printWhite(" - Future", true);
 
 		userInput = read(true);
 
@@ -532,6 +534,7 @@ public class CLI
 		}
 
 		Tense tense;
+
 		if(userInput.equals("past") || userInput.equals("pa"))
 			tense = Tense.PAST;
 		else if(userInput.equals("present") || userInput.equals("pr"))
@@ -539,28 +542,28 @@ public class CLI
 		else
 			tense = Tense.FUTURE;
 
-		String generated = processor.generateWithBoth(number, tense);
-		printGreen("Generated sentence: " + generated, false);
+		printWhite("Proceding generating a sentence with " + number.name().toLowerCase() + " nouns and " + tense.name().toLowerCase() + " tense", true);
+		printWhite("Generated sentence: " + processor.generateWithBoth(number, tense), false);
 	}
 
 	private void analyzeHandler()
 	{
 		printTitleSeparator("Analyze procedure", BOLD_BLUE_STYLE);
-		printBlue("Proceeding to analyze select one of the following options:", true);
-		printWhite("    Random", true);
-		printWhite("      Performs one random of the available options", true);
-		printWhite("    All", true);
-		printWhite("      Performs all the analysis available", true);
-		printWhite("    Syntax", true);
-		printWhite("      Performs the syntactic analysis", true);
-		printWhite("    Sentiment", true);
-		printWhite("      Performs the sentiment analysis", true);
-		printWhite("    Toxicity", true);
-		printWhite("      Performs the toxicity analysis", true);
-		printWhite("    Entity", true);
-		printWhite("      Performs the entity analysis", true);
-		printWhite("    Combined", true);
-		printWhite("      Allows to choose a combination of the options", true);
+		printWhite("Proceeding to analyze select one of the following options:", true);
+		printWhite(" - Random", true);
+		printWhite("    Performs one random available options", true);
+		printWhite(" - All", true);
+		printWhite("    Performs all the analysis available", true);
+		printWhite(" - Syntax", true);
+		printWhite("    Performs the syntactic analysis", true);
+		printWhite(" - Sentiment", true);
+		printWhite("    Performs the sentiment analysis", true);
+		printWhite(" - Toxicity", true);
+		printWhite("    Performs the toxicity analysis", true);
+		printWhite(" - Entity", true);
+		printWhite("    Performs the entity analysis", true);
+		printWhite(" - Combined", true);
+		printWhite("   Allows to choose a combination of the options", true);
 
 		String analysis = read(true);
 
@@ -569,7 +572,7 @@ public class CLI
 			if(i == 0)
 				return;
 
-			if(analysis.isEmpty() || !analyzeOptions.containsKey(analysis))
+			if(analysis.isEmpty() || !analyzeOptions.containsKey(analysis.toLowerCase()))
 			{
 				printYellow("Please enter a valid option. Remaining attempts " + i, true);
 				analysis = read(true);
@@ -578,8 +581,8 @@ public class CLI
 				break;
 		}
 
-		printBlue("Select if do you want to analyze a generate sentence or input a new one", true);
-		printWhite("(Generate/Input)", true);
+		printWhite("Select if do you want to analyze a generate sentence or input a new one", true);
+		printWhite("(generate/input)", true);
 
 		String mode = read(true);
 
@@ -633,8 +636,6 @@ public class CLI
 			case ENTITY: analyzeEntity(userInput); break;
 			case COMBINED: analyzeCombined(userInput); break;
 		}
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void analyzeRandom(String input)
@@ -646,7 +647,7 @@ public class CLI
 
 		AnalyzeOptions opt = opts[random.nextInt(opts.length)];
 
-		printWhite("Random analysis chosen is " + opt, true);
+		printWhite("Random analysis chosen is " + opt.name().toLowerCase(), true);
 
 		switch(opt)
 		{
@@ -660,7 +661,7 @@ public class CLI
 	private void analyzeAll(String input)
 	{
 		printTitleSeparator("Complete analysis", BOLD_BLUE_STYLE);
-		printWhite("Proceding analyzing all the analysis", true);
+		printWhite("Proceding with all the analysis", true);
 
 		analyzeSyntax(input);
 		analyzeSentiment(input);
@@ -695,7 +696,7 @@ public class CLI
 	private void analyzeCombined(String input)
 	{
 		printTitleSeparator("Combined analysis", BOLD_BLUE_STYLE);
-		printBlue("Select the desired analysis (press enter to confirm the combination choice):", true);
+		printWhite("Select the desired analysis (press enter to confirm the combination choice):", true);
 		printWhite("Syntax, sentiment, toxicity, entity", false);
 
 		String mode = read(true);
@@ -708,11 +709,6 @@ public class CLI
 
 			if(mode.isEmpty())
 				break;
-			else if(!mode.equals("syntax") && !mode.equals("sy") && !mode.equals("sentiment") && !mode.equals("se") && !mode.equals("toxicity") && !mode.equals("t") && !mode.equals("entity") && !mode.equals("e"))
-			{
-				printYellow("Please enter a valid option. Remaining attempts " + i, true);
-				mode = read(true);
-			}
 			else if(mode.equals("syntax") || mode.equals("sy"))
 				opts.add(AnalyzeOptions.SYNTAX);
 			else if(mode.equals("sentiment") || mode.equals("se"))
@@ -721,11 +717,16 @@ public class CLI
 				opts.add(AnalyzeOptions.TOXICITY);
 			else if(mode.equals("entity") || mode.equals("e"))
 				opts.add(AnalyzeOptions.ENTITY);
+			else
+			{
+				printYellow("Please enter a valid option. Remaining attempts " + i, true);
+				mode = read(true);
+			}
 		}
 
 		for(AnalyzeOptions opt : opts)
 		{
-			printBlue("Proceeding with " + opt, true);
+			printWhite("Proceeding with " + opt, true);
 
 			switch(opt)
 			{
@@ -740,7 +741,7 @@ public class CLI
 	private void treeHandler() throws IOException
 	{
 		printTitleSeparator("Syntax tree procedure", BOLD_BLUE_STYLE);
-		printBlue("Select if do you want to print the syntactic tree of a generate sentence or input a new one", true);
+		printWhite("Select if do you want to print the syntactic tree of a generate sentence or input a new one", true);
 		printWhite("(Generate/Input)", false);
 
 		String mode = read(true);
@@ -786,8 +787,6 @@ public class CLI
 		}
 
 		printTree(userInput);
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void printTree(String input) throws IOException
@@ -799,7 +798,7 @@ public class CLI
 	private void extendHandler() throws IOException
 	{
 		printTitleSeparator("Extension procedure", BOLD_BLUE_STYLE);
-		printBlue("Enter the part of speech taht you want to add (press Enter to confirm the new terms):", true);
+		printWhite("Enter the part of speech taht you want to add (press Enter to confirm the new terms):", true);
 		printWhite("Noun, adjective or verb", true);
 
 		String partOfSpeech = read(true);
@@ -827,7 +826,8 @@ public class CLI
 			if(partOfSpeech.equals("noun") || partOfSpeech.equals("n"))
 			{
 				printBlue("Enter the number for the noun: ", true);
-				printWhite("Singular or plural ", true);
+				printWhite(" - Singular", true);
+				printWhite(" - Plural", true);
 				String num = read(true);
 
 				for(int i = MAX_ATTEMPTS; i >= 0; --i)
@@ -853,6 +853,20 @@ public class CLI
 				printBlue("Insert the new noun:", true);
 				String text = read(true);
 
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
+				{
+					if(i == 0)
+						return;
+
+					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					{
+						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						text = read(false);
+					}
+					else
+						break;
+				}
+
 				nounList.add(new Noun(text, number));
 			}
 			else if(partOfSpeech.equals("adjective") || partOfSpeech.equals("a"))
@@ -860,12 +874,28 @@ public class CLI
 				printBlue("Insert the new adjective:", true);
 				String text = read(true);
 
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
+				{
+					if(i == 0)
+						return;
+
+					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					{
+						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						text = read(false);
+					}
+					else
+						break;
+				}
+
 				adjectiveList.add(new Adjective(text));
 			}
 			else if(partOfSpeech.equals("verb") || partOfSpeech.equals("v"))
 			{
 				printBlue("Enter the tense for the verb: ", true);
-				printWhite("past, present or future ", true);
+				printWhite(" - Past", true);
+				printWhite(" - Present", true);
+				printWhite(" - Future", true);
 				String textTense = read(true);
 
 				for(int i = MAX_ATTEMPTS; i >= 0; --i)
@@ -890,24 +920,37 @@ public class CLI
 				else
 					tense = Tense.FUTURE;
 
-				printBlue("Insert the new verb:", true);
+				printWhite("Insert the new verb:", true);
 				String text = read(true);
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
+				{
+					if(i == 0)
+						return;
+
+					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					{
+						printYellow("Please enter a valid value. Remaining attempts " + i, true);
+						text = read(false);
+					}
+					else
+						break;
+				}
 
 				verbList.add(new Verb(text, tense));
 			}
 		}
 
-		printBlue("Adding the new elements", true);
+		printWhite("Proceding adding the new elements", true);
 		processor.append(nounList, adjectiveList, verbList);
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void setToleranceHandler()
 	{
 		printTitleSeparator("Tolerance procedure", BOLD_BLUE_STYLE);
-		printWhite("Enter tolerance value (0.0 - 1.0): ", true);
 		printWhite("Current tolerance value is " + processor.getTolerance(), true);
+		printWhite("The tolerance parameter specifies which is the lower bound over which an analyzed sentence is considered toxic", true);
+		printWhite("Enter a new tolerance value (0.0 - 1.0): ", true);
 
 		String newTolerance = read(true);
 
@@ -933,15 +976,14 @@ public class CLI
 			}
 		}
 
+		printWhite("Setting the new tolerance value", true);
 		float tolerance = Float.parseFloat(newTolerance);
 		processor.setTolerance(tolerance);
-
-		printSeparator(BOLD_BLUE_STYLE);
 	}
 
 	private void extendedUsage()
 	{
-		printTitleSeparator("Extended commands help", BOLD_MAGENTA_STYLE);
+		printTitleSeparator("Extended commands help", BOLD_BLUE_STYLE);
 
 		String[][] commandsInfo =
 		{
@@ -1039,15 +1081,13 @@ public class CLI
 			for (String line : lines)
 				printWhite("    " + line, true);
 		}
-
-		printSeparator(BOLD_MAGENTA_STYLE);
 	}
 
 	private void verboseHandler()
 	{
 		printTitleSeparator("Verbosity procedure", BOLD_BLUE_STYLE);
-		printBlue("Currently verbosity is set to " + processor.isVerbose(), true);
-		printBlue("Switching verbosity", true);
+		printWhite("Currently verbosity is set to " + processor.isVerbose(), true);
+		printWhite("Switching verbosity", true);
 
 		processor.switchVerbosity();
 	}
@@ -1095,7 +1135,6 @@ public class CLI
 		}
 
 		writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_MAGENTA_STYLE).toAnsi(terminal));
-		writer.println(new AttributedString("Enter a command or type 'Help' to see this again:", BOLD_MAGENTA_STYLE).toAnsi(terminal));
 		writer.flush();
 	}
 
@@ -1107,9 +1146,11 @@ public class CLI
 
 	private boolean checkInternetConnection()
 	{
+		printTitleSeparator("Checking internet connection", BOLD_BLUE_STYLE);
 		try
 		{
 			InetAddress.getByName("google.com").isReachable(1000);
+			printTitleSeparator("Success", BOLD_GREEN_STYLE);
 			return true;
 
 		}
@@ -1118,10 +1159,12 @@ public class CLI
 			try
 			{
 				InetAddress.getByName("cloudflare.com").isReachable(1000);
+				printTitleSeparator("Success", BOLD_GREEN_STYLE);
 				return true;
 			}
 			catch (Exception ex)
 			{
+				printTitleSeparator("Failed", BOLD_RED_STYLE);
 				return false;
 			}
 		}

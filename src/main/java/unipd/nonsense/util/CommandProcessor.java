@@ -270,12 +270,12 @@ public class CommandProcessor implements AutoCloseable
 		toxicityTolerance = newTolerance;
 	}
 
-	public String getCurrentSentence()
+	public String getCachedSentence()
 	{
 		if(cachedString == null || cachedString.isEmpty())
-			return "No sentence currently cached. Use 'generate' first.";
+			throw new SentenceNotCachedException();
 
-		return "Current sentence: " + cachedString;
+		return cachedString;
 	}
 
 	public void switchVerbosity()
