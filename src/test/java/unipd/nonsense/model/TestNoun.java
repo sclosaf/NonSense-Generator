@@ -26,9 +26,14 @@ public class TestNoun{
 	}
 
 	@Test
-	@DisplayName("Getting numbers")
-	public void testGetNumber_NounNumber(){
+	@DisplayName("Getting singular number")
+	public void testGetNumber_SINGULAR(){
 		assertEquals(singularNoun.getNumber(), Number.SINGULAR);
+	}
+
+	@Test
+	@DisplayName("Getting plural number")
+	public void testGetNumber_PLURAL(){
 		assertEquals(pluralNoun.getNumber(), Number.PLURAL);
 	}
 
