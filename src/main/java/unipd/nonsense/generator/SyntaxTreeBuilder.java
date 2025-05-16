@@ -53,13 +53,21 @@ public class SyntaxTreeBuilder
 			logger.logInfo("getSyntaxTree: Building dependency map");
 			Map<Integer, List<Integer>> dependencyMap = buildDependencyMap(tokens);
 
-			logger.logInfo("getSyntaxTree: Finding root token");
-			T root = findRootToken(tokens);
+			logger.logInfo("getSyntaxTree: Finding root tokens");
+			List<T> rootTokens = findRootTokens(tokens);
 
-			if(root != null)
+			if(rootTokens.isEmpty())
 			{
-				logger.logDebug("getSyntaxTree: Root found at index: " + tokens.indexOf(root));
-				StringBuilder treeBuilder = new StringBuilder("Syntax Tree:\n");
+				logger.logWarn("getSyntaxTree: No root tokens found due to invalid syntactic structure");
+				return "No root tokens found - invalid syntactic structure";
+			}
+
+			StringBuilder treeBuilder = new StringBuilder();
+
+			if(rootTokens.size() == 1)
+			{
+				logger.logDebug("getSyntaxTree: Single sentence detected");
+				T root = rootTokens.get(0);
 				int rootIndex = tokens.indexOf(root);
 
 				List<Integer> punctuationTokens = findPunctuationTokens(tokens);
@@ -77,17 +85,41 @@ public class SyntaxTreeBuilder
 					}
 				}
 
-				logger.logInfo("getSyntaxTree: Building tree string representation");
 				buildTreeString(rootIndex, indexToToken, dependencyMap, "", true, treeBuilder);
+				return "Syntax Tree:\n" + treeBuilder.toString();
+			}
+			else
+			{
+				logger.logDebug("getSyntaxTree: Multiple sentences detected (" + rootTokens.size() + ")");
+				for(int i = 0; i < rootTokens.size(); i++)
+				{
+					T root = rootTokens.get(i);
+					int rootIndex = tokens.indexOf(root);
 
-				logger.logInfo("getSyntaxTree: Syntax tree generated successfully");
+					List<Integer> punctuationTokens = findPunctuationTokens(tokens);
+					for(Integer punctIndex : punctuationTokens)
+					{
+						if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
+						{
+							int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+
+							if(!dependencyMap.containsKey(newHead))
+								dependencyMap.put(newHead, new ArrayList<>());
+
+							dependencyMap.get(newHead).add(punctIndex);
+						}
+					}
+
+					treeBuilder.append("Sentence ").append(i+1).append(":\n");
+					buildTreeString(rootIndex, indexToToken, dependencyMap, "", true, treeBuilder);
+
+					if(i < rootTokens.size() - 1)
+						treeBuilder.append("\n");
+
+				}
 
 				return treeBuilder.toString();
 			}
-
-			logger.logWarn("getSyntaxTree: Root not found due to invalid syntactic structure");
-			return "Root not found - invalid syntactic structure";
-
 		}
 		catch(Exception e)
 		{
@@ -96,13 +128,58 @@ public class SyntaxTreeBuilder
 		}
 	}
 
+	private static <T extends SyntaxToken> List<T> findRootTokens(List<T> tokens)
+	{
+		logger.logDebug("findRootTokens: Searching for root tokens");
+		List<T> rootTokens = new ArrayList<>();
+
+		for(T token : tokens)
+		{
+			if(token.getDependencyLabel() == DependencyEdge.Label.ROOT)
+			{
+				logger.logDebug("findRootTokens: Found root token by dependency label ROOT: " + token.getText());
+				rootTokens.add(token);
+			}
+		}
+
+		if(rootTokens.isEmpty())
+		{
+			for(T token : tokens)
+			{
+				int headIdx = token.getHeadTokenIndex();
+
+				if(headIdx == -1)
+				{
+					logger.logDebug("findRootTokens: Found root token with index -1: " + token.getText());
+					rootTokens.add(token);
+				}
+			}
+		}
+
+		if(rootTokens.isEmpty())
+		{
+			for(T token : tokens)
+			{
+				int headIdx = token.getHeadTokenIndex();
+
+				if(headIdx >= tokens.size() || headIdx < -1)
+				{
+					logger.logDebug("findRootTokens: Found invalid head index " + headIdx + " for token: " + token.getText());
+					rootTokens.add(token);
+				}
+			}
+		}
+
+		logger.logInfo("findRootTokens: Found " + rootTokens.size() + " root tokens");
+		return rootTokens;
+	}
 
 	private static <T extends SyntaxToken> List<Integer> findPunctuationTokens(List<T> tokens)
 	{
 		List<Integer> punctuationIndices = new ArrayList<>();
 
 		for(int i = 0; i < tokens.size(); ++i)
-			if (tokens.get(i).getPosTag().equals("PUNCT"))
+			if(tokens.get(i).getPosTag().equals("PUNCT"))
 				punctuationIndices.add(i);
 
 		return punctuationIndices;
@@ -137,8 +214,9 @@ public class SyntaxTreeBuilder
 
 	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, List<T> tokens)
 	{
-		if (punctIndex > 0)
+		if(punctIndex > 0)
 			return punctIndex - 1;
+
 		return -1;
 	}
 
@@ -169,48 +247,7 @@ public class SyntaxTreeBuilder
 		}
 
 		logger.logDebug("buildDependencyMap: Dependency map built with " + dependencyMap.size() + " entries");
-
 		return dependencyMap;
-	}
-
-	private static <T extends SyntaxToken> T findRootToken(List<T> tokens)
-	{
-		logger.logDebug("findRootToken: Searching for root token");
-
-		for(T token : tokens)
-		{
-			if(token.getDependencyLabel() == DependencyEdge.Label.ROOT)
-			{
-				logger.logDebug("findRootToken: Found root token by dependency label ROOT: " + token.getText());
-				return token;
-            }
-		}
-
-		for (T token : tokens)
-		{
-			int headIdx = token.getHeadTokenIndex();
-
-			if(headIdx == -1)
-			{
-				logger.logDebug("findRootToken: Found root token with index -1: " + token.getText());
-				return token;
-			}
-		}
-
-		for(T token : tokens)
-		{
-			int headIdx = token.getHeadTokenIndex();
-
-			if(headIdx >= tokens.size() || headIdx < -1)
-			{
-				logger.logDebug("findRootToken: Found invalid head index " + headIdx + " for token: " + token.getText());
-				return token;
-			}
-		}
-
-		logger.logInfo("findRootToken: No valid root token found");
-
-		return null;
 	}
 
 	private static <T extends SyntaxToken> void buildTreeString(int rootIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
@@ -218,9 +255,7 @@ public class SyntaxTreeBuilder
 		logger.logDebug("buildTreeString: Building tree string for token index: " + rootIndex);
 
 		Deque<TreeNodeInfo> stack = new ArrayDeque<>();
-
 		stack.push(new TreeNodeInfo(rootIndex, "", true, 0));
-
 		Map<Integer, Boolean> visited = new HashMap<>();
 
 		while(!stack.isEmpty())
@@ -236,7 +271,8 @@ public class SyntaxTreeBuilder
 			visited.put(current.tokenIndex, true);
 
 			T token = indexToToken.get(current.tokenIndex);
-			if (token == null)
+
+			if(token == null)
 			{
 				logger.logDebug("buildTreeString: No token found for index: " + current.tokenIndex);
 				continue;
@@ -278,11 +314,8 @@ public class SyntaxTreeBuilder
 			for(int i = childrenIndices.size() - 1; i >= 0; --i)
 			{
 				int childIndex = childrenIndices.get(i);
-
 				boolean childIsLast = (i == childrenIndices.size() - 1);
-
 				T childToken = indexToToken.get(childIndex);
-
 				stack.push(new TreeNodeInfo(childIndex, nextIndent, childIsLast, current.depth + 1));
 			}
 		}
