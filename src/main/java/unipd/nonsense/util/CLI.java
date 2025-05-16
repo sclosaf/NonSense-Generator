@@ -597,17 +597,17 @@ public class CLI
 		else if(mode.equals("input") || mode.equals("i"))
 		{
 			printWhite("Insert the desired sentence", true);
-			userInput = read(false);
 
-			for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+			for(int i = MAX_ATTEMPTS; i >= 0; --i)
 			{
-				if(i == 0)
-					return;
+				userInput = read(false);
 
-				if(userInput.isEmpty())
+				if(userInput.isEmpty() && i > 1)
+					printYellow("Please enter a valid sentence. Remaining attempts " + (i - 1), true);
+				else if(i == 1)
 				{
-					printYellow("Please enter a valid sentence. Remaining attempts " + i, true);
-					userInput = read(false);
+					printYellow("Maximum attempts reached. Operation cancelled.", true);
+					return;
 				}
 				else
 					break;
@@ -635,22 +635,25 @@ public class CLI
 
 			String choice = new String();
 
-			for(i = MAX_ATTEMPTS; i > 0; --i)
+			for(i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				choice = read(true);
 
-				if(choice.matches("[1-5]"))
+				if(choice.matches("[1-5]") && i > 1)
 				{
-					Template template = templateList.get(Integer.parseInt(choice));
+					Template template = templateList.get(Integer.parseInt(choice) - 1);
 					printWhite("Template chosen: " + template.getPattern(), true);
-					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice)));
+					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice) - 1));
 					printWhite("Sentence generated from the chosen template: " + userInput, true);
 					break;
 				}
-				else
+				else if(i == 1)
 				{
-					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+					printYellow("Maximum attempts reached, operation cancelled", true);
+					return;
 				}
+				else
+					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
 			}
 		}
 
@@ -817,17 +820,16 @@ public class CLI
 		{
 			printWhite("Insert the desired sentence", true);
 
-			userInput = read(false);
-
-			for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+			for(int i = MAX_ATTEMPTS; i >= 0; --i)
 			{
-				if(i == 0)
-					return;
+				userInput = read(false);
 
-				if(userInput.isEmpty())
+				if(userInput.isEmpty() && i > 1)
+					printYellow("Please enter a valid Sentence. Remaining attempts " + (i - 1), true);
+				else if(i == 1)
 				{
-					printYellow("Please enter a valid Sentence. Remaining attempts " + i, true);
-					userInput = read(false);
+					printYellow("Maximum attempts reached, operation cancelled", true);
+					return;
 				}
 				else
 					break;
@@ -855,22 +857,25 @@ public class CLI
 
 			String choice = new String();
 
-			for(i = MAX_ATTEMPTS; i > 0; --i)
+			for(i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				choice = read(true);
 
-				if(choice.matches("[1-5]"))
+				if(choice.matches("[1-5]") && i > 1)
 				{
-					Template template = templateList.get(Integer.parseInt(choice));
+					Template template = templateList.get(Integer.parseInt(choice) - 1);
 					printWhite("Template chosen: " + template.getPattern(), true);
-					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice)));
+					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice) - 1));
 					printWhite("Sentence generated from the chosen template: " + userInput, true);
 					break;
 				}
-				else
+				else if(i == 1)
 				{
-					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+					printYellow("Maximum attempts reached, operation cancelled", true);
+					return;
 				}
+				else
+					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
 			}
 		}
 
@@ -908,17 +913,19 @@ public class CLI
 					number = Number.PLURAL;
 
 				printWhite("Insert the new noun:", true);
-				String text = read(true);
 
-				for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+				String text = new String();
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
-					if(i == 0)
-						return;
+					text = read(true);
 
-					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					else if(i == 1)
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
-						text = read(true);
+						printYellow("Maximum attempts reached, operation cancelled", true);
+						break;
 					}
 					else
 						break;
@@ -929,17 +936,19 @@ public class CLI
 			else if(partOfSpeech.equals("adjective") || partOfSpeech.equals("a"))
 			{
 				printWhite("Insert the new adjective:", true);
-				String text = read(true);
 
-				for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+				String text = new String();
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
-					if(i == 0)
-						return;
+					text = read(true);
 
-					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					else if(i == 1)
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
-						text = read(true);
+						printYellow("Maximum attempts reached, operation cancelled", true);
+						return;
 					}
 					else
 						break;
@@ -964,19 +973,20 @@ public class CLI
 					tense = Tense.FUTURE;
 
 				printWhite("Insert the new verb:", true);
-				String text = read(true);
 
-				for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+				String text = new String();
+
+				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
-					if(i == 0)
-						return;
+					text = read(true);
 
-					if(text.isEmpty() || !text.matches("[a-zA-Z]+"))
+					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					else if(i == 1)
 					{
-						printYellow("Please enter a valid value. Remaining attempts " + i, true);
-						text = read(true);
+						printYellow("Maximum attempts reached, operation cancelled", true);
+						return;
 					}
-					else
 						break;
 				}
 
@@ -1003,17 +1013,19 @@ public class CLI
 
 		String newTolerance = new String();
 
-		for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
+		for(int i = MAX_ATTEMPTS; i >= 0; --i)
 		{
-			if(i == 0)
-				return;
-
 			newTolerance = read(true);
 
 			try
 			{
-				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f || (Float.parseFloat(newTolerance) > 1.0f))))
-					printYellow("Please enter a valid value. Remaining attempts " + i, true);
+				if((newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f || (Float.parseFloat(newTolerance) > 1.0f)))) && i > 1)
+					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+				else if(i == 1)
+				{
+					printYellow("Maximum attempts reached, operation cancelled", true);
+					return;
+				}
 				else
 					break;
 			}
