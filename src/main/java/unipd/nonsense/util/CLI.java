@@ -95,7 +95,7 @@ public class CLI
 			if(input == null || input.trim().isEmpty())
 				return false;
 
-			return mainCommand.equalsIgnoreCase(input) || alias.contains(input.toLowerCase());
+			return mainCommand.equals(input.toLowerCase()) || alias.equals(input.toLowerCase());
 		}
 
 		public String getDisplayName()
@@ -420,6 +420,7 @@ public class CLI
 				printWhite("Proceding with the standard synctactic analysis of the given sentence", true);
 				analyzeSyntax(userInput);
 
+				printSeparator(BOLD_BLUE_STYLE);
 				printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
 				String generated = processor.generateFrom(userInput);
 
@@ -699,13 +700,45 @@ public class CLI
 		while(!mode.isEmpty())
 		{
 			if(mode.equals("syntax") || mode.equals("sy"))
-				opts.add(AnalyzeOptions.SYNTAX);
+			{
+				if(opts.contains(AnalyzeOptions.SYNTAX))
+					printYellow("Option already chosen", true);
+				else
+				{
+					opts.add(AnalyzeOptions.SYNTAX);
+					printWhite("Option added: syntax", true);
+				}
+			}
 			else if(mode.equals("sentiment") || mode.equals("se"))
-				opts.add(AnalyzeOptions.SENTIMENT);
+			{
+				if(opts.contains(AnalyzeOptions.SENTIMENT))
+					printYellow("Option already chosen", true);
+				else
+				{
+					opts.add(AnalyzeOptions.SENTIMENT);
+					printWhite("Option added: sentiment", true);
+				}
+			}
 			else if(mode.equals("toxicity") || mode.equals("t"))
-				opts.add(AnalyzeOptions.TOXICITY);
+			{
+				if(opts.contains(AnalyzeOptions.TOXICITY))
+					printYellow("Option already chosen", true);
+				else
+				{
+					opts.add(AnalyzeOptions.TOXICITY);
+					printWhite("Option added: toxicity", true);
+				}
+			}
 			else if(mode.equals("entity") || mode.equals("e"))
-				opts.add(AnalyzeOptions.ENTITY);
+			{
+				if(opts.contains(AnalyzeOptions.ENTITY))
+					printYellow("Option already chosen", true);
+				else
+				{
+					opts.add(AnalyzeOptions.ENTITY);
+					printWhite("Option added: entity", true);
+				}
+			}
 
 			mode = validateInput("Select the next desired mode:", COMBINED_ANALYZE_MODE_OPTIONS, true);
 		}
@@ -718,6 +751,9 @@ public class CLI
 
 		for(AnalyzeOptions opt : opts)
 		{
+			if(opts.indexOf(opt) != 0)
+				printSeparator(BOLD_BLUE_STYLE);
+
 			printWhite("Proceeding with " + opt, true);
 
 			switch(opt)
