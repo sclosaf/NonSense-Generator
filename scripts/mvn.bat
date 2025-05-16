@@ -2,7 +2,7 @@
 SETLOCAL
 
 if "%~1"=="" (
-	echo Usage: %~nx0 [compile^|test^|package^|javadoc^|clean^|execute]
+	echo Usage: %~nx0 [compile^|test^|package^|javadoc^|clean^|execute^|all]
 	exit /b 1
 )
 
@@ -32,9 +32,13 @@ if /i "%COMMAND%"=="compile" (
 ) else if /i "%COMMAND%"=="execute" (
 	java -cp "target\nonsense-generator-1.0.jar;target\libs\*" unipd.nonsense.App
 	exit /b 0
+) else if /i "%COMMAND%"=="all"(
+	mvn -s config\settings.xml clean
+	mvn -s config\settings.xml package
+	java -cp "target\nonsense-generator-1.0.jar;target\libs\*" unipd.nonsense.App
 ) else (
 	echo Invalid option: %COMMAND%
-	echo Available options: compile, test, package, javadoc, clean, execute
+	echo Available options: compile, test, package, javadoc, clean, execute, all
 	exit /b 1
 )
 

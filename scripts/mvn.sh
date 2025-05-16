@@ -29,6 +29,12 @@ execute_maven()
 			java -cp "target/nonsense-generator-1.0.jar:target/libs/*" unipd.nonsense.App
 			;;
 
+		"all")
+			mvn -s config/settings.xml clean
+			mvn -s config/settings.xml package
+			java -cp "target/nonsense-generator-1.0.jar:target/libs/*" unipd.nonsense.App
+			;;
+
 		*)
 			echo "Invalid option: $1"
 			echo "Available options: compile, test, package, javadoc, clean, execute"
@@ -40,7 +46,7 @@ execute_maven()
 main()
 {
 	if [ $# -ne 1 ]; then
-		echo "Usage: $0 [compile|test|package|javadoc|clean|execute]"
+		echo "Usage: $0 [compile|test|package|javadoc|clean|execute|all]"
 		exit 1
 	fi
 
