@@ -7,6 +7,7 @@ import unipd.nonsense.model.Noun.Number;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Verb.Tense;
+import unipd.nonsense.model.Template;
 
 import unipd.nonsense.exceptions.MissingInternetConnectionException;
 import unipd.nonsense.exceptions.IllegalToleranceException;
@@ -122,8 +123,9 @@ public class CLI
 		(
 			new Option("generate", "Generate a random sentence", "g"),
 			new Option("input", "Enter a sentence manually", "i"),
-			new Option("cached", "Use the cached sentence", "c")
-		);
+			new Option("cached", "Use the cached sentence", "ca"),
+			new Option("choose", "Choose among 5 given templates", "ch")
+	);
 
 	private static final List<Option> ELEMENT_OPTIONS = Arrays.asList
 		(
@@ -611,7 +613,7 @@ public class CLI
 					break;
 			}
 		}
-		else if(mode.equals("cached") || mode.equals("c"))
+		else if(mode.equals("cached") || mode.equals("ca"))
 		{
 			if(!processor.isSentenceCached())
 			{
@@ -621,6 +623,35 @@ public class CLI
 
 			printWhite("Proceding analyzing the cached sentence: '" + processor.getCachedSentence() + "'", true);
 			userInput = processor.getCachedSentence();
+		}
+		else if(mode.equals("choose") || mode.equals("ch"))
+		{
+			printWhite("Choose one template among the five presented:", true);
+			List<Template> templateList = processor.getRandomTemplates();
+
+			int i = 1;
+			for(Template template : templateList)
+				printWhite((i++) + ": " + template.getPattern(), true);
+
+			String choice = new String();
+
+			for(i = MAX_ATTEMPTS; i > 0; --i)
+			{
+				choice = read(true);
+
+				if(choice.matches("[1-5]"))
+				{
+					Template template = templateList.get(Integer.parseInt(choice));
+					printWhite("Template chosen: " + template.getPattern(), true);
+					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice)));
+					printWhite("Sentence generated from the chosen template: " + userInput, true);
+					break;
+				}
+				else
+				{
+					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+				}
+			}
 		}
 
 		switch(analyzeOptions.get(analysis))
@@ -813,6 +844,35 @@ public class CLI
 			printWhite("Proceding with the cached sentence", true);
 			userInput = processor.getCachedSentence();
 		}
+		else if(mode.equals("choose") || mode.equals("ch"))
+		{
+			printWhite("Choose one template among the five presented:", true);
+			List<Template> templateList = processor.getRandomTemplates();
+
+			int i = 1;
+			for(Template template : templateList)
+				printWhite((i++) + ": " + template.getPattern(), true);
+
+			String choice = new String();
+
+			for(i = MAX_ATTEMPTS; i > 0; --i)
+			{
+				choice = read(true);
+
+				if(choice.matches("[1-5]"))
+				{
+					Template template = templateList.get(Integer.parseInt(choice));
+					printWhite("Template chosen: " + template.getPattern(), true);
+					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice)));
+					printWhite("Sentence generated from the chosen template: " + userInput, true);
+					break;
+				}
+				else
+				{
+					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+				}
+			}
+		}
 
 		printTree(userInput);
 	}
@@ -941,27 +1001,25 @@ public class CLI
 		printWhite("The tolerance parameter specifies which is the value over which an analyzed sentence is considered toxic", true);
 		printWhite("Enter a new tolerance value (0.0 - 1.0): ", true);
 
-		String newTolerance = read(true);
+		String newTolerance = new String();
 
 		for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
 		{
 			if(i == 0)
 				return;
 
+			newTolerance = read(true);
+
 			try
 			{
 				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f || (Float.parseFloat(newTolerance) > 1.0f))))
-				{
 					printYellow("Please enter a valid value. Remaining attempts " + i, true);
-					newTolerance = read(true);
-				}
 				else
 					break;
 			}
 			catch(NumberFormatException e)
 			{
 				printYellow("Please enter a valid value. Remaining attempts " + i, true);
-				newTolerance = read(true);
 			}
 		}
 

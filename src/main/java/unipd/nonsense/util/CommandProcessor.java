@@ -109,6 +109,16 @@ public class CommandProcessor implements AutoCloseable
 		return cachedString = generator.generateSentenceWithTenseAndNumber(tense, num).getPattern();
 	}
 
+	public String generateWithTemplate(Template template)
+	{
+		return cachedString = generator.generateSentenceFromTemplate(template).getPattern();
+	}
+
+	public List<Template> getRandomTemplates()
+	{
+		return generator.getRandomTemplates();
+	}
+
 	private Number fromPartOfSpeechNumberToNumber(PartOfSpeech.Number num)
 	{
 		switch(num)

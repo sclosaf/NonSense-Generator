@@ -19,6 +19,7 @@ import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidNumberException;
 import unipd.nonsense.exceptions.InvalidTemplateTypeException;
+import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import java.util.Random;
 import java.util.List;
@@ -193,6 +194,47 @@ public class SentenceGenerator
 		logger.logInfo("generateSentenceWithTenseAndNumber: Sentence generation completed");
 
 		return template;
+	}
+
+	public Template generateSentenceFromTemplate(Template template)
+	{
+		if(template == null || template.getPattern().isEmpty())
+			throw new InvalidTemplateException();
+
+		Number number = convertTemplateTypeToNumber(template.getType());
+
+		while(template.countPlaceholders(Placeholder.NOUN) != 0)
+		{
+			String noun = nounGenerator.getRandomNoun(number).getNoun();
+			template.replacePlaceholder(Placeholder.NOUN, noun);
+			logger.logInfo("generateSentenceWithTenseAndNumber: Replaced NOUN placeholder with: " + noun);
+		}
+
+		while(template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
+		{
+			String adjective = adjectiveGenerator.getRandomAdjective().getAdjective();
+			template.replacePlaceholder(Placeholder.ADJECTIVE, adjective);
+			logger.logInfo("generateSentenceWithTenseAndNumber: Replaced ADJECTIVE placeholder with: " + adjective);
+		}
+
+		while(template.countPlaceholders(Placeholder.VERB) != 0)
+		{
+			String verb = verbGenerator.getRandomVerb(getRandomTense()).getVerb();
+			template.replacePlaceholder(Placeholder.VERB, verb);
+			logger.logInfo("generateSentenceWithTenseAndNumber: Replaced VERB placeholder with: " + verb);
+		}
+
+		return template;
+	}
+
+	public List<Template> getRandomTemplates()
+	{
+		List<Template> templateList = new ArrayList<>();
+
+		for(int i = 0; i < 5; ++i)
+			templateList.add(templateGenerator.getRandomTemplate());
+
+		return templateList;
 	}
 
 	private Number getRandomNumber()
