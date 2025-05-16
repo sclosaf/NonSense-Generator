@@ -44,9 +44,9 @@ public class JsonFileHandler
 
 	private JsonFileHandler()
 	{
-		logger.logInfo("Initializing JsonFileHandler");
+		logger.logTrace("Initializing JsonFileHandler");
 		gson = new GsonBuilder().setPrettyPrinting().create();
-		logger.logInfo("JsonFileHandler created successfully");
+		logger.logTrace("JsonFileHandler created successfully");
 	}
 
 	public static JsonFileHandler getInstance()
@@ -56,7 +56,7 @@ public class JsonFileHandler
 
 	public void appendItemToJson(String filePath, String key, String str) throws IOException, IllegalArgumentException
 	{
-		logger.logInfo("appendItemToJson: Attempting to append item to JSON");
+		logger.logTrace("appendItemToJson: Attempting to append item to JSON");
 		logger.logDebug("appendItemToJson: Appending to filePath " + filePath + ", key = " + key + ", str = " + str);
 
 		if(key == null)
@@ -68,7 +68,7 @@ public class JsonFileHandler
 		filePath = validateFile(filePath, true);
 
 		lock.writeLock().lock();
-		logger.logInfo("appendItemToJson: Acquired write lock");
+		logger.logTrace("appendItemToJson: Acquired write lock");
 
 		try
 		{
@@ -93,26 +93,26 @@ public class JsonFileHandler
 			{
 				if(element.isJsonPrimitive() && element.getAsString().equals(str))
 				{
-					logger.logInfo("appendItemToJson: Item already exists in array, skipping");
+					logger.logTrace("appendItemToJson: Item already exists in array, skipping");
 					return;
 				}
 			}
 
 			elements.add(str);
-			logger.logInfo("appendItemToJson: Added new item to array");
+			logger.logTrace("appendItemToJson: Added new item to array");
 			writeJsonObject(filePath, json);
-			logger.logInfo("appendItemToJson: Successfully updated JSON file");
+			logger.logTrace("appendItemToJson: Successfully updated JSON file");
 		}
 		finally
 		{
 			lock.writeLock().unlock();
-			logger.logInfo("appendItemToJson: Released write lock");
+			logger.logTrace("appendItemToJson: Released write lock");
 		}
 	}
 
 	public String readItemFromJson(String filePath, String key, int index) throws IOException, IllegalArgumentException, IndexOutOfBoundsException
 	{
-		logger.logInfo("readItemFromJson: Attempting to read item from JSON");
+		logger.logTrace("readItemFromJson: Attempting to read item from JSON");
 		logger.logDebug("readItemFromJson: FilePath " + filePath + ", key = " + key);
 
 		if(key == null)
@@ -130,7 +130,7 @@ public class JsonFileHandler
 		}
 
 		lock.readLock().lock();
-		logger.logInfo("readItemFromJson: Acquired read lock");
+		logger.logTrace("readItemFromJson: Acquired read lock");
 
 		try
 		{
@@ -148,9 +148,7 @@ public class JsonFileHandler
 				throw new JsonElementIsNotArrayException(key);
 			}
 
-
 			JsonArray elements = json.getAsJsonArray(key);
-
 
 			if(index >= elements.size())
 			{
@@ -168,20 +166,20 @@ public class JsonFileHandler
 
 			String result = element.getAsString();
 			logger.logDebug("readItemFromJson: Retrieved value: " + result);
-			logger.logInfo("readItemFromJson: Successfully read item from JSON");
+			logger.logTrace("readItemFromJson: Successfully read item from JSON");
 
 			return result;
 		}
 		finally
 		{
 			lock.readLock().unlock();
-			logger.logInfo("readItemFromJson: Released read lock");
+			logger.logTrace("readItemFromJson: Released read lock");
 		}
 	}
 
 	public List<String> readListFromJson(String filePath, String key) throws IOException, IllegalArgumentException
 	{
-		logger.logInfo("readListFromJson: Attempting to read list from JSON");
+		logger.logTrace("readListFromJson: Attempting to read list from JSON");
 		logger.logDebug("readListFromJson: Appending to filePath " + filePath + ", key = " + key);
 
 		if(key == null)
@@ -193,7 +191,7 @@ public class JsonFileHandler
 		filePath = validateFile(filePath, false);
 
 		lock.readLock().lock();
-		logger.logInfo("readListFromJson: Acquired read lock");
+		logger.logTrace("readListFromJson: Acquired read lock");
 
 		try
 		{
@@ -219,20 +217,20 @@ public class JsonFileHandler
 					result.add(element.getAsString());
 
 			logger.logDebug("readListFromJson: Retrieved list with " + result.size() + " items");
-			logger.logInfo("readListFromJson: Successfully read list from JSON");
+			logger.logTrace("readListFromJson: Successfully read list from JSON");
 
 			return result;
 		}
 		finally
 		{
 			lock.readLock().unlock();
-			logger.logInfo("readListFromJson: Released read lock");
+			logger.logTrace("readListFromJson: Released read lock");
 		}
 	}
 
 	public boolean hasJsonKey(String filePath, String key) throws IOException, IllegalArgumentException
 	{
-		logger.logInfo("hasJsonKey: Checking if JSON has key");
+		logger.logTrace("hasJsonKey: Checking if JSON has key");
 		logger.logDebug("hasJsonKey: Appending to filePath " + filePath + ", key = " + key);
 
 		if(key == null)
@@ -244,7 +242,7 @@ public class JsonFileHandler
 		filePath = validateFile(filePath, false);
 
 		lock.readLock().lock();
-		logger.logInfo("hasJsonKey: Acquired read lock");
+		logger.logTrace("hasJsonKey: Acquired read lock");
 
 		try
 		{
@@ -272,44 +270,44 @@ public class JsonFileHandler
 				currentElement = currentObject.get(k);
 			}
 
-			logger.logInfo("hasJsonKey: Key found in JSON");
-			logger.logInfo("hasJsonKey: Key check completed");
+			logger.logTrace("hasJsonKey: Key found in JSON");
+			logger.logTrace("hasJsonKey: Key check completed");
 
 			return true;
 		}
 		finally
 		{
 			lock.readLock().unlock();
-			logger.logInfo("hasJsonKey: Released read lock");
+			logger.logTrace("hasJsonKey: Released read lock");
 		}
 	}
 
 	public JsonObject getJsonObject(String filePath) throws IOException
 	{
-		logger.logInfo("getJsonObject: Retrieving JSON object from file");
+		logger.logTrace("getJsonObject: Retrieving JSON object from file");
 		logger.logDebug("getJsonObject: filePath=" + filePath);
 
 		filePath = validateFile(filePath, false);
 
 		lock.readLock().lock();
-		logger.logInfo("getJsonObject: Acquired read lock");
+		logger.logTrace("getJsonObject: Acquired read lock");
 
 		try
 		{
 			JsonObject result = readJsonObject(filePath);
-			logger.logInfo("getJsonObject: Successfully retrieved JSON object");
+			logger.logTrace("getJsonObject: Successfully retrieved JSON object");
 			return result;
 		}
 		finally
 		{
 			lock.readLock().unlock();
-			logger.logInfo("getJsonObject: Released read lock");
+			logger.logTrace("getJsonObject: Released read lock");
 		}
 	}
 
 	private String validateFile(String filePath, boolean requiresWrite) throws IOException, IllegalArgumentException
 	{
-		logger.logInfo("validateFile: Validating file");
+		logger.logTrace("validateFile: Validating file");
 		logger.logDebug("validateFile: filePath = " + filePath + ", requiresWrite = " + requiresWrite);
 
 
@@ -349,19 +347,19 @@ public class JsonFileHandler
 			throw new UnwritableFileException();
 		}
 
-		logger.logInfo("validateFile: File validation successful");
+		logger.logTrace("validateFile: File validation successful");
 		return filePath;
 	}
 
 	private JsonObject readJsonObject(String filePath) throws IOException
 	{
-		logger.logInfo("readJsonObject: Reading JSON object from file");
+		logger.logTrace("readJsonObject: Reading JSON object from file");
 		logger.logDebug("readJsonObject: filePath = " + filePath);
 
 		try(FileReader reader = new FileReader(filePath))
 		{
 			JsonObject result = JsonParser.parseReader(reader).getAsJsonObject();
-			logger.logInfo("readJsonObject: Successfully parsed JSON object");
+			logger.logTrace("readJsonObject: Successfully parsed JSON object");
 			return result;
 		}
 		catch(IllegalStateException | JsonSyntaxException e)
@@ -373,13 +371,13 @@ public class JsonFileHandler
 
 	private void writeJsonObject(String filePath, JsonObject json) throws IOException
 	{
-		logger.logInfo("writeJsonObject: Writing JSON object to file");
+		logger.logTrace("writeJsonObject: Writing JSON object to file");
 		logger.logDebug("writeJsonObject: filePath = " + filePath);
 
 		try(FileWriter writer = new FileWriter(filePath))
 		{
 			gson.toJson(json, writer);
-			logger.logInfo("writeJsonObject: Successfully wrote JSON object");
+			logger.logTrace("writeJsonObject: Successfully wrote JSON object");
 		}
 		catch(IllegalStateException | JsonSyntaxException e)
 		{

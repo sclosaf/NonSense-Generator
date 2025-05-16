@@ -53,7 +53,7 @@ public class GoogleApiClient implements AutoCloseable
 			logger.logDebug("Credentials file validated: " + this.credentialsPath);
 
 			cacheLock.lock();
-			logger.logInfo("Acquired cache lock for client initialization");
+			logger.logTrace("Acquired cache lock for client initialization");
 
 			try
 			{
@@ -68,16 +68,16 @@ public class GoogleApiClient implements AutoCloseable
 				{
 					LanguageServiceClient newClient = createClient(this.credentialsPath);
 					clientCache.put(this.credentialsPath, new ClientEntry(newClient));
-					logger.logInfo("Created new client instance and added to cache");
+					logger.logTrace("Created new client instance and added to cache");
 				}
 
 				isClosed = false;
-				logger.logInfo("GoogleApiClient initialized successfully");
+				logger.logTrace("GoogleApiClient initialized successfully");
 			}
 			finally
 			{
 				cacheLock.unlock();
-				logger.logInfo("Released cache lock after client initialization");
+				logger.logTrace("Released cache lock after client initialization");
 			}
 		}
 		catch(IOException e)
@@ -89,7 +89,7 @@ public class GoogleApiClient implements AutoCloseable
 
 	public LanguageServiceClient getClient()
 	{
-		logger.logInfo("getClient: Attempting to get client instance");
+		logger.logTrace("getClient: Attempting to get client instance");
 
 		if(isClosed)
 		{
@@ -105,7 +105,7 @@ public class GoogleApiClient implements AutoCloseable
 			throw new ClientNonExistentException();
 		}
 
-		logger.logInfo("getClient: Returning client instance");
+		logger.logTrace("getClient: Returning client instance");
 		return entry.client;
 	}
 
@@ -114,7 +114,7 @@ public class GoogleApiClient implements AutoCloseable
 		logger.logDebug("getClientCount: Getting client count for path: " + filePath);
 
 		cacheLock.lock();
-		logger.logInfo("getClientCount: Acquired cache lock for client count");
+		logger.logTrace("getClientCount: Acquired cache lock for client count");
 
 		try
 		{
@@ -128,14 +128,14 @@ public class GoogleApiClient implements AutoCloseable
 		finally
 		{
 			cacheLock.unlock();
-			logger.logInfo("getClientCount: Released cache lock after client count");
+			logger.logTrace("getClientCount: Released cache lock after client count");
 		}
 	}
 
 	@Override
 	public void close()
 	{
-		logger.logInfo("close: Closing client");
+		logger.logTrace("close: Closing client");
 
 		if(isClosed)
 		{
@@ -144,7 +144,7 @@ public class GoogleApiClient implements AutoCloseable
 		}
 
 		cacheLock.lock();
-		logger.logInfo("close: Acquired cache lock for client closure");
+		logger.logTrace("close: Acquired cache lock for client closure");
 
 		try
 		{
@@ -159,25 +159,25 @@ public class GoogleApiClient implements AutoCloseable
 				{
 					entry.client.close();
 					clientCache.remove(this.credentialsPath);
-					logger.logInfo("close: Client fully closed and removed from cache");
+					logger.logTrace("close: Client fully closed and removed from cache");
 				}
 			}
 
 			isClosed = true;
-			logger.logInfo("close: GoogleApiClient closed successfully");
+			logger.logTrace("close: GoogleApiClient closed successfully");
 		}
 		finally
 		{
 			cacheLock.unlock();
-			logger.logInfo("close: Released cache lock after client closure");
+			logger.logTrace("close: Released cache lock after client closure");
 		}
 	}
 
 	public static void closeAllClients()
 	{
-		logger.logInfo("closeAllClients: Initiating shutdown of all clients");
+		logger.logTrace("closeAllClients: Initiating shutdown of all clients");
 		cacheLock.lock();
-		logger.logInfo("closeAllClients: Acquired cache lock");
+		logger.logTrace("closeAllClients: Acquired cache lock");
 
 		try
 		{
@@ -187,22 +187,22 @@ public class GoogleApiClient implements AutoCloseable
 			for(ClientEntry entry : clientCache.values())
 			{
 				entry.client.close();
-				logger.logInfo("closeAllClients: Closed client instance");
+				logger.logTrace("closeAllClients: Closed client instance");
 			}
 
 			clientCache.clear();
-			logger.logInfo("closeAllClients: Successfully closed all " + clientCount + " clients");
+			logger.logDebug("closeAllClients: Successfully closed all " + clientCount + " clients");
 		}
 		finally
 		{
 			cacheLock.unlock();
-			logger.logInfo("closeAllClients: Released cache lock");
+			logger.logTrace("closeAllClients: Released cache lock");
 		}
 	}
 
 	private LanguageServiceClient createClient(String filePath) throws IOException
 	{
-		logger.logInfo("createClient: Creating new LanguageServiceClient");
+		logger.logTrace("createClient: Creating new LanguageServiceClient");
 
 		try(InputStream stream = getClass().getResourceAsStream(filePath))
 		{
@@ -214,11 +214,11 @@ public class GoogleApiClient implements AutoCloseable
 
 			ServiceAccountCredentials credentials = ServiceAccountCredentials.fromStream(stream);
 
-			logger.logInfo("createClient: Successfully loaded service account credentials");
+			logger.logTrace("createClient: Successfully loaded service account credentials");
 
 			LanguageServiceSettings settings = LanguageServiceSettings.newBuilder().setCredentialsProvider(FixedCredentialsProvider.create(credentials)).build();
 
-			logger.logDebug("createClient: LanguageServiceSettings configured");
+			logger.logTrace("createClient: LanguageServiceSettings configured");
 
 			return LanguageServiceClient.create(settings);
 
@@ -248,7 +248,7 @@ public class GoogleApiClient implements AutoCloseable
 
 		filePath = filePath.toLowerCase().endsWith(".json") ? filePath : filePath + ".json";
 
-		logger.logInfo("Formatted file path: " + filePath);
+		logger.logDebug("Formatted file path: " + filePath);
 
 		File file = new File(filePath);
 
@@ -260,7 +260,7 @@ public class GoogleApiClient implements AutoCloseable
 				throw new FailedOpeningInputStreamException();
 			}
 
-			logger.logInfo("validateFile: File validation successful");
+			logger.logTrace("validateFile: File validation successful");
 		}
 
 		return filePath;

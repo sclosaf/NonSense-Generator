@@ -32,8 +32,6 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	public RandomTemplateGenerator() throws IOException
 	{
-		logger.logInfo("Initializing RandomTemplateGenerator");
-
 		this.templates = new HashMap<>();
 		this.random = new Random();
 
@@ -42,8 +40,6 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 			loadTemplates();
 			JsonUpdater.addObserver(this);
 
-			logger.logInfo("Initialization completed successfully");
-			logger.logDebug("LoadedTemplates counts - Singular: " + (templates.get(TemplateType.SINGULAR) != null ? templates.get(TemplateType.SINGULAR).size() : 0) + ", Plural: " + (templates.get(TemplateType.PLURAL) != null ? templates.get(TemplateType.PLURAL).size() : 0));
 		}
 		catch(IOException e)
 		{
@@ -53,8 +49,6 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	private void loadTemplates() throws IOException
 	{
-		logger.logInfo("loadTemplates: Loading templates from JSON file");
-
 		for(String key : keys)
 		{
 			TemplateType type;
@@ -73,7 +67,6 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 				List<Template> templateList = jsonList.stream().map(template -> new Template(template, type)).collect(Collectors.toList());
 
 				templates.put(type, templateList);
-				logger.logDebug("loadTemplates: Loaded " + templateList.size() + " " + type + " templates");
 			}
 			else
 				logger.logWarn("loadTemplates: No templates found for key: " + key);
@@ -82,17 +75,14 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	public Template getRandomTemplate()
 	{
-		logger.logInfo("getRandomTemplate: Selecting random template with random type");
 		TemplateType[] types = TemplateType.values();
 		TemplateType randomType = types[random.nextInt(types.length)];
 
-		logger.logDebug("getRandomTemplate: Selected type: " + randomType);
 		return getRandomTemplate(randomType);
 	}
 
 	public Template getRandomTemplate(TemplateType type)
 	{
-		logger.logDebug("getRandomTemplate: Selecting random " + type + " template");
 		List<Template> templateList = templates.get(type);
 
 		if(templateList == null || templateList.isEmpty())
@@ -105,21 +95,15 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 		Template selected = templateList.get(randomIndex);
 
-		logger.logDebug("getRandomTemplate: Selected template: " + selected.getPattern() + " (index " + randomIndex + " of " + templateList.size() + ")");
 		return selected;
 	}
 
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
-		logger.logInfo("onJsonUpdate: JSON file updated, reloading templates");
-
 		try
 		{
 			loadTemplates();
-
-			logger.logInfo("onJsonUpdate: Templates reloaded successfully");
-			logger.logDebug("Templates count - Singular: " + (templates.get(TemplateType.SINGULAR) != null ? templates.get(TemplateType.SINGULAR).size() : 0) + ", Plural: " + (templates.get(TemplateType.PLURAL) != null ? templates.get(TemplateType.PLURAL).size() : 0));
 		}
 		catch (IOException e)
 		{

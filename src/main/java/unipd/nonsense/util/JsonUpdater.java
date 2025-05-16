@@ -35,14 +35,14 @@ public class JsonUpdater
 	{
 		logger.logDebug("addObserver: Adding observer: " + observer.getClass().getSimpleName());
 		observers.add(observer);
-		logger.logInfo("addObserver: Observer added successfully");
+		logger.logTrace("addObserver: Observer added successfully");
 	}
 
 	public static void removeObserver(JsonUpdateObserver observer)
 	{
 		logger.logDebug("removeObserver: Removing observer: " + observer.getClass().getSimpleName());
 		observers.remove(observer);
-		logger.logInfo("removeObserver: Observer removed successfully");
+		logger.logTrace("removeObserver: Observer removed successfully");
 	}
 
 	private static void notifyAllObservers() throws IOException
@@ -55,7 +55,7 @@ public class JsonUpdater
 			{
 				logger.logDebug("notifyAllObservers: Notifying observer: " + observer.getClass().getSimpleName());
 				observer.onJsonUpdate();
-				logger.logInfo("notifyAllObservers: Observer notified successfully");
+				logger.logTrace("notifyAllObservers: Observer notified successfully");
 			}
 			catch(IOException e)
 			{
@@ -69,7 +69,7 @@ public class JsonUpdater
 	{
 		logger.logDebug("loadNoun: Loading noun: " + noun.getNoun() + " with number: " + noun.getNumber());
 		loadNoun(noun.getNoun(), noun.getNumber());
-		logger.logInfo("loadNoun: Noun loaded successfully");
+		logger.logTrace("loadNoun: Noun loaded successfully");
 	}
 
 	public static void loadNoun(String noun, Number num) throws IOException
@@ -88,7 +88,7 @@ public class JsonUpdater
 
 		logger.logDebug("loadNoun: Appending noun to JSON with key: " + key);
 		jsonHandler.appendItemToJson(nounsPath, key, noun);
-		logger.logInfo("loadNoun: Noun appended to JSON successfully");
+		logger.logTrace("loadNoun: Noun appended to JSON successfully");
 		notifyAllObservers();
 	}
 
@@ -96,7 +96,7 @@ public class JsonUpdater
 	{
 		logger.logDebug("loadVerb: Loading verb: " + verb.getVerb() + " with tense: " + verb.getTense());
 		loadVerb(verb.getVerb(), verb.getTense());
-		logger.logInfo("loadVerb: Verb loaded successfully");
+		logger.logTrace("loadVerb: Verb loaded successfully");
 	}
 
 
@@ -118,7 +118,7 @@ public class JsonUpdater
 
 		logger.logDebug("loadVerb: Appending verb to JSON with key: " + key);
 		jsonHandler.appendItemToJson(verbsPath, key, verb);
-		logger.logInfo("loadVerb: Verb appended to JSON successfully");
+		logger.logTrace("loadVerb: Verb appended to JSON successfully");
 		notifyAllObservers();
 	}
 
@@ -126,7 +126,7 @@ public class JsonUpdater
 	{
 		logger.logDebug("loadAdjective: Loading adjective: " + adjective.getAdjective());
 		loadAdjective(adjective.getAdjective());
-		logger.logInfo("loadAdjective: Adjective loaded successfully");
+		logger.logTrace("loadAdjective: Adjective loaded successfully");
 	}
 
 	public static void loadAdjective(String adjective) throws IOException
@@ -136,7 +136,7 @@ public class JsonUpdater
 
 		logger.logDebug("loadAdjective: Appending adjective to JSON with key: " + key);
 		jsonHandler.appendItemToJson(adjectivesPath, key, adjective);
-		logger.logInfo("loadAdjective: Adjective appended to JSON successfully");
+		logger.logTrace("loadAdjective: Adjective appended to JSON successfully");
 		notifyAllObservers();
 	}
 
@@ -144,7 +144,7 @@ public class JsonUpdater
 	{
 		logger.logDebug("loadTemplate: Loading template: " + template.getPattern() + " with type: " + template.getType());
 		loadTemplate(template.getPattern(), template.getType());
-		logger.logInfo("loadTemplate: Template loaded successfully");
+		logger.logTrace("loadTemplate: Template loaded successfully");
 	}
 
 	public static void loadTemplate(String template, TemplateType type) throws IOException
@@ -163,7 +163,7 @@ public class JsonUpdater
 
 		logger.logDebug("loadTemplate: Appending template to JSON with key: " + key);
 		jsonHandler.appendItemToJson(templatesPath, key, template);
-		logger.logInfo("loadTemplate: Template appended to JSON successfully");
+		logger.logTrace("loadTemplate: Template appended to JSON successfully");
 		notifyAllObservers();
 	}
 }

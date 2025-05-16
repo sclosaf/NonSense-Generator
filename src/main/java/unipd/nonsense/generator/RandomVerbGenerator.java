@@ -35,8 +35,6 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 	public RandomVerbGenerator() throws IOException
 	{
-		logger.logInfo("Initializing RandomVerbGenerator");
-
 		this.verbs = new HashMap<>();
 		this.random = new Random();
 
@@ -44,9 +42,6 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 		{
 			loadVerbs();
 			JsonUpdater.addObserver(this);
-
-			logger.logInfo("Initialization completed successfully");
-			logger.logDebug("Loaded verbs counts - Past: " + (verbs.get(Tense.PAST) != null ? verbs.get(Tense.PAST).size() : 0) + ", Present: " + (verbs.get(Tense.PRESENT) != null ? verbs.get(Tense.PRESENT).size() : 0) + ", Future: " + (verbs.get(Tense.FUTURE) != null ? verbs.get(Tense.FUTURE).size() : 0));
 		}
 		catch(IOException e)
 		{
@@ -57,7 +52,6 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 	private void loadVerbs() throws IOException
 	{
-		logger.logInfo("loadVerbs: Loading verbs from JSON file");
 
 		for(String key : keys)
 		{
@@ -79,7 +73,6 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 				List<Verb> verbList = jsonList.stream().map(verb -> new Verb(verb, tense)).collect(Collectors.toList());
 				verbs.put(tense, verbList);
 
-				logger.logDebug("loadVerbs: Loaded " + verbList.size() + " " + tense + " verbs");
 			}
 			else
 				logger.logWarn("loadVerbs: No verbs found for key: " + key);
@@ -88,18 +81,14 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 	public Verb getRandomVerb()
 	{
-		logger.logInfo("getRandomVerb: Selecting random verb with random tense");
 		Tense[] tenses = Tense.values();
 		Tense randomTense = tenses[random.nextInt(tenses.length)];
-
-		logger.logDebug("getRandomVerb: Selected tense: " + randomTense);
 
 		return getRandomVerb(randomTense);
 	}
 
 	public Verb getRandomVerb(Tense tense)
 	{
-		logger.logDebug("getRandomVerb: Selecting random " + tense + " verb");
 		List<Verb> verbList = verbs.get(tense);
 
 		if(verbList == null || verbList.isEmpty())
@@ -111,22 +100,16 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 		int randomIndex = random.nextInt(verbList.size());
 		Verb selected = verbList.get(randomIndex);
 
-		logger.logDebug("getRandomVerb: Selected verb: " + selected.getVerb() + " (index " + randomIndex + " of " + verbList.size() + ")");
 		return selected;
 	}
 
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
-		logger.logInfo("onJsonUpdate: JSON file updated, reloading verbs");
-
 		try
 		{
 			loadVerbs();
 
-			logger.logInfo("onJsonUpdate: Verbs reloaded successfully");
-
-			logger.logDebug("Verbs count - Past:" + (verbs.get(Tense.PAST) != null ? verbs.get(Tense.PAST).size() : 0) + ", Present: " + (verbs.get(Tense.PRESENT) != null ? verbs.get(Tense.PRESENT).size() : 0) + ", Future: " + (verbs.get(Tense.FUTURE) != null ? verbs.get(Tense.FUTURE).size() : 0));
 		}
 		catch(IOException e)
 		{

@@ -37,7 +37,7 @@ public class SyntaxTreeBuilder
 
 	public static <T extends SyntaxToken> String getSyntaxTree(List<T> tokens)
 	{
-		logger.logInfo("getSyntaxTree: Starting syntax tree generation");
+		logger.logTrace("getSyntaxTree: Starting syntax tree generation");
 
 		if(tokens == null || tokens.isEmpty())
 		{
@@ -47,13 +47,13 @@ public class SyntaxTreeBuilder
 
 		try
 		{
-			logger.logInfo("getSyntaxTree: Creating index to token map");
+			logger.logTrace("getSyntaxTree: Creating index to token map");
 			Map<Integer, T> indexToToken = createIndexTokenMap(tokens);
 
-			logger.logInfo("getSyntaxTree: Building dependency map");
+			logger.logTrace("getSyntaxTree: Building dependency map");
 			Map<Integer, List<Integer>> dependencyMap = buildDependencyMap(tokens);
 
-			logger.logInfo("getSyntaxTree: Finding root tokens");
+			logger.logTrace("getSyntaxTree: Finding root tokens");
 			List<T> rootTokens = findRootTokens(tokens);
 
 			if(rootTokens.isEmpty())
@@ -66,17 +66,21 @@ public class SyntaxTreeBuilder
 
 			if(rootTokens.size() == 1)
 			{
-				logger.logDebug("getSyntaxTree: Single sentence detected");
+				logger.logDebug("getSyntaxTree: Single sentence detected with root token: " + rootTokens.get(0).getText());
 				T root = rootTokens.get(0);
 				int rootIndex = tokens.indexOf(root);
 
 				List<Integer> punctuationTokens = findPunctuationTokens(tokens);
+
+				logger.logDebug("getSyntaxTree: Found " + punctuationTokens.size() + " punctuation tokens");
 
 				for(Integer punctIndex : punctuationTokens)
 				{
 					if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
 					{
 						int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+
+						logger.logDebug("getSyntaxTree: Reattached punctuation at index " + punctIndex + " to new head at index " + newHead);
 
 						if(!dependencyMap.containsKey(newHead))
 							dependencyMap.put(newHead, new ArrayList<>());
@@ -86,22 +90,33 @@ public class SyntaxTreeBuilder
 				}
 
 				buildTreeString(rootIndex, indexToToken, dependencyMap, "", true, treeBuilder);
-				return "Syntax Tree:\n" + treeBuilder.toString();
+
+				logger.logTrace("getSyntaxTree: Successfully built syntax tree for single sentence");
+
+				return treeBuilder.toString();
 			}
 			else
 			{
 				logger.logDebug("getSyntaxTree: Multiple sentences detected (" + rootTokens.size() + ")");
+
 				for(int i = 0; i < rootTokens.size(); i++)
 				{
 					T root = rootTokens.get(i);
 					int rootIndex = tokens.indexOf(root);
 
+					logger.logDebug("getSyntaxTree: Processing sentence " + (i + 1) + " with root token: " + root.getText());
+
 					List<Integer> punctuationTokens = findPunctuationTokens(tokens);
+
+					logger.logDebug("getSyntaxTree: Found " + punctuationTokens.size() + " punctuation tokens for sentence " + (i + 1));
+
 					for(Integer punctIndex : punctuationTokens)
 					{
 						if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
 						{
 							int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+
+							logger.logDebug("getSyntaxTree: Reattached punctuation at index " + punctIndex + " to new head at index " + newHead + " for sentence " + (i + 1));
 
 							if(!dependencyMap.containsKey(newHead))
 								dependencyMap.put(newHead, new ArrayList<>());
@@ -118,6 +133,8 @@ public class SyntaxTreeBuilder
 
 				}
 
+				logger.logTrace("getSyntaxTree: Successfully built syntax trees for all sentences");
+
 				return treeBuilder.toString();
 			}
 		}
@@ -130,7 +147,7 @@ public class SyntaxTreeBuilder
 
 	private static <T extends SyntaxToken> List<T> findRootTokens(List<T> tokens)
 	{
-		logger.logDebug("findRootTokens: Searching for root tokens");
+		logger.logDebug("findRootTokens: Searching for root tokens among " + tokens.size() + " tokens");
 		List<T> rootTokens = new ArrayList<>();
 
 		for(T token : tokens)
@@ -144,6 +161,8 @@ public class SyntaxTreeBuilder
 
 		if(rootTokens.isEmpty())
 		{
+			logger.logTrace("findRootTokens: No ROOT label tokens found, checking for head index -1");
+
 			for(T token : tokens)
 			{
 				int headIdx = token.getHeadTokenIndex();
@@ -158,6 +177,8 @@ public class SyntaxTreeBuilder
 
 		if(rootTokens.isEmpty())
 		{
+			logger.logTrace("findRootTokens: No -1 head index tokens found, checking for invalid head indices");
+
 			for(T token : tokens)
 			{
 				int headIdx = token.getHeadTokenIndex();
@@ -170,17 +191,25 @@ public class SyntaxTreeBuilder
 			}
 		}
 
-		logger.logInfo("findRootTokens: Found " + rootTokens.size() + " root tokens");
+		logger.logDebug("findRootTokens: Found " + rootTokens.size() + " root tokens");
 		return rootTokens;
 	}
 
 	private static <T extends SyntaxToken> List<Integer> findPunctuationTokens(List<T> tokens)
 	{
+		logger.logDebug("findPunctuationTokens: Searching for punctuation tokens");
 		List<Integer> punctuationIndices = new ArrayList<>();
 
 		for(int i = 0; i < tokens.size(); ++i)
+		{
 			if(tokens.get(i).getPosTag().equals("PUNCT"))
+			{
+				logger.logDebug("findPunctuationTokens: Found punctuation token at index " + i + ": " + tokens.get(i).getText());
 				punctuationIndices.add(i);
+			}
+		}
+
+		logger.logDebug("findPunctuationTokens: Found " + punctuationIndices.size() + " punctuation tokens");
 
 		return punctuationIndices;
 	}
@@ -193,7 +222,7 @@ public class SyntaxTreeBuilder
 		for(int i = 0; i < tokens.size(); ++i)
 		{
 			map.put(i, tokens.get(i));
-			logger.logInfo("createIndexTokenMap: Mapped index " + i + " to token: " + tokens.get(i).getText());
+			logger.logDebug("createIndexTokenMap: Mapped index " + i + " to token: " + tokens.get(i).getText());
 		}
 
 		logger.logDebug("createIndexTokenMap: Token index map created with " + map.size() + " entries");
@@ -202,21 +231,39 @@ public class SyntaxTreeBuilder
 
 	private static boolean isConnectedToTree(int tokenIndex, int rootIndex, Map<Integer, List<Integer>> dependencyMap)
 	{
-		if(dependencyMap.containsKey(rootIndex) && dependencyMap.get(rootIndex).contains(tokenIndex))
-			return true;
+		logger.logDebug("isConnectedToTree: Checking if token " + tokenIndex + " is connected to root " + rootIndex);
 
-		for(List<Integer> children : dependencyMap.values())
-			if(children.contains(tokenIndex))
+		if(dependencyMap.containsKey(rootIndex) && dependencyMap.get(rootIndex).contains(tokenIndex))
+		{
+			logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is directly connected to root");
+			return true;
+		}
+
+		for(Map.Entry<Integer, List<Integer>> entry : dependencyMap.entrySet())
+		{
+			if(entry.getValue().contains(tokenIndex))
+			{
+				logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is connected via head " + entry.getKey());
 				return true;
+			}
+		}
+
+		logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is not connected to the tree");
 
 		return false;
 	}
 
 	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, List<T> tokens)
 	{
-		if(punctIndex > 0)
-			return punctIndex - 1;
+		logger.logDebug("findAppropriateHeadForPunctuation: Finding head for punctuation at index " + punctIndex);
 
+		if(punctIndex > 0)
+		{
+			logger.logDebug("findAppropriateHeadForPunctuation: Using previous token at index " + (punctIndex - 1) + " as head");
+			return punctIndex - 1;
+		}
+
+		logger.logDebug("findAppropriateHeadForPunctuation: No previous token available, using -1 as head");
 		return -1;
 	}
 
@@ -228,7 +275,7 @@ public class SyntaxTreeBuilder
 		for(int i = -1; i < tokens.size(); ++i)
 		{
 			dependencyMap.put(i, new ArrayList<>());
-			logger.logInfo("buildDependencyMap: Initialized dependencies for index: " + i);
+			logger.logDebug("buildDependencyMap: Initialized dependencies for index: " + i);
 		}
 
 		for(int i = 0; i < tokens.size(); ++i)
@@ -243,7 +290,7 @@ public class SyntaxTreeBuilder
 			}
 
 			dependencyMap.computeIfAbsent(headIdx, k -> new ArrayList<>()).add(i);
-			logger.logInfo("buildDependencyMap: Added dependency from head " + headIdx + " to child " + i);
+			logger.logDebug("buildDependencyMap: Added dependency from head " + headIdx + " to child " + i + " (" + token.getText() + ")");
 		}
 
 		logger.logDebug("buildDependencyMap: Dependency map built with " + dependencyMap.size() + " entries");
@@ -280,6 +327,8 @@ public class SyntaxTreeBuilder
 
 			String nodeLabel = String.format("%s (%s)", token.getText(), token.getPosTag());
 
+			logger.logDebug("buildTreeString: Processing token: " + nodeLabel);
+
 			StringBuilder line = new StringBuilder();
 			line.append(current.indent);
 
@@ -295,9 +344,8 @@ public class SyntaxTreeBuilder
 
 			builder.append(line).append("\n");
 
-			logger.logDebug("buildTreeString: Added node to tree: " + nodeLabel);
-
 			List<Integer> childrenIndices = dependencyMap.getOrDefault(current.tokenIndex, Collections.emptyList());
+			logger.logDebug("buildTreeString: Found " + childrenIndices.size() + " children for token " + current.tokenIndex);
 			Collections.sort(childrenIndices);
 
 			List<Integer> unvisitedChildren = new ArrayList<>();
@@ -316,10 +364,12 @@ public class SyntaxTreeBuilder
 				int childIndex = childrenIndices.get(i);
 				boolean childIsLast = (i == childrenIndices.size() - 1);
 				T childToken = indexToToken.get(childIndex);
+
+				logger.logDebug("buildTreeString: Adding child " + childIndex + " (" + childToken.getText() + ") to processing stack");
 				stack.push(new TreeNodeInfo(childIndex, nextIndent, childIsLast, current.depth + 1));
 			}
 		}
 
-		logger.logDebug("buildTreeString: Completed iterative tree building");
+		logger.logDebug("buildTreeString: Completed tree building for root index " + rootIndex);
 	}
 }
