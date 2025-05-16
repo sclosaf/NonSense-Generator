@@ -27,7 +27,7 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
-	private static List<String> keys = List.of("adjective");
+	private static List<String> keys = List.of("adjectives");
 
 	private LoggerManager logger = new LoggerManager(RandomAdjectiveGenerator.class);
 

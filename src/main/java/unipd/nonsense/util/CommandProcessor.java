@@ -132,16 +132,15 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateSyntaxTree(String str) throws IOException
 	{
-		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokens(str));
-	}
+		cachedString = str;
 
-	public String analyzeSyntax()
-	{
-		return analyzeSyntax(cachedString);
+		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokens(str));
 	}
 
 	public String analyzeSyntax(String str)
 	{
+		cachedString = str;
+
 		try
 		{
 			return analyzer.analyzeSyntaxInput(str);
@@ -152,13 +151,10 @@ public class CommandProcessor implements AutoCloseable
 		}
 	}
 
-	public String analyzeSentiment()
-	{
-		return analyzeSentiment(cachedString);
-	}
-
 	public String analyzeSentiment(String str)
 	{
+		cachedString = str;
+
 		try
 		{
 			return analyzer.analyzeSentimentInput(str);
@@ -169,13 +165,10 @@ public class CommandProcessor implements AutoCloseable
 		}
 	}
 
-	public String analyzeEntity()
-	{
-		return analyzeEntity(cachedString);
-	}
-
 	public String analyzeEntity(String str)
 	{
+		cachedString = str;
+
 		try
 		{
 			return analyzer.analyzeEntitiesInput(str);
@@ -186,14 +179,11 @@ public class CommandProcessor implements AutoCloseable
 		}
 	}
 
-	public String analyzeToxicity()
-	{
-		return analyzeToxicity(cachedString);
-	}
-
 	public String analyzeToxicity(String str)
 	{
-		String report = validator.getToxicityReport(cachedString);
+		cachedString = str;
+
+		String report = validator.getToxicityReport(str);
 
 		boolean isToxic = validator.isTextToxic(cachedString, toxicityTolerance);
 

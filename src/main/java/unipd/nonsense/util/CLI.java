@@ -78,7 +78,7 @@ public class CLI
 	private static Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 
 	private static final int HISTORY_SIZE = 20;
-	private static final int MAX_ATTEMPTS = 3;
+	private static final int MAX_ATTEMPTS = 4;
 	private static final int MAX_WIDTH = 106;
 
 	private boolean running;
@@ -458,7 +458,7 @@ public class CLI
 
 		String userInput = read(true);
 
-		for(int i = MAX_ATTEMPTS - 1; i >= 0; ++i)
+		for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
 		{
 			if(i == 0)
 				return;
@@ -515,7 +515,7 @@ public class CLI
 
 		Number number;
 
-		if(userInput.equals("singular") && userInput.equals("s"))
+		if(userInput.equals("singular") || userInput.equals("s"))
 			number = Number.SINGULAR;
 		else
 			number = Number.PLURAL;
@@ -527,7 +527,7 @@ public class CLI
 
 		userInput = read(true);
 
-		for(int i = MAX_ATTEMPTS - 1; i >= 0; ++i)
+		for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
 		{
 			if(i == 0)
 				return;
@@ -614,11 +614,13 @@ public class CLI
 
 		if(mode.equals("generate") || mode.equals("g"))
 		{
+			printWhite("Proceding generating a random sentence", true);
 			userInput = processor.generateRandom();
 			printGreen("Generated sentence: '" + userInput + "'", false);
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
+			printWhite("Insert the desired sentence", true);
 			userInput = read(false);
 
 			for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
@@ -643,7 +645,7 @@ public class CLI
 				return;
 			}
 
-			printWhite("Proceding analyzing the cached sentence", true);
+			printWhite("Proceding analyzing the cached sentence: '" + processor.getCachedSentence() + "'", true);
 			userInput = processor.getCachedSentence();
 		}
 
@@ -851,7 +853,6 @@ public class CLI
 
 		while(!partOfSpeech.isEmpty())
 		{
-
 			for(int i = MAX_ATTEMPTS - 1; i >= 0; --i)
 			{
 				if(i == 0)
@@ -1015,7 +1016,7 @@ public class CLI
 
 			try
 			{
-				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f && (Float.parseFloat(newTolerance) > 1.0f))))
+				if(newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f || (Float.parseFloat(newTolerance) > 1.0f))))
 				{
 					printYellow("Please enter a valid value. Remaining attempts " + i, true);
 					newTolerance = read(true);
@@ -1080,7 +1081,7 @@ public class CLI
 			},
 
 			{
-				"Extend",
+				"Extend (e)",
 					"Gives the opportunity to the user to input a Noun, an Adjective or a Verb\n" +
 					"to the data dictionaries used by the program."
 			},

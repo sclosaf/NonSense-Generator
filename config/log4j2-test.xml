@@ -1,13 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <Configuration status="WARN">
 	<Appenders>
-		<Console name="NULL" target="SYSTEM_OUT">
-			<PatternLayout pattern="%msg%n"/>
-		</Console>
 	</Appenders>
 	<Loggers>
-		<Root level="OFF">
-			<AppenderRef ref="NULL"/>
-		</Root>
+		<Root level="OFF"></Root>
 	</Loggers>
 </Configuration>
