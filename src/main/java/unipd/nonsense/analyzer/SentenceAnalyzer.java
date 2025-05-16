@@ -51,133 +51,119 @@ public class SentenceAnalyzer implements AutoCloseable
 		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
 
 		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
-
 		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
 
 		StringBuilder report = new StringBuilder();
-
 		int tokenIndex = 1;
+
+
 		for(Token token : response.getTokensList())
 		{
 			report.append("Token ").append(tokenIndex).append(": ").append(token.getText().getContent()).append("\n");
-			report.append("  - Lemma: ").append(token.getLemma()).append("\n");
-			report.append("  - Part of Speech: ").append(token.getPartOfSpeech().getTag()).append("\n");
+			report.append("  Lemma: ").append(token.getLemma()).append("\n");
+			report.append("  POS: ").append(token.getPartOfSpeech().getTag()).append("\n");
 
-			if(token.getPartOfSpeech().getAspect() != PartOfSpeech.Aspect.ASPECT_UNKNOWN)
-				report.append("  - Aspect: ").append(token.getPartOfSpeech().getAspect()).append("\n");
+			addIfNotDefault(report, "  Aspect: ", token.getPartOfSpeech().getAspect(), PartOfSpeech.Aspect.ASPECT_UNKNOWN);
+			addIfNotDefault(report, "  Case: ", token.getPartOfSpeech().getCase(), PartOfSpeech.Case.CASE_UNKNOWN);
+			addIfNotDefault(report, "  Form: ", token.getPartOfSpeech().getForm(), PartOfSpeech.Form.FORM_UNKNOWN);
+			addIfNotDefault(report, "  Gender: ", token.getPartOfSpeech().getGender(), PartOfSpeech.Gender.GENDER_UNKNOWN);
 
-			if(token.getPartOfSpeech().getCase() != PartOfSpeech.Case.CASE_UNKNOWN)
-				report.append("  - Case: ").append(token.getPartOfSpeech().getCase()).append("\n");
+			addIfNotDefault(report, "  Mood: ", token.getPartOfSpeech().getMood(), PartOfSpeech.Mood.MOOD_UNKNOWN);
 
-			if(token.getPartOfSpeech().getForm() != PartOfSpeech.Form.FORM_UNKNOWN)
-				report.append("  - Form: ").append(token.getPartOfSpeech().getForm()).append("\n");
+			addIfNotDefault(report, "  Number: ", token.getPartOfSpeech().getNumber(), PartOfSpeech.Number.NUMBER_UNKNOWN);
 
-			if(token.getPartOfSpeech().getGender() != PartOfSpeech.Gender.GENDER_UNKNOWN)
-				report.append("  - Gender: ").append(token.getPartOfSpeech().getGender()).append("\n");
+			addIfNotDefault(report, "  Person: ", token.getPartOfSpeech().getPerson(), PartOfSpeech.Person.PERSON_UNKNOWN);
 
-			if(token.getPartOfSpeech().getMood() != PartOfSpeech.Mood.MOOD_UNKNOWN)
-				report.append("  - Mood: ").append(token.getPartOfSpeech().getMood()).append("\n");
+			addIfNotDefault(report, "  Proper: ", token.getPartOfSpeech().getProper(), PartOfSpeech.Proper.PROPER_UNKNOWN);
+			addIfNotDefault(report, "  Reciprocity: ", token.getPartOfSpeech().getReciprocity(), PartOfSpeech.Reciprocity.RECIPROCITY_UNKNOWN);
+			addIfNotDefault(report, "  Tense: ", token.getPartOfSpeech().getTense(), PartOfSpeech.Tense.TENSE_UNKNOWN);
+			addIfNotDefault(report, "  Voice: ", token.getPartOfSpeech().getVoice(), PartOfSpeech.Voice.VOICE_UNKNOWN);
 
-			if(token.getPartOfSpeech().getNumber() != PartOfSpeech.Number.NUMBER_UNKNOWN)
-				report.append("  - Number: ").append(token.getPartOfSpeech().getNumber()).append("\n");
+			report.append("  Dependency:\n");
+			report.append("    Head Token Index: ").append(token.getDependencyEdge().getHeadTokenIndex()).append("\n");
+			report.append("    Label: ").append(token.getDependencyEdge().getLabel()).append("\n");
 
-			if(token.getPartOfSpeech().getPerson() != PartOfSpeech.Person.PERSON_UNKNOWN)
-				report.append("  - Person: ").append(token.getPartOfSpeech().getPerson()).append("\n");
-
-			if(token.getPartOfSpeech().getProper() != PartOfSpeech.Proper.PROPER_UNKNOWN)
-				report.append("  - Proper: ").append(token.getPartOfSpeech().getProper()).append("\n");
-
-			if(token.getPartOfSpeech().getReciprocity() != PartOfSpeech.Reciprocity.RECIPROCITY_UNKNOWN)
-				report.append("  - Reciprocity: ").append(token.getPartOfSpeech().getReciprocity()).append("\n");
-
-			if(token.getPartOfSpeech().getTense() != PartOfSpeech.Tense.TENSE_UNKNOWN)
-				report.append("  - Tense: ").append(token.getPartOfSpeech().getTense()).append("\n");
-
-			if(token.getPartOfSpeech().getVoice() != PartOfSpeech.Voice.VOICE_UNKNOWN)
-				report.append("  - Voice: ").append(token.getPartOfSpeech().getVoice()).append("\n");
-
-			report.append("  - Dependency\n");
-			report.append("      Head Token Index: ").append(token.getDependencyEdge().getHeadTokenIndex()).append("\n");
-			report.append("      Label: ").append(token.getDependencyEdge().getLabel()).append("\n");
-
+			tokenIndex++;
 			report.append("\n");
-
-			++tokenIndex;
 		}
 
-		return report.toString();
+		return report.toString().trim();
+	}
+
+	private void addIfNotDefault(StringBuilder sb, String prefix, Object value, Object defaultValue)
+	{
+		if(!value.equals(defaultValue))
+			sb.append(prefix).append(value).append("\n");
 	}
 
 	public String analyzeSentimentInput(String text) throws IOException
 	{
 		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
-
 		AnalyzeSentimentResponse response = languageClient.analyzeSentiment(doc);
 		Sentiment sentiment = response.getDocumentSentiment();
 
-		StringBuilder report = new StringBuilder();
+		if (sentiment == null)
+			return "No sentiment detected.";
 
-		if(sentiment == null)
-		{
-			report.append("No sentiment detected in the provided text.\n\n");
-			return report.toString();
-		}
-
-		report.append("Sentiment Score: ").append(sentiment.getScore()).append("\n");
-		report.append("Sentiment Magnitude: ").append(sentiment.getMagnitude()).append("\n\n");
-
-		return report.toString();
+		return String.format
+			(
+				"Sentiment Score: %.2f (Magnitude: %.2f)",
+				sentiment.getScore(),
+				sentiment.getMagnitude()
+			);
 	}
+
 
 	public String analyzeEntitiesInput(String text) throws IOException
 	{
 		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
-
 		AnalyzeEntitiesRequest request = AnalyzeEntitiesRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
-
 		AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
 
 		StringBuilder report = new StringBuilder();
-		report.append("Analyzed Text: ").append(text).append("\n\n");
-
 		List<Entity> entities = response.getEntitiesList();
 
 		if(entities.isEmpty())
-		{
-			report.append("No entities detected in the provided text.\n\n");
-			return report.toString();
-		}
+			return "No entities detected.";
 
 		int entityIndex = 1;
 		for(Entity entity : entities)
 		{
-			report.append("Entity ").append(entityIndex).append(": ").append(entity.getName()).append("\n");
-			report.append("  - Type: ").append(entity.getType()).append("\n");
-			report.append("  - Salience: ").append(String.format("%.3f", entity.getSalience())).append("\n");
+			report.append(String.format
+				(
+				 	"Entity %d: %s (Type: %s, Salience: %.3f)\n",
+					entityIndex,
+					entity.getName(),
+					entity.getType(),
+					entity.getSalience()
+				));
 
 			if(!entity.getMetadataMap().isEmpty())
 			{
-				report.append("  - Metadata:\n");
-				for (Map.Entry<String, String> entry : entity.getMetadataMap().entrySet())
-					report.append("      ").append(entry.getKey()).append(": ").append(entry.getValue()).append("\n");
+				report.append("  Metadata:\n");
+				for(Map.Entry<String, String> entry : entity.getMetadataMap().entrySet())
+					report.append(String.format("    %s: %s\n", entry.getKey(), entry.getValue()));
 			}
 
 			if(!entity.getMentionsList().isEmpty())
 			{
-				report.append("  - Mentions:\n");
+				report.append("  Mentions:\n");
+
 				for(EntityMention mention : entity.getMentionsList())
-				{
-					report.append("      Mention Content: ").append(mention.getText().getContent()).append("\n");
-					report.append("      Begin Offset: ").append(mention.getText().getBeginOffset()).append("\n");
-					report.append("      Mention Type: ").append(mention.getType()).append("\n");
-				}
+					report.append(String.format
+						(
+							"    - %s (Type: %s, Offset: %d)\n",
+							mention.getText().getContent(),
+							mention.getType(),
+							mention.getText().getBeginOffset()
+						));
 			}
 
+			entityIndex++;
 			report.append("\n");
-			++entityIndex;
 		}
 
-		return report.toString();
+		return report.toString().trim();
 	}
 
 	public List<SyntaxToken> getSyntaxTokens(String text) throws IOException

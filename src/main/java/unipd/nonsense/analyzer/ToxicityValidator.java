@@ -74,8 +74,7 @@ public class ToxicityValidator implements AutoCloseable
 		logger.logInfo("getToxicityReport: Generating report.");
 
 		Map<String, Float> scores = getToxicityScores(text);
-		StringBuilder report = new StringBuilder("Toxicity Analysis Report:\n");
-		report.append("------------------------\n");
+		StringBuilder report = new StringBuilder();
 
 		if(scores.isEmpty())
 			report.append("No toxicity categories found or scores available.\n");

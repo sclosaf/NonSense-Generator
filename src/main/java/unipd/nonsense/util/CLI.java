@@ -403,7 +403,7 @@ public class CLI
 			{
 				printWhite("Sentence input skipped, proceding by generating one from scratch", true);
 				userInput = processor.generateRandom();
-				printWhite("Generated sentence: '" + userInput + "'", false);
+				printWhite("Generated sentence: '" + userInput + "'", true);
 
 				printWhite("Proceding with a standard analysis of the generated sentence", true);
 				printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
@@ -423,7 +423,7 @@ public class CLI
 				printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
 				String generated = processor.generateFrom(userInput);
 
-				printWhite("Generated sentence: '" + generated + "'", false);
+				printWhite("Generated sentence: '" + generated + "'", true);
 
 				printWhite("Proceding with a standard analysis of the generated sentence", true);
 				printWhite("This passage includes the syntactic and toxicity analysis of the generated sentence", true);
@@ -502,12 +502,12 @@ public class CLI
 		if(userInput.equals("singular") || userInput.equals("s"))
 		{
 			printWhite("Proceding generating a sentence with singular nouns", true);
-			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.SINGULAR) + "'", false);
+			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.SINGULAR) + "'", true);
 		}
 		else if(userInput.equals("plural") || userInput.equals("p"))
 		{
 			printWhite("Proceding generating a sentence with plural nouns", true);
-			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.PLURAL) + "'", false);
+			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.PLURAL) + "'", true);
 		}
 	}
 
@@ -522,17 +522,17 @@ public class CLI
 		if(userInput.equals("past") || userInput.equals("pa"))
 		{
 			printWhite("Proceding generating a sentence with past tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PAST) + "'", false);
+			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PAST) + "'", true);
 		}
 		else if(userInput.equals("present") || userInput.equals("pr"))
 		{
 			printWhite("Proceding generating a sentence with present tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PRESENT) + "'", false);
+			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PRESENT) + "'", true);
 		}
 		else if(userInput.equals("future") || userInput.equals("f"))
 		{
 			printWhite("Proceding generating a sentence with future tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.FUTURE) + "'", false);
+			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.FUTURE) + "'", true);
 		}
 	}
 
@@ -567,7 +567,7 @@ public class CLI
 			tense = Tense.FUTURE;
 
 		printWhite("Proceding generating a sentence with " + number.name().toLowerCase() + " nouns and " + tense.name().toLowerCase() + " tense", true);
-		printWhite("Generated sentence: '" + processor.generateWithBoth(number, tense) + "'", false);
+		printWhite("Generated sentence: '" + processor.generateWithBoth(number, tense) + "'", true);
 	}
 
 	private void analyzeHandler() throws IOException
@@ -589,7 +589,7 @@ public class CLI
 		{
 			printWhite("Proceding generating a random sentence", true);
 			userInput = processor.generateRandom();
-			printWhite("Generated sentence: '" + userInput + "'", false);
+			printWhite("Generated sentence: '" + userInput + "'", true);
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
@@ -668,25 +668,25 @@ public class CLI
 	private void analyzeSyntax(String input)
 	{
 		printTitleSeparator("Analyze syntax", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeSyntax(input), false);
+		printWhite(processor.analyzeSyntax(input), true);
 	}
 
 	private void analyzeSentiment(String input)
 	{
 		printTitleSeparator("Analyze sentiment", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeSentiment(input), false);
+		printWhite(processor.analyzeSentiment(input), true);
 	}
 
 	private void analyzeToxicity(String input)
 	{
 		printTitleSeparator("Analyze toxicity", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeToxicity(input), false);
+		printWhite(processor.analyzeToxicity(input), true);
 	}
 
 	private void analyzeEntity(String input)
 	{
 		printTitleSeparator("Analyze entity", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeEntity(input), false);
+		printWhite(processor.analyzeEntity(input), true);
 	}
 
 	private void analyzeCombined(String input) throws IOException
@@ -744,7 +744,7 @@ public class CLI
 		{
 			printWhite("Proceding generating a random sentence", true);
 			userInput = processor.generateRandom();
-			printWhite("Generated sentence: '" + userInput + "'", false);
+			printWhite("Generated sentence: '" + userInput + "'", true);
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
@@ -784,7 +784,7 @@ public class CLI
 	private void printTree(String input) throws IOException
 	{
 		printTitleSeparator("Syntax tree", BOLD_BLUE_STYLE);
-		printWhite(processor.generateSyntaxTree(input), false);
+		printWhite(processor.generateSyntaxTree(input), true);
 	}
 
 	private void extendHandler() throws IOException

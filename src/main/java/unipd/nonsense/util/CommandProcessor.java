@@ -188,17 +188,11 @@ public class CommandProcessor implements AutoCloseable
 		boolean isToxic = validator.isTextToxic(cachedString, toxicityTolerance);
 
 		StringBuilder result = new StringBuilder();
-		result.append("----------------------------------\n");
-		result.append("Toxicity Analysis:\n");
-		result.append("----------------------------------\n");
-		result.append("Analyzed Text: ").append(cachedString).append("\n\n");
 		result.append(report);
 
 		result.append("\nTolerance threshold set to: ").append(toxicityTolerance).append("\n");
 		result.append("Overall Assessment: ");
 		result.append(isToxic ? "TEXT FLAGGED AS POTENTIALLY INAPPROPRIATE" : "Text within acceptable parameters");
-		result.append("\n");
-
 		return result.toString();
 	}
 
