@@ -10,7 +10,7 @@ public class TestAdjective{
 	Adjective adj = new Adjective("adjectiveExample");
 	
 	@Test
-	@DisplayName("Create adjectives with invalid arguements")
+	@DisplayName("Create adjectives with invalid arguments")
 	public void testAdjective_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Adjective(""), "Should throw InvalidGrammaticalElementException");

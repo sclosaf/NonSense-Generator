@@ -32,7 +32,7 @@ if /i "%COMMAND%"=="compile" (
 ) else if /i "%COMMAND%"=="execute" (
 	java -cp "target\nonsense-generator-1.0.jar;target\libs\*" unipd.nonsense.App
 	exit /b 0
-) else if /i "%COMMAND%"=="all"(
+) else if /i "%COMMAND%"=="all" (
 	mvn -s config\settings.xml clean
 	mvn -s config\settings.xml package
 	java -cp "target\nonsense-generator-1.0.jar;target\libs\*" unipd.nonsense.App

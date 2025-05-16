@@ -13,7 +13,7 @@ public class TestNoun{
 	Noun pluralNoun = new Noun("pluralNounExample", Number.PLURAL);
 	
 	@Test
-	@DisplayName("Create noun with invalid arguements")
+	@DisplayName("Create noun with invalid arguments")
 	public void testNoun_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Noun("", Number.SINGULAR), "Should throw InvalidGrammaticalElementException");
