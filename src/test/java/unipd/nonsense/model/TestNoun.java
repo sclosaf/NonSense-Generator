@@ -14,20 +14,20 @@ public class TestNoun{
 	
 	@Test
 	@DisplayName("Create noun with invalid arguements")
-	public void testInvalidAdjectiveCreation(){
+	public void testNoun_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Noun("", Number.SINGULAR), "Should throw InvalidGrammaticalElementException");
 	}
 
 	@Test
 	@DisplayName("Getting nouns")
-	public void testGetNoun(){
+	public void testGetNoun_NounString(){
 		assertEquals(singularNoun.getNoun(), "singularNounExample");
 	}
 
 	@Test
 	@DisplayName("Getting numbers")
-	public void testGetNumber(){
+	public void testGetNumber_NounNumber(){
 		assertEquals(singularNoun.getNumber(), Number.SINGULAR);
 		assertEquals(pluralNoun.getNumber(), Number.PLURAL);
 	}

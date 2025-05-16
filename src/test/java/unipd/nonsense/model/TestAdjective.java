@@ -11,14 +11,14 @@ public class TestAdjective{
 	
 	@Test
 	@DisplayName("Create adjectives with invalid arguements")
-	public void testInvalidAdjectiveCreation(){
+	public void testAdjective_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Adjective(""), "Should throw InvalidGrammaticalElementException");
 	}
 
 	@Test
 	@DisplayName("Getting adjectives")
-	public void testGetAdjective(){
+	public void testGetAdjective_AdjectiveString(){
 		assertEquals(adj.getAdjective(), "adjectiveExample");
 	}
 
