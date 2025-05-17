@@ -24,10 +24,10 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	private Map<TemplateType, List<Template>> templates;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
+	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
-	private static List<String> keys = List.of("singularTemplates", "pluralTemplates");
+	private final static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+	private final static List<String> keys = List.of("singularTemplates", "pluralTemplates");
 	private LoggerManager logger = new LoggerManager(RandomTemplateGenerator.class);
 
 	public RandomTemplateGenerator() throws IOException

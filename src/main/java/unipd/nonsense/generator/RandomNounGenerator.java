@@ -26,10 +26,10 @@ public class RandomNounGenerator implements JsonUpdateObserver
 	private Map<Number, List<Noun>> nouns;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
+	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
-	private static List<String> keys = List.of("singularNouns", "pluralNouns");
+	private final static String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
+	private final static List<String> keys = List.of("singularNouns", "pluralNouns");
 	private LoggerManager logger = new LoggerManager(RandomNounGenerator.class);
 
 	public RandomNounGenerator() throws IOException

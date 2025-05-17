@@ -36,9 +36,9 @@ import java.util.concurrent.Executors;
 
 public class SentenceAnalyzer implements AutoCloseable
 {
-	private LanguageServiceClient languageClient;
-	private ExecutorService executor = Executors.newCachedThreadPool();
-	private String credentialsPath = "/credentials.json";
+	private final LanguageServiceClient languageClient;
+	private final ExecutorService executor = Executors.newCachedThreadPool();
+	private static final String credentialsPath = "/credentials.json";
 
 	public SentenceAnalyzer()
 	{

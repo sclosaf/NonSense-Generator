@@ -26,10 +26,10 @@ public class JsonUpdater
 	private static List<JsonUpdateObserver> observers = new ArrayList<>();
 	private static LoggerManager logger = new LoggerManager(JsonUpdater.class);
 
-	private static String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
-	private static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
-	private static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
-	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+	private static final String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
+	private static final String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
+	private static final String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
+	private static final String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
 
 	public static synchronized void addObserver(JsonUpdateObserver observer)
 	{

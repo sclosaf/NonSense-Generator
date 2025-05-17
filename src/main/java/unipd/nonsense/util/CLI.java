@@ -47,17 +47,17 @@ import java.net.InetAddress;
 
 public class CLI
 {
-	private enum Command
+	private static enum Command
 	{
 		DEFAULT, PERSONALIZED, GENERATE, ANALYZE, TREE, EXTEND, SETTOLERANCE, INFO, VERBOSE, HELP, CLEAR, QUIT
 	}
 
-	private enum GenerateOptions
+	private static enum GenerateOptions
 	{
 		RANDOM, NUMBER, TENSE, BOTH
 	}
 
-	private enum AnalyzeOptions
+	private static enum AnalyzeOptions
 	{
 		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, ENTITY, COMBINED
 	}
@@ -185,7 +185,7 @@ public class CLI
 	private boolean running;
 	private final String initialOutput;
 
-	private final CommandProcessor processor;
+	private static final CommandProcessor processor;
 	private final Terminal terminal;
 
 	private LineReader commandReader;

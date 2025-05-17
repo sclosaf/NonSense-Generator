@@ -28,6 +28,7 @@ public class ToxicityValidator implements AutoCloseable
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 	private final GoogleApiClient apiClient;
 	private final LoggerManager logger;
+	private static final String credentialsPath = "/credentials.json";
 	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
 
 	public ToxicityValidator(GoogleApiClient apiClient, LoggerManager logger)
@@ -47,7 +48,7 @@ public class ToxicityValidator implements AutoCloseable
 
 	public ToxicityValidator() throws IOException
 	{
-		this(new GoogleApiClient("/credentials.json"), new LoggerManager(ToxicityValidator.class));
+		this(new GoogleApiClient(credentialsPath), new LoggerManager(ToxicityValidator.class));
 	}
 
 	public CompletableFuture<Map<String, Float>> getToxicityScoresAsync(String text)

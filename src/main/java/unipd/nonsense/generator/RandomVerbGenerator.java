@@ -27,10 +27,10 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 	private Map<Tense, List<Verb>> verbs;
 	private static Random random;
 
-	private static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
+	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
-	private static List<String> keys = List.of("pastVerbs", "presentVerbs", "futureVerbs");
+	private final static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
+	private final static List<String> keys = List.of("pastVerbs", "presentVerbs", "futureVerbs");
 	private LoggerManager logger = new LoggerManager(RandomVerbGenerator.class);
 
 	public RandomVerbGenerator() throws IOException

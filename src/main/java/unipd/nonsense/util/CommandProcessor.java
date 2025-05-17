@@ -44,7 +44,7 @@ public class CommandProcessor implements AutoCloseable
 	private static SentenceGenerator generator;
 	private LoggerManager logger = new LoggerManager(CommandProcessor.class);
 
-	private static String cachedString;
+	private String cachedString;
 
 	private float toxicityTolerance;
 

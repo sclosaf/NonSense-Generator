@@ -29,11 +29,11 @@ import java.io.IOException;
 
 public class SentenceGenerator implements AutoCloseable
 {
-	private final RandomNounGenerator nounGenerator;
-	private final RandomAdjectiveGenerator adjectiveGenerator;
-	private final RandomVerbGenerator verbGenerator;
-	private final RandomTemplateGenerator templateGenerator;
-	private static final LoggerManager logger = new LoggerManager(SentenceGenerator.class);
+	private static final RandomNounGenerator nounGenerator;
+	private static final RandomAdjectiveGenerator adjectiveGenerator;
+	private static final RandomVerbGenerator verbGenerator;
+	private static final RandomTemplateGenerator templateGenerator;
+	private final LoggerManager logger = new LoggerManager(SentenceGenerator.class);
 	private static final Random random = new Random();
 
 	public SentenceGenerator() throws IOException
