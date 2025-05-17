@@ -12,8 +12,18 @@ public class TestNoun{
 	Noun singularNoun = new Noun("singularNounExample", Number.SINGULAR);
 	Noun pluralNoun = new Noun("pluralNounExample", Number.PLURAL);
 	
+	
 	@Test
-	@DisplayName("Create noun with invalid arguments")
+	@DisplayName("Test correct noun building success")
+	public void testNoun_CorrectCreation(){
+		Noun testNounBuilding = new Noun("NounBuildingExample", Number.SINGULAR);
+		assertNotNull(testNounBuilding, "Should have correctly built a noun");
+		assertNotNull(testNounBuilding.getNoun(), "Should return the noun's string");
+		assertNotNull(testNounBuilding.getNumber(), "Should return the noun's number");
+	}
+
+	@Test
+	@DisplayName("Test building noun with invalid arguments")
 	public void testNoun_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Noun("", Number.SINGULAR), "Should throw InvalidGrammaticalElementException");

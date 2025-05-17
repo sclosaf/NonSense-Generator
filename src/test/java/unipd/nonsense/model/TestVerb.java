@@ -14,7 +14,16 @@ public class TestVerb{
 	Verb futureVerb = new Verb("futureVerbExample", Tense.FUTURE);
 	
 	@Test
-	@DisplayName("Create verb with invalid arguments")
+	@DisplayName("Test correct verb building success")
+	public void testVerb_CorrectCreation(){
+		Verb testVerbBuilding = new Verb("verbBuildingExample", Tense.PAST);
+		assertNotNull(testVerbBuilding, "Should have correctly built a verb");
+		assertNotNull(testVerbBuilding.getVerb(), "Should return the verb's string");
+		assertNotNull(testVerbBuilding.getTense(), "Should return the verb's tense");
+	}
+
+	@Test
+	@DisplayName("Test building verb with invalid arguments")
 	public void testVerb_InvalidElement(){
 		assertThrows(InvalidGrammaticalElementException.class, () -> 
 			new Verb("", Tense.PAST), "Should throw InvalidGrammaticalElementException");
