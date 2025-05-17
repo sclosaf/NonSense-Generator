@@ -66,7 +66,7 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateFrom(String str) throws IOException
 	{
-		List<SyntaxToken> analysis = analyzer.getSyntaxTokens(str);
+		List<SyntaxToken> analysis = analyzer.getSyntaxTokensAsync(str).join();
 
 		List<Noun> nounList = new ArrayList<>();
 		List<Adjective> adjectiveList = new ArrayList<>();
@@ -144,58 +144,37 @@ public class CommandProcessor implements AutoCloseable
 	{
 		cachedString = str;
 
-		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokens(str));
+		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokensAsync(str).join());
 	}
 
 	public String analyzeSyntax(String str)
 	{
 		cachedString = str;
 
-		try
-		{
-			return analyzer.analyzeSyntaxInput(str);
-		}
-		catch(IOException e)
-		{
-			return "Error during syntax analysis: " + e.getMessage();
-		}
+		return analyzer.analyzeSyntaxAsync(str).join();
 	}
 
 	public String analyzeSentiment(String str)
 	{
 		cachedString = str;
 
-		try
-		{
-			return analyzer.analyzeSentimentInput(str);
-		}
-		catch(IOException e)
-		{
-			return "Error during sentiment analysis: " + e.getMessage();
-		}
+		return analyzer.analyzeSentimentAsync(str).join();
 	}
 
 	public String analyzeEntity(String str)
 	{
 		cachedString = str;
 
-		try
-		{
-			return analyzer.analyzeEntitiesInput(str);
-		}
-		catch(IOException e)
-		{
-			return "Error during entity analysis: " + e.getMessage();
-		}
+		return analyzer.analyzeEntitiesAsync(str).join();
 	}
 
 	public String analyzeToxicity(String str)
 	{
 		cachedString = str;
 
-		String report = validator.getToxicityReport(str);
+		String report = validator.getToxicityReportAsync(str).join();
 
-		boolean isToxic = validator.isTextToxic(cachedString, toxicityTolerance);
+		boolean isToxic = validator.isTextToxicAsync(cachedString, toxicityTolerance).join();
 
 		StringBuilder result = new StringBuilder();
 		result.append(report);

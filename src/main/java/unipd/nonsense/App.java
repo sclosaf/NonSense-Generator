@@ -27,5 +27,9 @@ public class App
 			logger.logFatal("Terminating due to fatal error", e);
 			System.exit(1);
 		}
+		finally
+		{
+			System.exit(0);
+		}
 	}
 }

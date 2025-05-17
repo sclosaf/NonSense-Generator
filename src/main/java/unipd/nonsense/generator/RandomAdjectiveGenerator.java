@@ -67,7 +67,6 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 
 	public Adjective getRandomAdjective()
 	{
-
 		if(adjectives.isEmpty())
 		{
 			logger.logError("getRandomAdjective: Adjectives list is empty");
@@ -80,10 +79,14 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 		return selected;
 	}
 
+	public void cleanup()
+	{
+		JsonUpdater.removeObserver(this);
+	}
+
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
-
 		try
 		{
 			loadAdjectives();

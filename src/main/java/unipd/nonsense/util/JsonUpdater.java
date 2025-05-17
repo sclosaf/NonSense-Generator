@@ -31,14 +31,14 @@ public class JsonUpdater
 	private static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
 	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
 
-	public static void addObserver(JsonUpdateObserver observer)
+	public static synchronized void addObserver(JsonUpdateObserver observer)
 	{
 		logger.logDebug("addObserver: Adding observer: " + observer.getClass().getSimpleName());
 		observers.add(observer);
 		logger.logTrace("addObserver: Observer added successfully");
 	}
 
-	public static void removeObserver(JsonUpdateObserver observer)
+	public static synchronized void removeObserver(JsonUpdateObserver observer)
 	{
 		logger.logDebug("removeObserver: Removing observer: " + observer.getClass().getSimpleName());
 		observers.remove(observer);

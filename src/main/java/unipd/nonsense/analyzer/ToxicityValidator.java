@@ -2,6 +2,7 @@ package unipd.nonsense.analyzer;
 
 import com.google.cloud.language.v1.ClassificationCategory;
 import com.google.cloud.language.v1.Document;
+import com.google.cloud.language.v1.Document.Type;
 import com.google.cloud.language.v1.LanguageServiceClient;
 import com.google.cloud.language.v1.ModerateTextRequest;
 import com.google.cloud.language.v1.ModerateTextResponse;
@@ -18,8 +19,13 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class ToxicityValidator implements AutoCloseable
 {
+	private final ExecutorService executor = Executors.newCachedThreadPool();
 	private final GoogleApiClient apiClient;
 	private final LoggerManager logger;
 	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
@@ -44,8 +50,14 @@ public class ToxicityValidator implements AutoCloseable
 		this(new GoogleApiClient("/credentials.json"), new LoggerManager(ToxicityValidator.class));
 	}
 
-	public Map<String, Float> getToxicityScores(String text)
+	public CompletableFuture<Map<String, Float>> getToxicityScoresAsync(String text)
 	{
+		return CompletableFuture.supplyAsync(() -> getToxicityScores(text), executor);
+	}
+
+	private Map<String, Float> getToxicityScores(String text)
+	{
+		validateInput(text);
 
 		ModerateTextResponse response = moderateText(text);
 		Map<String, Float> scores = new HashMap<>();
@@ -62,8 +74,15 @@ public class ToxicityValidator implements AutoCloseable
 		return scores;
 	}
 
-	public String getToxicityReport(String text)
+	public CompletableFuture<String> getToxicityReportAsync(String text)
 	{
+		return CompletableFuture.supplyAsync(() -> getToxicityReport(text), executor);
+	}
+
+	private String getToxicityReport(String text)
+	{
+		validateInput(text);
+
 		Map<String, Float> scores = getToxicityScores(text);
 		StringBuilder report = new StringBuilder();
 
@@ -76,8 +95,14 @@ public class ToxicityValidator implements AutoCloseable
 		return report.toString();
 	}
 
-	public ModerateTextResponse moderateText(String text)
+	public CompletableFuture<ModerateTextResponse> moderateTextAsync(String text)
 	{
+		return CompletableFuture.supplyAsync(() -> moderateText(text), executor);
+	}
+
+	private ModerateTextResponse moderateText(String text)
+	{
+		validateInput(text);
 
 		if(text == null || text.trim().isEmpty())
 		{
@@ -86,20 +111,31 @@ public class ToxicityValidator implements AutoCloseable
 		}
 
 		LanguageServiceClient languageClient = apiClient.getClient();
-		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		Document doc = buildDocument(text);
 		ModerateTextRequest request = ModerateTextRequest.newBuilder().setDocument(doc).build();
 
 		ModerateTextResponse response = languageClient.moderateText(request);
 		return response;
 	}
 
-	public boolean isTextToxic(String text)
+	public CompletableFuture<Boolean> isTextToxicAsync(String text)
+	{
+		return CompletableFuture.supplyAsync(() -> isTextToxic(text), executor);
+	}
+
+	private boolean isTextToxic(String text)
 	{
 		return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
 	}
 
-	public boolean isTextToxic(String text, float threshold)
+	public CompletableFuture<Boolean> isTextToxicAsync(String text, float threshold)
 	{
+		return CompletableFuture.supplyAsync(() -> isTextToxic(text, threshold), executor);
+	}
+
+	private boolean isTextToxic(String text, float threshold)
+	{
+		validateInput(text);
 
 		if(threshold < 0.0f || threshold > 1.0f)
 		{
@@ -110,29 +146,45 @@ public class ToxicityValidator implements AutoCloseable
 		ModerateTextResponse response = moderateText(text);
 
 		for(ClassificationCategory category : response.getModerationCategoriesList())
-		{
 			if(category.getConfidence() > threshold)
-			{
 				return true;
-			}
-		}
 
 		return false;
+	}
+
+	private void validateInput(String text)
+	{
+		if(text == null)
+			throw new InvalidTextException("Input text cannot be null");
+
+		if(text.trim().isEmpty())
+			throw new InvalidTextException("Input text cannot be empty or whitespace-only");
+
+		if(text.length() > 1000)
+			throw new InvalidTextException("Input text exceeds maximum length (1,000 characters)");
+	}
+
+	private Document buildDocument(String text)
+	{
+		return Document.newBuilder().setContent(text).setType(Type.PLAIN_TEXT).build();
 	}
 
 	@Override
 	public void close()
 	{
-		if (apiClient != null)
+		try
 		{
-			try
-			{
+			if(apiClient != null)
 				apiClient.close();
-			}
-			catch (Exception e)
-			{
-				logger.logError("close: Error encountered while closing GoogleApiClient.", e);
-			}
+		}
+		catch(Exception e)
+		{
+			logger.logError("Error closing GoogleApiClient", e);
+		}
+		finally
+		{
+			executor.shutdownNow();
 		}
 	}
 }
+

@@ -22,15 +22,22 @@ import unipd.nonsense.util.GoogleApiClient;
 
 import unipd.nonsense.model.SyntaxToken;
 
+import unipd.nonsense.exceptions.InvalidTextException;
+
 import java.io.IOException;
 
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Map;
 
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 public class SentenceAnalyzer implements AutoCloseable
 {
 	private LanguageServiceClient languageClient;
+	private ExecutorService executor = Executors.newCachedThreadPool();
 	private String credentialsPath = "/credentials.json";
 
 	public SentenceAnalyzer()
@@ -46,8 +53,24 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 	}
 
-	public String analyzeSyntaxInput(String text) throws IOException
+	public CompletableFuture<String> analyzeSyntaxAsync(String text)
 	{
+		return CompletableFuture.supplyAsync(() ->
+			{
+				try
+				{
+					return analyzeSyntax(text);
+				}
+				catch(IOException e)
+				{
+					throw new RuntimeException("Syntax analysis failed", e);
+				}
+			}, executor);
+	}
+
+	private String analyzeSyntax(String text) throws IOException
+	{
+		validateInput(text);
 		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
 
 		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
@@ -55,7 +78,6 @@ public class SentenceAnalyzer implements AutoCloseable
 
 		StringBuilder report = new StringBuilder();
 		int tokenIndex = 1;
-
 
 		for(Token token : response.getTokensList())
 		{
@@ -96,9 +118,25 @@ public class SentenceAnalyzer implements AutoCloseable
 			sb.append(prefix).append(value).append("\n");
 	}
 
-	public String analyzeSentimentInput(String text) throws IOException
+	public CompletableFuture<String> analyzeSentimentAsync(String text)
 	{
-		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		return CompletableFuture.supplyAsync(() ->
+			{
+				try
+				{
+					return analyzeSentiment(text);
+				}
+				catch(IOException e)
+				{
+					throw new RuntimeException("Sentiment analysis failed", e);
+				}
+			}, executor);
+	}
+
+	private String analyzeSentiment(String text) throws IOException
+	{
+		validateInput(text);
+		Document doc = buildDocument(text);
 		AnalyzeSentimentResponse response = languageClient.analyzeSentiment(doc);
 		Sentiment sentiment = response.getDocumentSentiment();
 
@@ -113,10 +151,25 @@ public class SentenceAnalyzer implements AutoCloseable
 			);
 	}
 
-
-	public String analyzeEntitiesInput(String text) throws IOException
+	public CompletableFuture<String> analyzeEntitiesAsync(String text)
 	{
-		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		return CompletableFuture.supplyAsync(() ->
+			{
+				try
+				{
+					return analyzeEntities(text);
+				}
+				catch(IOException e)
+				{
+					throw new RuntimeException("Entity analysis failed", e);
+				}
+			}, executor);
+	}
+
+	private String analyzeEntities(String text) throws IOException
+	{
+		validateInput(text);
+		Document doc = buildDocument(text);
 		AnalyzeEntitiesRequest request = AnalyzeEntitiesRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 		AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
 
@@ -166,9 +219,25 @@ public class SentenceAnalyzer implements AutoCloseable
 		return report.toString().trim();
 	}
 
-	public List<SyntaxToken> getSyntaxTokens(String text) throws IOException
+	public CompletableFuture<List<SyntaxToken>> getSyntaxTokensAsync(String text)
 	{
-		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		return CompletableFuture.supplyAsync(() ->
+			{
+				try
+				{
+					return getSyntaxTokens(text);
+				}
+				catch(IOException e)
+				{
+					throw new RuntimeException("Failed to get syntax tokens", e);
+				}
+			}, executor);
+	}
+
+	private List<SyntaxToken> getSyntaxTokens(String text) throws IOException
+	{
+		validateInput(text);
+		Document doc = buildDocument(text);
 
 		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 
@@ -191,10 +260,38 @@ public class SentenceAnalyzer implements AutoCloseable
 		return tokens;
 	}
 
+	private void validateInput(String text)
+	{
+		if(text == null)
+			throw new InvalidTextException("Input text cannot be null");
+
+		if(text.trim().isEmpty())
+			throw new InvalidTextException("Input text cannot be empty or whitespace-only");
+
+		if(text.length() > 1000)
+			throw new InvalidTextException("Input text exceeds maximum length (1,000 characters)");
+	}
+
+	private Document buildDocument(String text)
+	{
+		return Document.newBuilder().setContent(text).setType(Type.PLAIN_TEXT).build();
+	}
+
 	@Override
 	public void close()
 	{
-		if(languageClient != null)
-			languageClient.close();
+		try
+		{
+			if(languageClient != null)
+				languageClient.close();
+		}
+		catch(Exception e)
+		{
+			throw e;
+		}
+		finally
+		{
+			executor.shutdownNow();
+		}
 	}
 }

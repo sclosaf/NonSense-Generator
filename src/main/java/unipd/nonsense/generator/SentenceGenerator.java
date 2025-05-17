@@ -27,14 +27,14 @@ import java.util.ArrayList;
 
 import java.io.IOException;
 
-public class SentenceGenerator
+public class SentenceGenerator implements AutoCloseable
 {
-	private RandomNounGenerator nounGenerator;
-	private RandomAdjectiveGenerator adjectiveGenerator;
-	private RandomVerbGenerator verbGenerator;
-	private RandomTemplateGenerator templateGenerator;
-	private LoggerManager logger = new LoggerManager(SentenceGenerator.class);
-	private static Random random;
+	private final RandomNounGenerator nounGenerator;
+	private final RandomAdjectiveGenerator adjectiveGenerator;
+	private final RandomVerbGenerator verbGenerator;
+	private final RandomTemplateGenerator templateGenerator;
+	private static final LoggerManager logger = new LoggerManager(SentenceGenerator.class);
+	private static final Random random = new Random();
 
 	public SentenceGenerator() throws IOException
 	{
@@ -44,9 +44,6 @@ public class SentenceGenerator
 			this.adjectiveGenerator = new RandomAdjectiveGenerator();
 			this.verbGenerator = new RandomVerbGenerator();
 			this.templateGenerator = new RandomTemplateGenerator();
-
-			this.random = new Random();
-
 		}
 		catch(IOException e)
 		{
@@ -68,21 +65,18 @@ public class SentenceGenerator
 
 	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
 	{
+
+		List<Noun> nouns = nounList != null ? new ArrayList<>(nounList) : new ArrayList<>();
+		List<Adjective> adjectives = adjectiveList != null ? new ArrayList<>(adjectiveList) : new ArrayList<>();
+		List<Verb> verbs = verbList != null ? new ArrayList<>(verbList) : new ArrayList<>();
+
 		Number number = getRandomNumber();
 		TemplateType templateType = convertNumberToTemplateType(number);
 		Template template = templateGenerator.getRandomTemplate(templateType);
 
 		try
 		{
-			for(Noun noun : nounList)
-				JsonUpdater.loadNoun(noun);
-
-			for(Adjective adjective : adjectiveList)
-				JsonUpdater.loadAdjective(adjective);
-
-			for(Verb verb : verbList)
-				JsonUpdater.loadVerb(verb);
-
+			loadWordsIntoJsonUpdater(nouns, adjectives, verbs);
 		}
 		catch(IOException e)
 		{
@@ -90,43 +84,54 @@ public class SentenceGenerator
 			throw e;
 		}
 
-		while(!nounList.isEmpty() && template.countPlaceholders(Placeholder.NOUN) != 0)
-		{
-			String noun = nounList.removeFirst().getNoun();
-			template.replacePlaceholder(Placeholder.NOUN, noun);
-		}
-
-		while(template.countPlaceholders(Placeholder.NOUN) != 0)
-		{
-			String noun = nounGenerator.getRandomNoun().getNoun();
-			template.replacePlaceholder(Placeholder.NOUN, noun);
-		}
-
-		while(!adjectiveList.isEmpty() && template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
-		{
-			String adjective = adjectiveList.removeFirst().getAdjective();
-			template.replacePlaceholder(Placeholder.ADJECTIVE, adjective);
-		}
-
-		while(template.countPlaceholders(Placeholder.ADJECTIVE) != 0)
-		{
-			String adjective = adjectiveGenerator.getRandomAdjective().getAdjective();
-			template.replacePlaceholder(Placeholder.ADJECTIVE, adjective);
-		}
-
-		while(!verbList.isEmpty() && template.countPlaceholders(Placeholder.VERB) != 0)
-		{
-			String verb = verbList.removeFirst().getVerb();
-			template.replacePlaceholder(Placeholder.VERB, verb);
-		}
-
-		while(template.countPlaceholders(Placeholder.VERB) != 0)
-		{
-			String verb = verbGenerator.getRandomVerb().getVerb();
-			template.replacePlaceholder(Placeholder.VERB, verb);
-		}
+		replacePlaceholders(template, nouns, adjectives, verbs);
 
 		return template;
+	}
+
+	private void loadWordsIntoJsonUpdater(List<Noun> nouns, List<Adjective> adjectives, List<Verb> verbs) throws IOException
+	{
+		for(Noun noun : nouns) JsonUpdater.loadNoun(noun);
+		for(Adjective adjective : adjectives) JsonUpdater.loadAdjective(adjective);
+		for(Verb verb : verbs) JsonUpdater.loadVerb(verb);
+	}
+
+	private void replacePlaceholders(Template template, List<Noun> nouns, List<Adjective> adjectives, List<Verb> verbs)
+	{
+		replaceNounPlaceholders(template, nouns);
+		replaceAdjectivePlaceholders(template, adjectives);
+		replaceVerbPlaceholders(template, verbs);
+	}
+
+	private void replaceNounPlaceholders(Template template, List<Noun> nouns)
+	{
+		Number number = convertTemplateTypeToNumber(template.getType());
+
+		while(template.countPlaceholders(Placeholder.NOUN) > 0)
+		{
+			String noun = !nouns.isEmpty() ? nouns.remove(0).getNoun() : nounGenerator.getRandomNoun(number).getNoun();
+			template.replacePlaceholder(Placeholder.NOUN, noun);
+		}
+	}
+
+	private void replaceAdjectivePlaceholders(Template template, List<Adjective> adjectives)
+	{
+		while(template.countPlaceholders(Placeholder.ADJECTIVE) > 0)
+		{
+			String adjective = !adjectives.isEmpty() ? adjectives.remove(0).getAdjective() : adjectiveGenerator.getRandomAdjective().getAdjective();
+			template.replacePlaceholder(Placeholder.ADJECTIVE, adjective);
+		}
+	}
+
+	private void replaceVerbPlaceholders(Template template, List<Verb> verbs)
+	{
+		Tense tense = getRandomTense();
+
+		while(template.countPlaceholders(Placeholder.VERB) > 0)
+		{
+			String verb = !verbs.isEmpty() ? verbs.remove(0).getVerb() : verbGenerator.getRandomVerb(tense).getVerb();
+			template.replacePlaceholder(Placeholder.VERB, verb);
+		}
 	}
 
 	public Template generateSentenceWithTense(Tense tense)
@@ -141,7 +146,6 @@ public class SentenceGenerator
 
 	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
 	{
-
 		TemplateType templateType = convertNumberToTemplateType(number);
 		Template template = templateGenerator.getRandomTemplate(templateType);
 
@@ -254,5 +258,14 @@ public class SentenceGenerator
 			logger.logError("convertTemplateTypeToNumber: Invalid template type: " + type, e);
 			throw e;
 		}
+	}
+
+	@Override
+	public void close()
+	{
+		nounGenerator.cleanup();
+		adjectiveGenerator.cleanup();
+		verbGenerator.cleanup();
+		templateGenerator.cleanup();
 	}
 }

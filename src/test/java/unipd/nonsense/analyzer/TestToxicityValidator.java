@@ -12,6 +12,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
 import java.util.*;
+import java.util.concurrent.CompletionException;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
@@ -112,7 +113,7 @@ class TestToxicityValidator
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(cleanScores));
 
-		Map<String, Float> result = validator.getToxicityScores(cleanText);
+		Map<String, Float> result = validator.getToxicityScoresAsync(cleanText).join();
 
 		assertEquals(cleanScores.size(), result.size(), "Score size mismatch");
 		cleanScores.forEach((k, v) -> assertEquals(v, result.get(k), "Mismatched score for " + k));
@@ -125,7 +126,7 @@ class TestToxicityValidator
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
-		Map<String, Float> result = validator.getToxicityScores(toxicText);
+		Map<String, Float> result = validator.getToxicityScoresAsync(toxicText).join();
 
 		assertEquals(toxicScores.size(), result.size(), "Score size mismatch");
 		toxicScores.forEach((k, v) -> assertEquals(v, result.get(k), "Mismatched score for " + k));
@@ -138,7 +139,7 @@ class TestToxicityValidator
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
-		assertTrue(validator.isTextToxic(toxicText, 0.7f), "Expected text to be toxic");
+		assertTrue(validator.isTextToxicAsync(toxicText, 0.7f).join(), "Expected text to be toxic");
 	}
 
 	@Test
@@ -148,36 +149,51 @@ class TestToxicityValidator
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(cleanScores));
 
-		assertFalse(validator.isTextToxic(cleanText, 0.7f), "Expected text to be non-toxic");
+		assertFalse(validator.isTextToxicAsync(cleanText, 0.7f).join(), "Expected text to be non-toxic");
 	}
 
 	@Test
 	@DisplayName("Invalid threshold should throw exception")
 	void testIsTextToxic_InvalidThreshold()
 	{
-		assertThrows(InvalidThresholdException.class, () ->
-			validator.isTextToxic("text", 1.5f),
-			"Should throw InvalidThresholdException"
-		);
+		CompletionException ex = assertThrows(CompletionException.class,
+			() -> validator.isTextToxicAsync("text", 1.5f).join()
+			);
+
+		assertTrue(ex.getCause() instanceof InvalidThresholdException);
 	}
 
 	@Test
 	@DisplayName("Null input to moderateText should throw exception")
 	void testModerateText_NullInput()
 	{
-		assertThrows(InvalidTextException.class, () ->
-			validator.moderateText(null),
-			"Should throw InvalidTextException for null input"
-		);
+		CompletionException ex = assertThrows(CompletionException.class,
+			() -> validator.moderateTextAsync(null).join()
+			);
+
+		assertTrue(ex.getCause() instanceof InvalidTextException);
 	}
 
 	@Test
 	@DisplayName("Empty input to moderateText should throw exception")
 	void testModerateText_EmptyInput()
 	{
-		assertThrows(InvalidTextException.class, () ->
-			validator.moderateText("   "),
-			"Should throw InvalidTextException for empty input"
-		);
+		CompletionException ex = assertThrows(CompletionException.class,
+			() -> validator.moderateTextAsync("   ").join()
+			);
+
+		assertTrue(ex.getCause() instanceof InvalidTextException);
+	}
+
+	@Test
+	@DisplayName("Text exceeding max length should throw InvalidTextException")
+	void testTextExceedsMaxLength()
+	{
+		String longText = String.join("", Collections.nCopies(1001, "a"));
+		CompletionException ex = assertThrows(CompletionException.class,
+			() -> validator.getToxicityScoresAsync(longText).join()
+			);
+
+		assertTrue(ex.getCause() instanceof InvalidTextException);
 	}
 }

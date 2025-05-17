@@ -100,6 +100,11 @@ public class RandomNounGenerator implements JsonUpdateObserver
 		return selected;
 	}
 
+	public void cleanup()
+	{
+		JsonUpdater.removeObserver(this);
+	}
+
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
