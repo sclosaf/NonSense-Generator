@@ -174,9 +174,9 @@ public class CLI
 			new Option("future", "Use simple future tense", "f")
 		);
 
-	private static Map<String, Command> commands = new HashMap<>();
-	private static Map<String, GenerateOptions> generateOptions = new HashMap<>();
-	private static Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
+	private final Map<String, Command> commands = new HashMap<>();
+	private final Map<String, GenerateOptions> generateOptions = new HashMap<>();
+	private final Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 
 	private static final int HISTORY_SIZE = 20;
 	private static final int MAX_ATTEMPTS = 4;
@@ -185,13 +185,13 @@ public class CLI
 	private boolean running;
 	private final String initialOutput;
 
-	private static final CommandProcessor processor;
+	private final CommandProcessor processor;
 	private final Terminal terminal;
 
 	private LineReader commandReader;
 	private LineReader plainReader;
 
-	private static class CommandHighlighter implements Highlighter
+	private class CommandHighlighter implements Highlighter
 	{
 		@Override
 		public AttributedString highlight(LineReader reader, String buffer)

@@ -15,6 +15,10 @@ import unipd.nonsense.model.Template.TemplateType;
 
 import unipd.nonsense.util.LoggerManager;
 
+import unipd.nonsense.exceptions.InvalidNumberException;
+import unipd.nonsense.exceptions.InvalidTenseException;
+import unipd.nonsense.exceptions.InvalidTemplateTypeException;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,7 +87,7 @@ public class JsonUpdater
 			case Number.PLURAL: key = "pluralNouns"; break;
 			default:
 				logger.logError("loadNoun: Invalid number type provided: " + num);
-				throw new IllegalArgumentException();
+				throw new InvalidNumberException();
 		}
 
 		logger.logDebug("loadNoun: Appending noun to JSON with key: " + key);
@@ -112,7 +116,7 @@ public class JsonUpdater
 			case Tense.FUTURE: key = "futureVerbs"; break;
 			default:
 				logger.logError("loadVerb: Invalid tense provided: " + tense);
-				throw new IllegalArgumentException();
+				throw new InvalidTenseException();
 		}
 
 
@@ -158,7 +162,7 @@ public class JsonUpdater
 			case TemplateType.PLURAL: key = "pluralTemplates"; break;
 			default:
 				logger.logError("loadTemplate: Invalid template type provided: " + type);
-				throw new IllegalArgumentException();
+				throw new InvalidTemplateTypeException();
 		}
 
 		logger.logDebug("loadTemplate: Appending template to JSON with key: " + key);

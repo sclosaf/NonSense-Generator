@@ -9,6 +9,8 @@ import com.google.cloud.language.v1.ModerateTextResponse;
 
 import unipd.nonsense.exceptions.InvalidThresholdException;
 import unipd.nonsense.exceptions.InvalidTextException;
+import unipd.nonsense.exceptions.NullLoggerException;
+import unipd.nonsense.exceptions.NullClientException;
 
 import com.google.api.gax.rpc.ApiException;
 
@@ -34,14 +36,12 @@ public class ToxicityValidator implements AutoCloseable
 	public ToxicityValidator(GoogleApiClient apiClient, LoggerManager logger)
 	{
 		if(logger == null)
-			throw new IllegalArgumentException("LoggerManager cannot be null.");
+			throw new NullLoggerException();
 
 		this.logger = logger;
 
 		if (apiClient == null)
-		{
-			throw new IllegalArgumentException("GoogleApiClient cannot be null.");
-		}
+			throw new NullClientException();
 
 		this.apiClient = apiClient;
 	}

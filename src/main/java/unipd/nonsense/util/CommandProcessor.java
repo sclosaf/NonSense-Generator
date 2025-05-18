@@ -21,6 +21,8 @@ import unipd.nonsense.exceptions.SentenceNotCachedException;
 import unipd.nonsense.exceptions.IllegalToleranceException;
 import unipd.nonsense.exceptions.InvalidNumberException;
 import unipd.nonsense.exceptions.InvalidTenseException;
+import unipd.nonsense.exceptions.InvalidTextException;
+import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import java.util.List;
 import java.util.ArrayList;
@@ -66,6 +68,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateFrom(String str) throws IOException
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		List<SyntaxToken> analysis = analyzer.getSyntaxTokensAsync(str).join();
 
 		List<Noun> nounList = new ArrayList<>();
@@ -111,6 +116,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateWithTemplate(Template template)
 	{
+		if(template == null)
+			throw new InvalidTemplateException();
+
 		return cachedString = generator.generateSentenceFromTemplate(template).getPattern();
 	}
 
@@ -142,6 +150,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateSyntaxTree(String str) throws IOException
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		cachedString = str;
 
 		return treeBuilder.getSyntaxTree(analyzer.getSyntaxTokensAsync(str).join());
@@ -149,13 +160,20 @@ public class CommandProcessor implements AutoCloseable
 
 	public String analyzeSyntax(String str)
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		cachedString = str;
+
 
 		return analyzer.analyzeSyntaxAsync(str).join();
 	}
 
 	public String analyzeSentiment(String str)
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		cachedString = str;
 
 		return analyzer.analyzeSentimentAsync(str).join();
@@ -163,6 +181,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String analyzeEntity(String str)
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		cachedString = str;
 
 		return analyzer.analyzeEntitiesAsync(str).join();
@@ -170,6 +191,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String analyzeToxicity(String str)
 	{
+		if(str == null)
+			throw new InvalidTextException();
+
 		cachedString = str;
 
 		String report = validator.getToxicityReportAsync(str).join();
@@ -187,14 +211,17 @@ public class CommandProcessor implements AutoCloseable
 
 	public void append(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
 	{
-		for(Noun noun : nounList)
-			JsonUpdater.loadNoun(noun);
+		if(!nounList.isEmpty())
+			for(Noun noun : nounList)
+				JsonUpdater.loadNoun(noun);
 
-		for(Adjective adjective : adjectiveList)
-			JsonUpdater.loadAdjective(adjective);
+		if(!adjectiveList.isEmpty())
+			for(Adjective adjective : adjectiveList)
+				JsonUpdater.loadAdjective(adjective);
 
-		for(Verb verb : verbList)
-			JsonUpdater.loadVerb(verb);
+		if(!verbList.isEmpty())
+			for(Verb verb : verbList)
+				JsonUpdater.loadVerb(verb);
 	}
 
 	public float getTolerance()

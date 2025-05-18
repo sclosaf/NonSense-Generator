@@ -23,6 +23,8 @@ import unipd.nonsense.util.GoogleApiClient;
 import unipd.nonsense.model.SyntaxToken;
 
 import unipd.nonsense.exceptions.InvalidTextException;
+import unipd.nonsense.exceptions.FailedAnalysisException;
+import unipd.nonsense.exceptions.FailedClientInitializationException;
 
 import java.io.IOException;
 
@@ -49,7 +51,7 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 		catch (Exception e)
 		{
-			throw new RuntimeException("Failed to initialize LanguageServiceClient: " + e.getMessage(), e);
+			throw new FailedClientInitializationException();
 		}
 	}
 
@@ -63,7 +65,7 @@ public class SentenceAnalyzer implements AutoCloseable
 				}
 				catch(IOException e)
 				{
-					throw new RuntimeException("Syntax analysis failed", e);
+					throw new FailedAnalysisException();
 				}
 			}, executor);
 	}
@@ -128,7 +130,7 @@ public class SentenceAnalyzer implements AutoCloseable
 				}
 				catch(IOException e)
 				{
-					throw new RuntimeException("Sentiment analysis failed", e);
+					throw new FailedAnalysisException();
 				}
 			}, executor);
 	}
@@ -161,7 +163,7 @@ public class SentenceAnalyzer implements AutoCloseable
 				}
 				catch(IOException e)
 				{
-					throw new RuntimeException("Entity analysis failed", e);
+					throw new FailedAnalysisException();
 				}
 			}, executor);
 	}
@@ -229,7 +231,7 @@ public class SentenceAnalyzer implements AutoCloseable
 				}
 				catch(IOException e)
 				{
-					throw new RuntimeException("Failed to get syntax tokens", e);
+					throw new FailedAnalysisException();
 				}
 			}, executor);
 	}

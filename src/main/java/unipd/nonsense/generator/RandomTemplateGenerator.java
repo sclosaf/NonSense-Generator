@@ -26,7 +26,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private final static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
 	private final static List<String> keys = List.of("singularTemplates", "pluralTemplates");
 	private LoggerManager logger = new LoggerManager(RandomTemplateGenerator.class);
 

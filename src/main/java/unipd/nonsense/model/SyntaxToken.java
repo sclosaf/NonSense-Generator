@@ -1,5 +1,7 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 import com.google.cloud.language.v1.PartOfSpeech;
 import com.google.cloud.language.v1.DependencyEdge;
 
@@ -14,6 +16,9 @@ public class SyntaxToken
 
 	public SyntaxToken(String text, int beginOffset, String lemma, PartOfSpeech partOfSpeech, int headTokenIndex, DependencyEdge.Label dependencyLabel)
 	{
+		if(text == null || lemma == null || partOfSpeech == null || dependencyLabel == null)
+			throw new InvalidGrammaticalElementException();
+
 		this.text = text;
 		this.beginOffset = beginOffset;
 		this.lemma = lemma;
