@@ -11,24 +11,27 @@ public class App
 	{
 		logger.logInfo("Application starting");
 
+		CLI cli = null;
+
 		try
 		{
-			CLI cli = new CLI();
-
-			logger.logInfo("CLI initialized successfully");
-
+			cli = new CLI();
 			while(cli.inputCatcher());
-
-			cli.closeResources();
 		}
 		catch(Exception e)
 		{
-			logger.logFatal("Terminating due to fatal error", e);
+			logger.logFatal("Fatal error, terminating due to ", e);
+
+			if(cli != null)
+				cli.closeResources();
+
 			System.exit(1);
 		}
 		finally
 		{
-			logger.logInfo("Application shutdown completed successfully");
+			if(cli != null)
+				cli.closeResources();
+
 			System.exit(0);
 		}
 	}

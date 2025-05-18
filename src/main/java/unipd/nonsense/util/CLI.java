@@ -1,6 +1,7 @@
 package unipd.nonsense.util;
 
 import unipd.nonsense.util.CommandProcessor;
+import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
@@ -84,7 +85,6 @@ public class CLI
 		{
 			return description;
 		}
-
 
 		public String getAlias()
 		{
@@ -185,6 +185,7 @@ public class CLI
 	private boolean running;
 	private final String initialOutput;
 
+	private final LoggerManager logger = new LoggerManager(CLI.class);
 	private final CommandProcessor processor;
 	private final Terminal terminal;
 
@@ -221,154 +222,233 @@ public class CLI
 
 	public CLI() throws IOException
 	{
+		logger.logTrace("Initializing CLI");
 
-		terminal = TerminalBuilder.builder().system(true).build();
+		try
+		{
+			terminal = TerminalBuilder.builder().system(true).build();
+			logger.logTrace("Terminal initialized successfully");
 
-		commandReader = LineReaderBuilder.builder()
-			.terminal(terminal)
-			.completer(new StringsCompleter(commands.keySet()))
-			.option(LineReader.Option.HISTORY_BEEP, false)
-			.option(LineReader.Option.AUTO_LIST, true)
-			.option(LineReader.Option.AUTO_FRESH_LINE, true)
-			.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
-			.highlighter(new CommandHighlighter())
-			.build();
+			commandReader = LineReaderBuilder.builder()
+				.terminal(terminal)
+				.completer(new StringsCompleter(commands.keySet()))
+				.option(LineReader.Option.HISTORY_BEEP, false)
+				.option(LineReader.Option.AUTO_LIST, true)
+				.option(LineReader.Option.AUTO_FRESH_LINE, true)
+				.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
+				.highlighter(new CommandHighlighter())
+				.build();
+			logger.logDebug("Command reader initialized with history size: " + HISTORY_SIZE);
 
-		plainReader = LineReaderBuilder.builder()
-			.terminal(terminal)
-			.option(LineReader.Option.HISTORY_BEEP, false)
-			.option(LineReader.Option.AUTO_FRESH_LINE, true)
-			.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
-			.build();
+			plainReader = LineReaderBuilder.builder()
+				.terminal(terminal)
+				.option(LineReader.Option.HISTORY_BEEP, false)
+				.option(LineReader.Option.AUTO_FRESH_LINE, true)
+				.variable(LineReader.HISTORY_SIZE, HISTORY_SIZE)
+				.build();
+			logger.logDebug("Plain reader initialized with history size: " + HISTORY_SIZE);
 
-		this.processor = new CommandProcessor();
-		running = true;
+			this.processor = new CommandProcessor();
+			running = true;
+			logger.logTrace("CommandProcessor initialized and running set to " + running);
 
-		commands.put("default", Command.DEFAULT);
-		commands.put("d", Command.DEFAULT);
-		commands.put("personalized", Command.PERSONALIZED);
-		commands.put("p", Command.PERSONALIZED);
-		commands.put("generate", Command.GENERATE);
-		commands.put("g", Command.GENERATE);
-		commands.put("analyze", Command.ANALYZE);
-		commands.put("a", Command.ANALYZE);
-		commands.put("tree", Command.TREE);
-		commands.put("t", Command.TREE);
-		commands.put("extends", Command.EXTEND);
-		commands.put("e", Command.EXTEND);
-		commands.put("set tolerance", Command.SETTOLERANCE);
-		commands.put("st", Command.SETTOLERANCE);
-		commands.put("info", Command.INFO);
-		commands.put("i", Command.INFO);
-		commands.put("verbose", Command.VERBOSE);
-		commands.put("v", Command.VERBOSE);
-		commands.put("help", Command.HELP);
-		commands.put("h", Command.HELP);
-		commands.put("clear", Command.CLEAR);
-		commands.put("c", Command.CLEAR);
-		commands.put("quit", Command.QUIT);
-		commands.put("q", Command.QUIT);
+			commands.put("default", Command.DEFAULT);
+			commands.put("d", Command.DEFAULT);
+			commands.put("personalized", Command.PERSONALIZED);
+			commands.put("p", Command.PERSONALIZED);
+			commands.put("generate", Command.GENERATE);
+			commands.put("g", Command.GENERATE);
+			commands.put("analyze", Command.ANALYZE);
+			commands.put("a", Command.ANALYZE);
+			commands.put("tree", Command.TREE);
+			commands.put("t", Command.TREE);
+			commands.put("extends", Command.EXTEND);
+			commands.put("e", Command.EXTEND);
+			commands.put("set tolerance", Command.SETTOLERANCE);
+			commands.put("st", Command.SETTOLERANCE);
+			commands.put("info", Command.INFO);
+			commands.put("i", Command.INFO);
+			commands.put("verbose", Command.VERBOSE);
+			commands.put("v", Command.VERBOSE);
+			commands.put("help", Command.HELP);
+			commands.put("h", Command.HELP);
+			commands.put("clear", Command.CLEAR);
+			commands.put("c", Command.CLEAR);
+			commands.put("quit", Command.QUIT);
+			commands.put("q", Command.QUIT);
+			logger.logDebug("Commands map initialized with " + commands.size() + " entries");
 
-		generateOptions.put("random", GenerateOptions.RANDOM);
-		generateOptions.put("r", GenerateOptions.RANDOM);
-		generateOptions.put("number", GenerateOptions.NUMBER);
-		generateOptions.put("n", GenerateOptions.NUMBER);
-		generateOptions.put("tense", GenerateOptions.TENSE);
-		generateOptions.put("t", GenerateOptions.TENSE);
-		generateOptions.put("both", GenerateOptions.BOTH);
-		generateOptions.put("b", GenerateOptions.BOTH);
+			generateOptions.put("random", GenerateOptions.RANDOM);
+			generateOptions.put("r", GenerateOptions.RANDOM);
+			generateOptions.put("number", GenerateOptions.NUMBER);
+			generateOptions.put("n", GenerateOptions.NUMBER);
+			generateOptions.put("tense", GenerateOptions.TENSE);
+			generateOptions.put("t", GenerateOptions.TENSE);
+			generateOptions.put("both", GenerateOptions.BOTH);
+			generateOptions.put("b", GenerateOptions.BOTH);
+			logger.logDebug("Generate options map initialized with " + generateOptions.size() + " entries");
 
-		analyzeOptions.put("random", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("r", AnalyzeOptions.RANDOM);
-		analyzeOptions.put("all", AnalyzeOptions.ALL);
-		analyzeOptions.put("a", AnalyzeOptions.ALL);
-		analyzeOptions.put("syntax", AnalyzeOptions.SYNTAX);
-		analyzeOptions.put("sy", AnalyzeOptions.SYNTAX);
-		analyzeOptions.put("sentiment", AnalyzeOptions.SENTIMENT);
-		analyzeOptions.put("se", AnalyzeOptions.SENTIMENT);
-		analyzeOptions.put("toxicity", AnalyzeOptions.TOXICITY);
-		analyzeOptions.put("t", AnalyzeOptions.TOXICITY);
-		analyzeOptions.put("entity", AnalyzeOptions.ENTITY);
-		analyzeOptions.put("e", AnalyzeOptions.ENTITY);
-		analyzeOptions.put("combined", AnalyzeOptions.COMBINED);
-		analyzeOptions.put("c", AnalyzeOptions.COMBINED);
+			analyzeOptions.put("random", AnalyzeOptions.RANDOM);
+			analyzeOptions.put("r", AnalyzeOptions.RANDOM);
+			analyzeOptions.put("all", AnalyzeOptions.ALL);
+			analyzeOptions.put("a", AnalyzeOptions.ALL);
+			analyzeOptions.put("syntax", AnalyzeOptions.SYNTAX);
+			analyzeOptions.put("sy", AnalyzeOptions.SYNTAX);
+			analyzeOptions.put("sentiment", AnalyzeOptions.SENTIMENT);
+			analyzeOptions.put("se", AnalyzeOptions.SENTIMENT);
+			analyzeOptions.put("toxicity", AnalyzeOptions.TOXICITY);
+			analyzeOptions.put("t", AnalyzeOptions.TOXICITY);
+			analyzeOptions.put("entity", AnalyzeOptions.ENTITY);
+			analyzeOptions.put("e", AnalyzeOptions.ENTITY);
+			analyzeOptions.put("combined", AnalyzeOptions.COMBINED);
+			analyzeOptions.put("c", AnalyzeOptions.COMBINED);
+			logger.logDebug("Analyze options map initialized with " + analyzeOptions.size() + " entries");
 
-		StringWriter stringWriter = new StringWriter();
-		PrintWriter tempWriter = new PrintWriter(stringWriter);
+			StringWriter stringWriter = new StringWriter();
+			PrintWriter tempWriter = new PrintWriter(stringWriter);
 
-		welcome(tempWriter);
-		usage(tempWriter);
-		tempWriter.flush();
+			welcome(tempWriter);
+			usage(tempWriter);
+			tempWriter.flush();
 
-		initialOutput = stringWriter.toString();
+			initialOutput = stringWriter.toString();
 
-		welcome(terminal.writer());
+			logger.logTrace("Initial output prepared for welcome and usage messages");
 
-		if(!checkInternetConnection())
-			throw new MissingInternetConnectionException();
+			welcome(terminal.writer());
 
-		usage(terminal.writer());
+			logger.logTrace("Welcome message displayed");
+
+			if(!checkInternetConnection())
+			{
+				logger.logError("No internet connection detected", new MissingInternetConnectionException());
+				throw new MissingInternetConnectionException();
+			}
+			else
+				logger.logTrace("Device connected to internet");
+
+			usage(terminal.writer());
+			logger.logTrace("Usage message displayed");
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize CLI", e);
+			throw e;
+		}
 	}
 
-	private void welcome(PrintWriter writer) throws IOException
+	private synchronized void welcome(PrintWriter writer) throws IOException
 	{
+		logger.logTrace("welcome: Starting welcome message display");
+
 		String title = "Welcome to";
+		logger.logDebug("welcome: Title set to: " + title);
 
 		int totalPadding = MAX_WIDTH - title.length() - 4;
 		int leftPadding = totalPadding / 2;
 		int rightPadding = totalPadding - leftPadding;
 
 		String topBorder = "=".repeat(leftPadding) + "< " + title + " >" + "=".repeat(rightPadding);
+		logger.logDebug("welcome: Top border constructed with length: " + topBorder.length());
+
 		writer.println(new AttributedString(topBorder, BOLD_WHITE_STYLE).toAnsi(terminal));
+		logger.logTrace("welcome: Top border printed");
 
 		InputStream stream = getClass().getResourceAsStream("/asciiArt.txt");
 
 		if(stream == null)
+		{
+			logger.logError("welcome: ASCII art file not found");
+			writer.println(new AttributedString("ASCII art not available", RED_STYLE).toAnsi(terminal));
+			writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_WHITE_STYLE).toAnsi(terminal));
+			writer.flush();
 			return;
+		}
 
-		BufferedReader reader = new BufferedReader(new InputStreamReader(stream));
+		logger.logTrace("welcome: ASCII art file loaded successfully");
 
-		String line;
+		try(BufferedReader reader = new BufferedReader(new InputStreamReader(stream)))
+		{
+			String line;
 
-		while((line = reader.readLine()) != null)
-			writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
+			while((line = reader.readLine()) != null)
+				writer.println(new AttributedString(line, BOLD_WHITE_STYLE).toAnsi(terminal));
 
-		writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_WHITE_STYLE).toAnsi(terminal));
-		writer.flush();
+			writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_WHITE_STYLE).toAnsi(terminal));
+			writer.flush();
+		}
+		catch(IOException e)
+		{
+			logger.logError("welcome: Error reading ASCII art file", e);
+			writer.println(new AttributedString("Error reading ASCII art", RED_STYLE).toAnsi(terminal));
+			writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_WHITE_STYLE).toAnsi(terminal));
+			writer.flush();
+			return;
+		}
+
+		logger.logTrace("welcome: ASCII art printed");
 	}
 
-	public boolean inputCatcher() throws IOException
+	public synchronized boolean inputCatcher()
 	{
+		logger.logTrace("inputCatcher: Starting command input capture");
+
 		try
 		{
 			printWhite("Enter a command or type 'help'", true);
+			logger.logTrace("inputCatcher: Prompt for command displayed");
+
 			String cmd = commandReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
+
+			logger.logDebug("inputCatcher: Received command " + (cmd.isEmpty() ? " NONE" : cmd));
 
 			if(!cmd.isEmpty() && !commands.containsKey(cmd))
 			{
 				printRed("Invalid command: " + cmd, true);
 				printRed("Type 'help' for available commands.", true);
+
+				logger.logWarn("inputCatcher: Invalid command entered: " + cmd);
 				return running;
 			}
 			else
+			{
 				commandExecuter(cmd);
+				logger.logDebug("inputCatcher: Command passed to commandExecuter: " + cmd);
+			}
 		}
 		catch(UserInterruptException | EndOfFileException e)
 		{
 			printYellow("Program ended.", true);
+			logger.logWarn("inputCatcher: Program interrupted by user", e);
+			running = false;
+		}
+		catch(Exception e)
+		{
+			printRed("Unexpected error: " + e.getMessage(), true);
+			logger.logError("inputCatcher: Unexpected error during command capture", e);
 			running = false;
 		}
 
+		logger.logDebug("inputCatcher: Completed with running status: " + running);
 		return running;
 	}
 
-	private void commandExecuter(String cmd) throws IOException
+	private synchronized void commandExecuter(String cmd) throws IOException
 	{
+		logger.logTrace("commandExecuter: Starting command execution");
+
 		if(cmd.isEmpty())
 		{
 			printYellow("Please enter a command.", true);
+
+			logger.logWarn("commandExecuter: Empty command received");
+			logger.logTrace("commandExecuter: Completed due to empty command");
+
 			return;
 		}
+
+		logger.logDebug("commandExecuter: Processing command: " + cmd);
+		logger.logDebug("commandExecuter: Matched command enum: " + commands.get(cmd));
 
 		switch(commands.get(cmd))
 		{
@@ -388,96 +468,133 @@ public class CLI
 
 		if(commands.get(cmd) != Command.HELP && commands.get(cmd) != Command.CLEAR && commands.get(cmd) != Command.QUIT)
 			printSeparator(BOLD_BLUE_STYLE);
+
+		logger.logDebug("commandExecuter: Completed successfully for command: " + cmd);
 	}
 
-	private void defaultHandler()
+	private synchronized void defaultHandler() throws IOException
 	{
-		try
+		logger.logTrace("defaultHandler: Starting default procedure");
+
+		printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
+
+		printWhite("Proceding with the default process.", true);
+		printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elabotation):", true);
+
+		logger.logTrace("defaultHandler: Prompt for sentence input displayed");
+		String userInput = read(false);
+		logger.logDebug("defaultHandler: Received user input: " + (userInput.isEmpty() ? "NONE" : userInput));
+
+		if(userInput.isEmpty())
 		{
-			printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
+			printWhite("Sentence input skipped, proceding by generating one from scratch", true);
+			userInput = processor.generateRandom();
+			printWhite("Generated sentence: '" + userInput + "'", true);
+			logger.logDebug("defaultHandler: Generated random sentence: " + userInput);
 
-			printWhite("Proceding with the default process.", true);
-			printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elabotation):", true);
+			printWhite("Proceding with a standard analysis of the generated sentence", true);
+			printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
+			printWhite("Followed by the generation of the syntactic tree of the generated sentence", true);
+			logger.logTrace("defaultHandler: Starting analysis of generated sentence");
 
-			String userInput = read(false);
+			analyzeSyntax(userInput);
+			logger.logTrace("defaultHandler: Completed syntactic analysis for generated sentence");
 
-			if(userInput.isEmpty())
-			{
-				printWhite("Sentence input skipped, proceding by generating one from scratch", true);
-				userInput = processor.generateRandom();
-				printWhite("Generated sentence: '" + userInput + "'", true);
+			analyzeToxicity(userInput);
+			logger.logTrace("defaultHandler: Completed toxicity analysis for generated sentence");
 
-				printWhite("Proceding with a standard analysis of the generated sentence", true);
-				printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
-				printWhite("Followed by the generation of the syntactic tree of the generated sentence", true);
-
-				analyzeSyntax(userInput);
-
-				analyzeToxicity(userInput);
-
-				printTree(userInput);
-			}
-			else
-			{
-				printWhite("Proceding with the standard synctactic analysis of the given sentence", true);
-				analyzeSyntax(userInput);
-
-				printSeparator(BOLD_BLUE_STYLE);
-				printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
-				String generated = processor.generateFrom(userInput);
-
-				printWhite("Generated sentence: '" + generated + "'", true);
-
-				printWhite("Proceding with a standard analysis of the generated sentence", true);
-				printWhite("This passage includes the syntactic and toxicity analysis of the generated sentence", true);
-				printWhite("Followed by the creation of its synctactic tree", true);
-
-				analyzeSyntax(generated);
-
-				analyzeToxicity(generated);
-
-				printTree(generated);
-			}
+			printTree(userInput);
+			logger.logTrace("defaultHandler: Completed syntactic tree generation for generated sentence");
 		}
-		catch(IOException e)
+		else
 		{
-			printRed("Error processing input: " + e.getMessage(), true);
+			printWhite("Proceding with the standard synctactic analysis of the given sentence", true);
+			logger.logTrace("defaultHandler: Starting analysis of user-provided sentence");
+			analyzeSyntax(userInput);
+			logger.logTrace("defaultHandler: Completed syntactic analysis for user-provided sentence");
+
+			printSeparator(BOLD_BLUE_STYLE);
+			printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
+			String generated = processor.generateFrom(userInput);
+
+			printWhite("Generated sentence: '" + generated + "'", true);
+			logger.logDebug("defaultHandler: Generated sentence from user input: " + generated);
+
+			printWhite("Proceding with a standard analysis of the generated sentence", true);
+			printWhite("This passage includes the syntactic and toxicity analysis of the generated sentence", true);
+			printWhite("Followed by the creation of its synctactic tree", true);
+			logger.logTrace("defaultHandler: Starting analysis of sentence generated from user input");
+
+			analyzeSyntax(generated);
+			logger.logTrace("defaultHandler: Completed syntactic analysis for sentence generated from user input");
+
+			analyzeToxicity(generated);
+			logger.logTrace("defaultHandler: Completed toxicity analysis for sentence generated from user input");
+			printTree(generated);
+			logger.logTrace("defaultHandler: Completed syntactic tree generation for sentence generated from user input");
 		}
+
+		logger.logTrace("defaultHandler: Completed default procedure successfully");
 	}
 
-	private void personalizedHandler() throws IOException
+	private synchronized void personalizedHandler() throws IOException
 	{
+		logger.logTrace("personalizedHandler: Starting personalized procedure");
+
 		printTitleSeparator("Personalized procedure", BOLD_BLUE_STYLE);
 		printWhite("Proceding with the personalized process.", true);
 		printWhite("This procedure lets the user go through several options that this program offers", true);
 
+		logger.logTrace("personalizedHandler: Displayed procedure introduction");
+
 		printWhite("As option the user can add new nouns, adjectives and verbs to the dictionaries", true);
+		logger.logTrace("personalizedHandler: Prompting for dictionary extension");
 		extendHandler();
+		logger.logTrace("personalizedHandler: Completed dictionary extension");
 
 		printWhite("Enter a sentence to process (or press Enter to generate one automatically)", true);
 
 		String userInput = read(false);
+		logger.logDebug("personalizedHandler: Received user input: " + (userInput.isEmpty() ? "NONE" : userInput));
 
 		if(userInput.isEmpty())
 		{
 			printWhite("Generation process chosen", true);
+			logger.logTrace("personalizedHandler: User chose to generate a sentence");
 			generateHandler();
+			logger.logTrace("personalizedHandler: Completed sentence generation");
 		}
+		else
+			logger.logDebug("personalizedHandler: User provided sentence for processing: " + userInput);
 
 		printWhite("Proceding with the analysis", true);
+
+		logger.logTrace("personalizedHandler: Starting sentence analysis");
 		analyzeHandler();
+		logger.logTrace("personalizedHandler: Completed sentence analysis");
 
 		printWhite("Proceding by building the synctactic tree", true);
+		logger.logTrace("personalizedHandler: Starting syntactic tree generation");
 		treeHandler();
+
+		logger.logTrace("personalizedHandler: Completed syntactic tree generation");
+		logger.logTrace("personalizedHandler: Completed personalized procedure successfully");
 	}
 
-	private void generateHandler() throws IOException
+	private synchronized void generateHandler() throws IOException
 	{
+		logger.logTrace("generateHandler: Starting sentence generation procedure");
 		printTitleSeparator("Generation procedure", BOLD_BLUE_STYLE);
 		String userInput = validateInput("Proceding generating a random sentence, select one of the following options:", GENERATION_MODE_OPTIONS, false);
 
+		logger.logDebug("generateHandler: Selected generation option: " + (userInput.isEmpty() ? "CANCELLED" : userInput));
+
 		if(userInput.isEmpty())
+		{
+			logger.logWarn("generateHandler: Generation cancelled due to invalid input");
+			logger.logTrace("generateHandler: Completed due to cancellation");
 			return;
+		}
 
 		switch(generateOptions.get(userInput))
 		{
@@ -486,177 +603,336 @@ public class CLI
 			case TENSE: generateTense(); break;
 			case BOTH: generateBoth(); break;
 		}
+
+		logger.logTrace("generateHandler: Completed sentence generation procedure successfully");
 	}
 
-	private void generateRandom()
+	private synchronized void generateRandom()
 	{
+		logger.logTrace("generateRandom: Starting random sentence generation");
 		printTitleSeparator("Random generation", BOLD_BLUE_STYLE);
-		printWhite("Generated sentence: '" + processor.generateRandom() + "'", true);
+
+		String sentence = processor.generateRandom();
+		logger.logDebug("generateRandom: Generated sentence: " + sentence);
+
+		printWhite("Generated sentence: '" + sentence + "'", true);
+		logger.logTrace("generateRandom: Printed generated sentence");
+
+		logger.logTrace("generateRandom: Completed random sentence generation successfully");
 	}
 
-	private void generateNumber() throws IOException
+	private synchronized void generateNumber() throws IOException
 	{
+		logger.logTrace("generateNumber: Starting sentence generation with specific number");
+
 		printTitleSeparator("Random generation (with number)", BOLD_BLUE_STYLE);
 		String userInput = validateInput("Specify the desired number among the available:", NUMBER_OPTIONS, false);
+		logger.logTrace("generateNumber: Prompt for number input displayed");
+		logger.logDebug("generateNumber: Received number input: " + (userInput.isEmpty() ? "NONE" : userInput));
 
 		if(userInput.isEmpty())
+		{
+			logger.logWarn("generateNumber: Generation cancelled due to invalid input");
+			logger.logTrace("generateNumber: Completed due to cancellation");
 			return;
+		}
 
 		if(userInput.equals("singular") || userInput.equals("s"))
 		{
+			logger.logTrace("generateNumber: Selected number: singular");
 			printWhite("Proceding generating a sentence with singular nouns", true);
-			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.SINGULAR) + "'", true);
+
+			String sentence = processor.generateWithNumber(Number.SINGULAR);
+			logger.logDebug("generateNumber: Generated sentence: " + sentence);
+
+			printWhite("Generated sentence: '" + sentence + "'", true);
+			logger.logTrace("generateNumber: Printed generated sentence");
 		}
 		else if(userInput.equals("plural") || userInput.equals("p"))
 		{
+			logger.logTrace("generateNumber: Selected number: plural");
 			printWhite("Proceding generating a sentence with plural nouns", true);
-			printWhite("Generated sentence: '" + processor.generateWithNumber(Number.PLURAL) + "'", true);
+
+			String sentence = processor.generateWithNumber(Number.PLURAL);
+			logger.logDebug("generateNumber: Generated sentence: " + sentence);
+
+			printWhite("Generated sentence: '" + sentence + "'", true);
+			logger.logTrace("generateNumber: Printed generated sentence");
 		}
+
+		logger.logTrace("generateNumber: Completed sentence generation successfully");
 	}
 
-	private void generateTense() throws IOException
+	private synchronized void generateTense() throws IOException
 	{
+		logger.logTrace("generateTense: Starting sentence generation with specific tense");
 		printTitleSeparator("Random generation (with tense)", BOLD_BLUE_STYLE);
+
 		String userInput = validateInput("Specify the desired tense among the available:", TENSE_OPTIONS, false);
 
+		logger.logTrace("generateTense: Prompt for tense input displayed");
+		logger.logDebug("generateTense: Received tense input: " + (userInput.isEmpty() ? "NONE" : userInput));
+
 		if(userInput.isEmpty())
+		{
+			logger.logWarn("generateTense: Generation cancelled due to invalid input");
+			logger.logTrace("generateTense: Completed due to cancellation");
 			return;
+		}
 
 		if(userInput.equals("past") || userInput.equals("pa"))
 		{
+			logger.logTrace("generateTense: Selected tense: past");
 			printWhite("Proceding generating a sentence with past tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PAST) + "'", true);
+
+			String sentence = processor.generateWithTense(Tense.PAST);
+			logger.logDebug("generateTense: Generated sentence: " + sentence);
+
+			printWhite("Generated sentence: '" + sentence + "'", true);
+			logger.logTrace("generateTense: Printed generated sentence");
 		}
 		else if(userInput.equals("present") || userInput.equals("pr"))
 		{
+			logger.logTrace("generateTense: Selected tense: present");
 			printWhite("Proceding generating a sentence with present tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.PRESENT) + "'", true);
+
+			String sentence = processor.generateWithTense(Tense.PRESENT);
+			logger.logDebug("generateTense: Generated sentence: " + sentence);
+
+			printWhite("Generated sentence: '" + sentence + "'", true);
+			logger.logTrace("generateTense: Printed generated sentence");
 		}
 		else if(userInput.equals("future") || userInput.equals("f"))
 		{
+			logger.logTrace("generateTense: Selected tense: future");
 			printWhite("Proceding generating a sentence with future tense", true);
-			printWhite("Generated sentence: '" + processor.generateWithTense(Tense.FUTURE) + "'", true);
+
+			String sentence = processor.generateWithTense(Tense.FUTURE);
+			logger.logDebug("generateTense: Generated sentence: " + sentence);
+
+			printWhite("Generated sentence: '" + sentence + "'", true);
+			logger.logTrace("generateTense: Printed generated sentence");
 		}
+
+		logger.logTrace("generateTense: Completed sentence generation successfully");
 	}
 
-	private void generateBoth() throws IOException
+	private synchronized void generateBoth() throws IOException
 	{
+		logger.logTrace("generateBoth: Starting sentence generation with specific number and tense");
 		printTitleSeparator("Random generation (with number and tense)", BOLD_BLUE_STYLE);
 
 		String userInput = validateInput("Specify the desired number among the available:", NUMBER_OPTIONS, false);
 
+		logger.logTrace("generateBoth: Prompt for number input displayed");
+		logger.logDebug("generateBoth: Received number input: " + (userInput.isEmpty() ? "NONE" : userInput));
+
 		if(userInput.isEmpty())
+		{
+			logger.logWarn("generateBoth: Generation cancelled due to invalid input");
+			logger.logTrace("generateBoth: Completed due to cancellation");
 			return;
+		}
 
 		Number number;
 
 		if(userInput.equals("singular") || userInput.equals("s"))
+		{
 			number = Number.SINGULAR;
+			logger.logTrace("generateBoth: Selected number: singular");
+		}
 		else
+		{
 			number = Number.PLURAL;
+			logger.logTrace("generateBoth: Selected number: plural");
+		}
 
 		userInput = validateInput("Specify the desired tense among the available:", TENSE_OPTIONS, false);
 
+		logger.logTrace("generateBoth: Prompt for tense input displayed");
+		logger.logDebug("generateBoth: Received tense input: " + (userInput.isEmpty() ? "NONE" : userInput));
+
+
 		if(userInput.isEmpty())
+		{
+			logger.logWarn("generateBoth: Generation cancelled due to invalid input");
+			logger.logTrace("generateBoth: Completed due to cancellation");
 			return;
+		}
 
 		Tense tense;
 
 		if(userInput.equals("past") || userInput.equals("pa"))
+		{
 			tense = Tense.PAST;
+			logger.logTrace("generateBoth: Selected tense: past");
+		}
 		else if(userInput.equals("present") || userInput.equals("pr"))
+		{
 			tense = Tense.PRESENT;
+			logger.logTrace("generateBoth: Selected tense: present");
+		}
 		else
+		{
 			tense = Tense.FUTURE;
+			logger.logTrace("generateBoth: Selected tense: future");
+		}
 
+		logger.logDebug("generateBoth: Proceeding with number: " + number.name().toLowerCase() + ", tense: " + tense.name().toLowerCase());
 		printWhite("Proceding generating a sentence with " + number.name().toLowerCase() + " nouns and " + tense.name().toLowerCase() + " tense", true);
-		printWhite("Generated sentence: '" + processor.generateWithBoth(number, tense) + "'", true);
+		String sentence = processor.generateWithBoth(number, tense);
+
+		logger.logDebug("generateBoth: Generated sentence: " + sentence);
+		printWhite("Generated sentence: '" + sentence + "'", true);
+		logger.logTrace("generateBoth: Printed generated sentence");
+
+		logger.logTrace("generateBoth: Completed sentence generation successfully");
 	}
 
-	private void analyzeHandler() throws IOException
+	private synchronized void analyzeHandler() throws IOException
 	{
+		logger.logTrace("analyzeHandler: Starting sentence analysis procedure");
+
 		printTitleSeparator("Analyze procedure", BOLD_BLUE_STYLE);
 		String analysis = validateInput("Proceeding to analyze select one of the following options:", ANALYZE_MODE_OPTIONS, false);
 
+		logger.logTrace("analyzeHandler: Prompt for analysis option displayed");
+		logger.logDebug("analyzeHandler: Received analysis option: " + (analysis.isEmpty() ? "NONE" : analysis));
+
 		if(analysis.isEmpty())
+		{
+			logger.logWarn("analyzeHandler: Analysis cancelled due to invalid input");
+			logger.logTrace("analyzeHandler: Completed due to cancellation");
 			return;
+		}
 
 		String mode = validateInput("Select what sentence do you want to analyze:", INPUT_MODE_OPTIONS, false);
+		logger.logTrace("analyzeHandler: Prompt for input mode displayed");
+		logger.logDebug("analyzeHandler: Received input mode: " + (mode.isEmpty() ? "NONE" : mode));
+
 
 		if(mode.isEmpty())
+		{
+			logger.logWarn("analyzeHandler: Analysis cancelled due to invalid input");
+			logger.logTrace("analyzeHandler: Completed due to cancellation");
 			return;
+		}
 
 		String userInput = new String();
 
 		if(mode.equals("generate") || mode.equals("g"))
 		{
-			printWhite("Proceding generating a random sentence", true);
+			logger.logTrace("analyzeHandler: Selected input mode: generate");
+			printWhite("Proceeding generating a random sentence", true);
+
 			userInput = processor.generateRandom();
+			logger.logDebug("analyzeHandler: Generated sentence: " + userInput);
+
 			printWhite("Generated sentence: '" + userInput + "'", true);
+			logger.logTrace("analyzeHandler: Printed generated sentence");
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
+			logger.logTrace("analyzeHandler: Selected input mode: input");
 			printWhite("Insert the desired sentence", true);
 
 			for(int i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				userInput = read(false);
+				logger.logDebug("analyzeHandler: Received sentence input: " + (userInput.isEmpty() ? "<empty>" : userInput));
 
 				if(userInput.isEmpty() && i > 1)
+				{
 					printYellow("Please enter a valid sentence. Remaining attempts " + (i - 1), true);
+					logger.logWarn("analyzeHandler: Empty sentence entered, attempts remaining: " + (i - 1));
+				}
 				else if(i == 1)
 				{
 					printYellow("Maximum attempts reached. Operation cancelled.", true);
+					logger.logWarn("analyzeHandler: Maximum attempts reached, operation cancelled");
+
+					logger.logTrace("analyzeHandler: Completed due to cancellation");
 					return;
 				}
 				else
+				{
+					logger.logTrace("analyzeHandler: Valid sentence input received");
 					break;
+				}
 			}
 		}
 		else if(mode.equals("cached") || mode.equals("ca"))
 		{
+			logger.logTrace("analyzeHandler: Selected input mode: cached");
+
 			if(!processor.isSentenceCached())
 			{
 				printYellow("No sentence is cached, try generating one first", true);
+
+				logger.logWarn("analyzeHandler: No cached sentence available");
+				logger.logTrace("analyzeHandler: Completed due to no cached sentence");
 				return;
 			}
 
 			printWhite("Proceding analyzing the cached sentence: '" + processor.getCachedSentence() + "'", true);
 			userInput = processor.getCachedSentence();
+
+			logger.logDebug("analyzeHandler: Using cached sentence: " + userInput);
+			logger.logTrace("analyzeHandler: Printed cached sentence");
 		}
 		else if(mode.equals("choose") || mode.equals("ch"))
 		{
+			logger.logTrace("analyzeHandler: Selected input mode: choose");
 			printWhite("Choose one template among the five presented:", true);
+			logger.logTrace("analyzeHandler: Prompt for template selection displayed");
+
 			List<Template> templateList = processor.getRandomTemplates();
+			logger.logDebug("analyzeHandler: Retrieved " + templateList.size() + " random templates");
 
 			int i = 1;
 			for(Template template : templateList)
+			{
 				printWhite((i++) + ": " + template.getPattern(), true);
+				logger.logDebug("analyzeHandler: Displayed template " + (i - 1) + ": " + template.getPattern());
+			}
 
 			String choice = new String();
 
 			for(i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				choice = read(true);
+				logger.logDebug("analyzeHandler: Received template choice: " + (choice.isEmpty() ? "<empty>" : choice));
 
 				if(choice.matches("[1-5]") && i > 1)
 				{
 					Template template = templateList.get(Integer.parseInt(choice) - 1);
 					printWhite("Template chosen: " + template.getPattern(), true);
+
+					logger.logDebug("analyzeHandler: Selected template: " + template.getPattern());
 					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice) - 1));
+
 					printWhite("Sentence generated from the chosen template: " + userInput, true);
+					logger.logDebug("analyzeHandler: Generated sentence from template: " + userInput);
+
+					logger.logTrace("analyzeHandler: Printed generated sentence from template");
 					break;
 				}
 				else if(i == 1)
 				{
 					printYellow("Maximum attempts reached, operation cancelled", true);
+					logger.logWarn("analyzeHandler: Maximum attempts reached for template selection, operation cancelled");
+					logger.logTrace("analyzeHandler: Completed due to cancellation");
 					return;
 				}
 				else
-					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+				{
+					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					logger.logWarn("analyzeHandler: Invalid template choice, attempts remaining: " + (i - 1));
+				}
 			}
 		}
 
+		logger.logDebug("analyzeHandler: Proceeding with analysis option: " + analysis);
 		switch(analyzeOptions.get(analysis))
 		{
 			case RANDOM: analyzeRandom(userInput); break;
@@ -667,18 +943,24 @@ public class CLI
 			case ENTITY: analyzeEntity(userInput); break;
 			case COMBINED: analyzeCombined(userInput); break;
 		}
+
+		logger.logTrace("analyzeHandler: Completed sentence analysis procedure successfully");
 	}
 
-	private void analyzeRandom(String input)
+	private synchronized void analyzeRandom(String input)
 	{
+		logger.logTrace("analyzeRandom: Starting random analysis procedure");
+
 		printTitleSeparator("Random analysis", BOLD_BLUE_STYLE);
 		Random random = new Random();
 
 		AnalyzeOptions[] opts = { AnalyzeOptions.SYNTAX, AnalyzeOptions.SENTIMENT, AnalyzeOptions.TOXICITY, AnalyzeOptions.ENTITY };
 
 		AnalyzeOptions opt = opts[random.nextInt(opts.length)];
+		logger.logDebug("analyzeRandom: Selected random analysis option: " + opt.name().toLowerCase());
 
 		printWhite("Random analysis chosen is " + opt.name().toLowerCase(), true);
+		logger.logTrace("analyzeRandom: Printed selected analysis option");
 
 		switch(opt)
 		{
@@ -687,47 +969,109 @@ public class CLI
 			case TOXICITY: analyzeToxicity(input); break;
 			case ENTITY: analyzeEntity(input); break;
 		}
+
+		logger.logTrace("analyzeRandom: Completed random analysis procedure successfully");
 	}
 
-	private void analyzeAll(String input)
+	private synchronized void analyzeAll(String input)
 	{
+		logger.logTrace("analyzeAll: Starting complete analysis procedure");
+
 		printTitleSeparator("Complete analysis", BOLD_BLUE_STYLE);
 		printWhite("Proceding with all the analysis", true);
 
+		logger.logTrace("analyzeAll: Executing syntax analysis");
 		analyzeSyntax(input);
+		logger.logTrace("analyzeAll: Completed syntax analysis");
+
+		logger.logTrace("analyzeAll: Executing sentiment analysis");
 		analyzeSentiment(input);
+		logger.logTrace("analyzeAll: Completed sentiment analysis");
+
+		logger.logTrace("analyzeAll: Executing toxicity analysis");
 		analyzeToxicity(input);
+		logger.logTrace("analyzeAll: Completed toxicity analysis");
+
+		logger.logTrace("analyzeAll: Executing entity analysis");
 		analyzeEntity(input);
+		logger.logTrace("analyzeAll: Completed entity analysis");
+
+		logger.logTrace("analyzeAll: Completed complete analysis procedure successfully");
 	}
 
-	private void analyzeSyntax(String input)
+	private synchronized void analyzeSyntax(String input)
 	{
+		logger.logTrace("analyzeSyntax: Starting syntax analysis procedure");
+
 		printTitleSeparator("Analyze syntax", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeSyntax(input), true);
+		logger.logDebug("analyzeSyntax: Analyzing input: " + input);
+
+		String result = processor.analyzeSyntax(input);
+		logger.logDebug("analyzeSyntax: Syntax analysis result: " + result);
+
+		printWhite(result, true);
+		logger.logTrace("analyzeSyntax: Printed analysis result");
+
+		logger.logTrace("analyzeSyntax: Completed syntax analysis procedure successfully");
 	}
 
-	private void analyzeSentiment(String input)
+	private synchronized void analyzeSentiment(String input)
 	{
+		logger.logTrace("analyzeSentiment: Starting sentiment analysis procedure");
+
 		printTitleSeparator("Analyze sentiment", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeSentiment(input), true);
+
+		logger.logDebug("analyzeSentiment: Analyzing input: " + input);
+		String result = processor.analyzeSentiment(input);
+		logger.logDebug("analyzeSentiment: Sentiment analysis result: " + result);
+
+		printWhite(result, true);
+		logger.logTrace("analyzeSentiment: Printed analysis result");
+
+		logger.logTrace("analyzeSentiment: Completed sentiment analysis procedure successfully");
 	}
 
-	private void analyzeToxicity(String input)
+	private synchronized void analyzeToxicity(String input)
 	{
+		logger.logTrace("analyzeToxicity: Starting toxicity analysis procedure");
+
 		printTitleSeparator("Analyze toxicity", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeToxicity(input), true);
+
+		logger.logDebug("analyzeToxicity: Analyzing input: " + input);
+		String result = processor.analyzeToxicity(input);
+		logger.logDebug("analyzeToxicity: Toxicity analysis result: " + result);
+
+		printWhite(result, true);
+		logger.logTrace("analyzeToxicity: Printed analysis result");
+
+		logger.logTrace("analyzeToxicity: Completed toxicity analysis procedure successfully");
 	}
 
-	private void analyzeEntity(String input)
+	private synchronized void analyzeEntity(String input)
 	{
+		logger.logTrace("analyzeEntity: Starting entity analysis procedure");
+
 		printTitleSeparator("Analyze entity", BOLD_BLUE_STYLE);
-		printWhite(processor.analyzeEntity(input), true);
+
+		logger.logDebug("analyzeEntity: Analyzing input: " + input);
+		String result = processor.analyzeEntity(input);
+		logger.logDebug("analyzeEntity: Entity analysis result: " + result);
+
+		printWhite(result, true);
+		logger.logTrace("analyzeEntity: Printed analysis result");
+
+		logger.logTrace("analyzeEntity: Completed entity analysis procedure successfully");
 	}
 
-	private void analyzeCombined(String input) throws IOException
+	private synchronized void analyzeCombined(String input) throws IOException
 	{
+		logger.logTrace("analyzeCombined: Starting combined analysis procedure");
+
 		printTitleSeparator("Combined analysis", BOLD_BLUE_STYLE);
 		String mode = validateInput("Select the desired analysis (press enter to confirm the combination choice):", COMBINED_ANALYZE_MODE_OPTIONS, true);
+
+		logger.logTrace("analyzeCombined: Prompt for analysis mode displayed");
+		logger.logDebug("analyzeCombined: Received analysis mode: " + (mode.isEmpty() ? "NONE" : mode));
 
 		List<AnalyzeOptions> opts = new ArrayList<>();
 
@@ -736,50 +1080,70 @@ public class CLI
 			if(mode.equals("syntax") || mode.equals("sy"))
 			{
 				if(opts.contains(AnalyzeOptions.SYNTAX))
+				{
 					printYellow("Option already chosen", true);
+					logger.logWarn("analyzeCombined: Syntax option already chosen");
+				}
 				else
 				{
 					opts.add(AnalyzeOptions.SYNTAX);
 					printWhite("Option added: syntax", true);
+					logger.logTrace("analyzeCombined: Added syntax option");
 				}
 			}
 			else if(mode.equals("sentiment") || mode.equals("se"))
 			{
 				if(opts.contains(AnalyzeOptions.SENTIMENT))
+				{
 					printYellow("Option already chosen", true);
+					logger.logWarn("analyzeCombined: Sentiment option already chosen");
+				}
 				else
 				{
 					opts.add(AnalyzeOptions.SENTIMENT);
 					printWhite("Option added: sentiment", true);
+					logger.logTrace("analyzeCombined: Added sentiment option");
 				}
 			}
 			else if(mode.equals("toxicity") || mode.equals("t"))
 			{
 				if(opts.contains(AnalyzeOptions.TOXICITY))
+				{
 					printYellow("Option already chosen", true);
+					logger.logWarn("analyzeCombined: Toxicity option already chosen");
+				}
 				else
 				{
 					opts.add(AnalyzeOptions.TOXICITY);
 					printWhite("Option added: toxicity", true);
+					logger.logTrace("analyzeCombined: Added toxicity option");
 				}
 			}
 			else if(mode.equals("entity") || mode.equals("e"))
 			{
 				if(opts.contains(AnalyzeOptions.ENTITY))
+				{
 					printYellow("Option already chosen", true);
+					logger.logWarn("analyzeCombined: Entity option already chosen");
+				}
 				else
 				{
 					opts.add(AnalyzeOptions.ENTITY);
 					printWhite("Option added: entity", true);
+					logger.logTrace("analyzeCombined: Added entity option");
 				}
 			}
 
 			mode = validateInput("Select the next desired mode:", COMBINED_ANALYZE_MODE_OPTIONS, true);
+			logger.logTrace("analyzeCombined: Prompt for next analysis mode displayed");
+			logger.logDebug("analyzeCombined: Received next analysis mode: " + (mode.isEmpty() ? "NONE" : mode));
 		}
 
 		if(opts.isEmpty())
 		{
 			printYellow("No options specified.", true);
+			logger.logWarn("analyzeCombined: No analysis options selected, operation cancelled");
+			logger.logTrace("analyzeCombined: Completed due to no options selected");
 			return;
 		}
 
@@ -790,6 +1154,7 @@ public class CLI
 
 			printWhite("Proceeding with " + opt, true);
 
+			logger.logDebug("analyzeCombined: Executing analysis: " + opt.name().toLowerCase());
 			switch(opt)
 			{
 				case SYNTAX: analyzeSyntax(input); break;
@@ -798,100 +1163,168 @@ public class CLI
 				case ENTITY: analyzeEntity(input); break;
 			}
 		}
+
+		logger.logTrace("analyzeCombined: Completed combined analysis procedure successfully");
 	}
 
-	private void treeHandler() throws IOException
+	private synchronized void treeHandler() throws IOException
 	{
+		logger.logTrace("treeHandler: Starting syntax tree generation procedure");
+
 		printTitleSeparator("Syntax tree procedure", BOLD_BLUE_STYLE);
 		String mode = validateInput("Select what sentence do you want to print the syntactic tree:", INPUT_MODE_OPTIONS, false);
 
+		logger.logTrace("treeHandler: Prompt for input mode displayed");
+		logger.logDebug("treeHandler: Received input mode: " + (mode.isEmpty() ? "NONE" : mode));
+
+
 		if(mode.isEmpty())
+		{
+			logger.logWarn("treeHandler: Operation cancelled due to invalid input");
+			logger.logTrace("treeHandler: Completed due to cancellation");
 			return;
+		}
 
 		String userInput = new String();
 
 		if(mode.equals("generate") || mode.equals("g"))
 		{
-			printWhite("Proceding generating a random sentence", true);
+			logger.logTrace("treeHandler: Selected input mode: generate");
+			printWhite("Proceeding generating a random sentence", true);
+
 			userInput = processor.generateRandom();
+			logger.logDebug("treeHandler: Generated sentence: " + userInput);
+
 			printWhite("Generated sentence: '" + userInput + "'", true);
+			logger.logTrace("treeHandler: Printed generated sentence");
 		}
 		else if(mode.equals("input") || mode.equals("i"))
 		{
+			logger.logTrace("treeHandler: Selected input mode: input");
 			printWhite("Insert the desired sentence", true);
 
 			for(int i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				userInput = read(false);
+				logger.logDebug("treeHandler: Received sentence input: " + (userInput.isEmpty() ? "NONE" : userInput));
 
 				if(userInput.isEmpty() && i > 1)
-					printYellow("Please enter a valid Sentence. Remaining attempts " + (i - 1), true);
+				{
+					printYellow("Please enter a valid sentence. Remaining attempts " + (i - 1), true);
+					logger.logWarn("treeHandler: Empty sentence entered, attempts remaining: " + (i - 1));
+				}
 				else if(i == 1)
 				{
 					printYellow("Maximum attempts reached, operation cancelled", true);
+					logger.logWarn("treeHandler: Maximum attempts reached, operation cancelled");
+					logger.logTrace("treeHandler: Completed due to cancellation");
 					return;
 				}
 				else
+				{
+					logger.logTrace("treeHandler: Valid sentence input received");
 					break;
+				}
 			}
 		}
 		else if(mode.equals("cached") || mode.equals("c"))
 		{
+			logger.logTrace("treeHandler: Selected input mode: cached");
+
 			if(!processor.isSentenceCached())
 			{
 				printYellow("No sentence is cached, try generating one first", true);
+				logger.logWarn("treeHandler: No cached sentence available");
+				logger.logTrace("treeHandler: Completed due to no cached sentence");
 				return;
 			}
 
 			printWhite("Proceding with the cached sentence", true);
 			userInput = processor.getCachedSentence();
+
+			logger.logDebug("treeHandler: Using cached sentence: " + userInput);
+			logger.logTrace("treeHandler: Printed cached sentence notification");
 		}
 		else if(mode.equals("choose") || mode.equals("ch"))
 		{
+			logger.logTrace("treeHandler: Selected input mode: choose");
 			printWhite("Choose one template among the five presented:", true);
+
 			List<Template> templateList = processor.getRandomTemplates();
+			logger.logDebug("treeHandler: Retrieved " + templateList.size() + " random templates");
 
 			int i = 1;
 			for(Template template : templateList)
+			{
 				printWhite((i++) + ": " + template.getPattern(), true);
+				logger.logDebug("treeHandler: Displayed template " + (i - 1) + ": " + template.getPattern());
+			}
 
 			String choice = new String();
 
 			for(i = MAX_ATTEMPTS; i >= 0; --i)
 			{
 				choice = read(true);
+				logger.logDebug("treeHandler: Received template choice: " + (choice.isEmpty() ? "<empty>" : choice));
 
 				if(choice.matches("[1-5]") && i > 1)
 				{
 					Template template = templateList.get(Integer.parseInt(choice) - 1);
 					printWhite("Template chosen: " + template.getPattern(), true);
+
+					logger.logDebug("treeHandler: Selected template: " + template.getPattern());
 					userInput = processor.generateWithTemplate(templateList.get(Integer.parseInt(choice) - 1));
+
 					printWhite("Sentence generated from the chosen template: " + userInput, true);
+					logger.logDebug("treeHandler: Generated sentence from template: " + userInput);
+
+					logger.logTrace("treeHandler: Printed generated sentence from template");
 					break;
 				}
 				else if(i == 1)
 				{
 					printYellow("Maximum attempts reached, operation cancelled", true);
+					logger.logWarn("treeHandler: Maximum attempts reached for template selection, operation cancelled");
+					logger.logTrace("treeHandler: Completed due to cancellation");
 					return;
 				}
 				else
-					printYellow("Please enter a valid value. Remaining attemps " + (i - 1), true);
+				{
+					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					logger.logWarn("treeHandler: Invalid template choice, attempts remaining: " + (i - 1));
+				}
 			}
 		}
 
+		logger.logDebug("treeHandler: Generating syntax tree for sentence: " + userInput);
 		printTree(userInput);
+		logger.logTrace("treeHandler: Completed syntax tree generation");
+
+		logger.logTrace("treeHandler: Completed syntax tree generation procedure successfully");
 	}
 
-	private void printTree(String input) throws IOException
+	private synchronized void printTree(String input) throws IOException
 	{
+		logger.logTrace("printTree: Starting syntax tree printing procedure");
+
 		printTitleSeparator("Syntax tree", BOLD_BLUE_STYLE);
+
+		logger.logDebug("printTree: Printing syntax tree for input: " + input);
 		printWhite(processor.generateSyntaxTree(input), true);
+		logger.logTrace("printTree: Completed syntax tree printing");
+
+		logger.logTrace("printTree: Completed syntax tree printing procedure successfully");
 	}
 
-	private void extendHandler() throws IOException
+	private synchronized void extendHandler() throws IOException
 	{
+		logger.logTrace("extendHandler: Starting sentence extension procedure");
+
 		printTitleSeparator("Extension procedure", BOLD_BLUE_STYLE);
 		String partOfSpeech = validateInput("Enter the part of speech that you want to add (press Enter to confirm the new terms):", ELEMENT_OPTIONS, true);
+
+		logger.logTrace("extendHandler: Prompt for part of speech displayed");
+		logger.logDebug("extendHandler: Received part of speech: " + (partOfSpeech.isEmpty() ? "<empty>" : partOfSpeech));
 
 		List<Noun> nounList = new ArrayList<>();
 		List<Adjective> adjectiveList = new ArrayList<>();
@@ -901,16 +1334,29 @@ public class CLI
 		{
 			if(partOfSpeech.equals("noun") || partOfSpeech.equals("n"))
 			{
+				logger.logTrace("extendHandler: Selected part of speech: noun");
 				String num = validateInput("Enter the number for the noun: ", NUMBER_OPTIONS, false);
+				logger.logDebug("extendHandler: Received noun number: " + (num.isEmpty() ? "NONE" : num));
 
 				if(num.isEmpty())
+				{
+					logger.logWarn("extendHandler: Operation cancelled due to invalid input");
+					logger.logTrace("extendHandler: Completed due to cancellation");
 					return;
+				}
+
 
 				Number number;
 				if(num.equals("singular") || num.equals("s"))
+				{
 					number = Number.SINGULAR;
+					logger.logTrace("extendHandler: Selected noun number: singular");
+				}
 				else
+				{
 					number = Number.PLURAL;
+					logger.logTrace("extendHandler: Selected noun number: plural");
+				}
 
 				printWhite("Insert the new noun:", true);
 
@@ -919,22 +1365,33 @@ public class CLI
 				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
 					text = read(true);
+					logger.logDebug("extendHandler: Received noun input: " + (text.isEmpty() ? "NONE" : text));
 
 					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+					{
 						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+						logger.logWarn("extendHandler: Invalid noun input, attempts remaining: " + (i - 1));
+					}
 					else if(i == 1)
 					{
 						printYellow("Maximum attempts reached, operation cancelled", true);
+						logger.logWarn("extendHandler: Maximum attempts reached for noun input, operation cancelled");
+						logger.logTrace("extendHandler: Completed due to cancellation");
 						break;
 					}
 					else
+					{
+						logger.logTrace("extendHandler: Valid noun input received");
 						break;
+					}
 				}
 
 				nounList.add(new Noun(text, number));
+				logger.logDebug("extendHandler: Added noun: " + text + " (" + number.name().toLowerCase() + ")");
 			}
 			else if(partOfSpeech.equals("adjective") || partOfSpeech.equals("a"))
 			{
+				logger.logTrace("extendHandler: Selected part of speech: adjective");
 				printWhite("Insert the new adjective:", true);
 
 				String text = new String();
@@ -942,35 +1399,60 @@ public class CLI
 				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
 					text = read(true);
+					logger.logDebug("extendHandler: Received adjective input: " + (text.isEmpty() ? "<empty>" : text));
 
 					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+					{
 						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+						logger.logWarn("extendHandler: Invalid adjective input, attempts remaining: " + (i - 1));
+					}
 					else if(i == 1)
 					{
 						printYellow("Maximum attempts reached, operation cancelled", true);
+						logger.logWarn("extendHandler: Maximum attempts reached for adjective input, operation cancelled");
+						logger.logTrace("extendHandler: Completed due to cancellation");
 						return;
 					}
 					else
+					{
+						logger.logTrace("extendHandler: Valid adjective input received");
 						break;
+					}
 				}
 
 				adjectiveList.add(new Adjective(text));
+				logger.logDebug("extendHandler: Added adjective: " + text);
 			}
 			else if(partOfSpeech.equals("verb") || partOfSpeech.equals("v"))
 			{
+				logger.logTrace("extendHandler: Selected part of speech: verb");
 				String textTense = validateInput("Enter the tense for the verb: ", TENSE_OPTIONS, false);
+				logger.logDebug("extendHandler: Received verb tense: " + (textTense.isEmpty() ? "<empty>" : textTense));
 
 				if(textTense.isEmpty())
+				{
+					logger.logWarn("extendHandler: Operation cancelled due to invalid input");
+					logger.logTrace("extendHandler: Completed due to cancellation");
 					return;
+				}
 
 				Tense tense;
 
 				if(textTense.equals("past") || textTense.equals("pa"))
+				{
 					tense = Tense.PAST;
+					logger.logTrace("extendHandler: Selected verb tense: past");
+				}
 				else if(textTense.equals("present") || textTense.equals("pr"))
+				{
 					tense = Tense.PRESENT;
+					logger.logTrace("extendHandler: Selected verb tense: present");
+				}
 				else
+				{
 					tense = Tense.FUTURE;
+					logger.logTrace("extendHandler: Selected verb tense: future");
+				}
 
 				printWhite("Insert the new verb:", true);
 
@@ -979,35 +1461,62 @@ public class CLI
 				for(int i = MAX_ATTEMPTS; i >= 0; --i)
 				{
 					text = read(true);
+					logger.logDebug("extendHandler: Received verb input: " + (text.isEmpty() ? "<empty>" : text));
 
 					if((text.isEmpty() || !text.matches("[a-zA-Z]+")) && i > 1)
+					{
 						printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+						logger.logWarn("extendHandler: Invalid verb input, attempts remaining: " + (i - 1));
+					}
 					else if(i == 1)
 					{
 						printYellow("Maximum attempts reached, operation cancelled", true);
+						logger.logWarn("extendHandler: Maximum attempts reached for verb input, operation cancelled");
+						logger.logTrace("extendHandler: Completed due to cancellation");
 						return;
 					}
+					else
+					{
+						logger.logTrace("extendHandler: Valid verb input received");
 						break;
+					}
 				}
 
 				verbList.add(new Verb(text, tense));
+				logger.logDebug("extendHandler: Added verb: " + text + " (" + tense.name().toLowerCase() + ")");
 			}
 
 			partOfSpeech = validateInput("Enter your next choice:", ELEMENT_OPTIONS, true);
+			logger.logTrace("extendHandler: Prompt for next part of speech displayed");
+			logger.logDebug("extendHandler: Received next part of speech: " + (partOfSpeech.isEmpty() ? "NONE" : partOfSpeech));
+
 		}
 
 		if(nounList.isEmpty() && adjectiveList.isEmpty() && verbList.isEmpty())
+		{
 			printWhite("No parts of speech added", true);
+			logger.logWarn("extendHandler: No parts of speech added");
+		}
 		else
-			printWhite("Proceding adding the new elements", true);
+		{
+			printWhite("Proceeding adding the new elements", true);
+			logger.logTrace("extendHandler: Proceeding to add new elements");
+			processor.append(nounList, adjectiveList, verbList);
+			logger.logDebug("extendHandler: Adding " + nounList.size() + " nouns, " + adjectiveList.size() + " adjectives, " + verbList.size() + " verbs");
+		}
 
-		processor.append(nounList, adjectiveList, verbList);
+		logger.logTrace("extendHandler: Completed adding new elements");
+		logger.logTrace("extendHandler: Completed sentence extension procedure successfully");
 	}
 
-	private void setToleranceHandler()
+	private synchronized void setToleranceHandler()
 	{
+		logger.logTrace("setToleranceHandler: Starting tolerance setting procedure");
+
 		printTitleSeparator("Tolerance procedure", BOLD_BLUE_STYLE);
 		printWhite("Current tolerance value is " + processor.getTolerance(), true);
+		logger.logDebug("setToleranceHandler: Current tolerance value: " + processor.getTolerance());
+
 		printWhite("The tolerance parameter specifies which is the value over which an analyzed sentence is considered toxic", true);
 		printWhite("Enter a new tolerance value (0.0 - 1.0): ", true);
 
@@ -1016,32 +1525,48 @@ public class CLI
 		for(int i = MAX_ATTEMPTS; i >= 0; --i)
 		{
 			newTolerance = read(true);
+			logger.logDebug("setToleranceHandler: Received tolerance input: " + (newTolerance.isEmpty() ? "NONE" : newTolerance));
 
 			try
 			{
 				if((newTolerance.isEmpty() || ((Float.parseFloat(newTolerance) < 0.0f || (Float.parseFloat(newTolerance) > 1.0f)))) && i > 1)
+				{
 					printYellow("Please enter a valid value. Remaining attempts " + (i - 1), true);
+					logger.logWarn("setToleranceHandler: Invalid tolerance input, attempts remaining: " + (i - 1));
+				}
 				else if(i == 1)
 				{
 					printYellow("Maximum attempts reached, operation cancelled", true);
+					logger.logWarn("setToleranceHandler: Maximum attempts reached, operation cancelled");
+					logger.logTrace("setToleranceHandler: Completed due to cancellation");
 					return;
 				}
 				else
+				{
+					logger.logTrace("setToleranceHandler: Valid tolerance input received");
 					break;
+				}
 			}
 			catch(NumberFormatException e)
 			{
 				printYellow("Please enter a valid value. Remaining attempts " + i, true);
+				logger.logWarn("setToleranceHandler: Invalid number format for tolerance input, attempts remaining: " + (i - 1), e);
 			}
 		}
 
 		printWhite("Setting the new tolerance value", true);
+		logger.logTrace("setToleranceHandler: Proceeding to set new tolerance");
+
 		float tolerance = Float.parseFloat(newTolerance);
 		processor.setTolerance(tolerance);
+
+		logger.logDebug("setToleranceHandler: Set new tolerance value: " + tolerance);
+		logger.logTrace("setToleranceHandler: Completed tolerance setting procedure successfully");
 	}
 
-	private void extendedUsage()
+	private synchronized void extendedUsage()
 	{
+		logger.logTrace("extendedUsage: Starting extended usage display procedure");
 		printTitleSeparator("Extended commands help", BOLD_BLUE_STYLE);
 
 		String[][] commandsInfo =
@@ -1129,38 +1654,60 @@ public class CLI
 			},
 		};
 
+		logger.logDebug("extendedUsage: Displaying information for " + commandsInfo.length + " commands");
+
 		for(String[] cmdInfo : commandsInfo)
 		{
 			String command = cmdInfo[0];
 			String description = cmdInfo[1];
 
 			printGreen(command, true);
+			logger.logDebug("extendedUsage: Printed command: " + command);
 
 			String[] lines = description.split("\n");
 			for (String line : lines)
 				printWhite("    " + line, true);
 		}
+
+		logger.logTrace("extendedUsage: Completed extended usage display procedure successfully");
 	}
 
-	private void verboseHandler()
+	private synchronized void verboseHandler()
 	{
+		logger.logTrace("verboseHandler: Starting verbosity switching procedure");
+
 		printTitleSeparator("Verbosity procedure", BOLD_BLUE_STYLE);
 		printWhite("Currently verbosity is set to " + processor.isVerbose(), true);
+
+		logger.logDebug("verboseHandler: Current verbosity state: " + processor.isVerbose());
+
 		printWhite("Switching verbosity", true);
+		logger.logTrace("verboseHandler: Proceeding to switch verbosity");
 
 		processor.switchVerbosity();
+		logger.logDebug("verboseHandler: Switched verbosity to: " + processor.isVerbose());
+
+		logger.logTrace("verboseHandler: Completed verbosity switching procedure successfully");
 	}
 
-	private void clearTerminal()
+	private synchronized void clearTerminal()
 	{
+		logger.logTrace("clearTerminal: Starting terminal clearing procedure");
+
 		terminal.puts(InfoCmp.Capability.clear_screen);
+
 		print("\033[3J");
+		logger.logTrace("clearTerminal: Cleared terminal scrollback");
 
 		print(initialOutput);
+		logger.logTrace("clearTerminal: Printed initial output");
+
+		logger.logTrace("clearTerminal: Completed terminal clearing procedure successfully");
 	}
 
-	private void usage(PrintWriter writer)
+	private synchronized void usage(PrintWriter writer)
 	{
+		logger.logTrace("usage: Starting usage display procedure");
 		String title = "Available Commands";
 
 		int titlePadding = (MAX_WIDTH - title.length() - 4) / 2;
@@ -1182,6 +1729,8 @@ public class CLI
 			"Quit", "Exits the program"
 		};
 
+		logger.logDebug("usage: Displaying information for " + commands.length + " commands");
+
 		for(int i = 0; i < commands.length; i += 2)
 		{
 			String command = String.format("%-22s", commands[i]);
@@ -1195,53 +1744,68 @@ public class CLI
 
 		writer.println(new AttributedString("=".repeat(MAX_WIDTH), BOLD_MAGENTA_STYLE).toAnsi(terminal));
 		writer.flush();
+
+		logger.logTrace("usage: Completed usage display procedure successfully");
 	}
 
-	private void quit()
+	private synchronized void quit()
 	{
+		logger.logTrace("quit: Starting quit procedure");
 		printTitleSeparator("Terminating", BOLD_BLUE_STYLE);
-		running = false;
+
+		closeResources();
+		logger.logTrace("quit: Completed quit procedure successfully");
 	}
 
-	private boolean checkInternetConnection()
+	private synchronized boolean checkInternetConnection()
 	{
+		logger.logTrace("checkInternetConnection: Starting internet connection check");
 		printTitleSeparator("Checking internet connection", BOLD_BLUE_STYLE);
+
 		try
 		{
+			logger.logTrace("checkInternetConnection: Trying to reach google.com");
 			InetAddress.getByName("google.com").isReachable(1000);
 			printTitleSeparator("Success", BOLD_GREEN_STYLE);
+
+			logger.logTrace("checkInternetConnection: Successfully reached google.com");
 			return true;
 
 		}
 		catch(Exception e)
 		{
+			logger.logTrace("checkInternetConnection: Failed to reach google.com, trying cloudflare.com");
+
 			try
 			{
 				InetAddress.getByName("cloudflare.com").isReachable(1000);
 				printTitleSeparator("Success", BOLD_GREEN_STYLE);
+
+				logger.logTrace("checkInternetConnection: Successfully reached cloudflare.com");
 				return true;
 			}
 			catch (Exception ex)
 			{
 				printTitleSeparator("Failed", BOLD_RED_STYLE);
+				logger.logError("checkInternetConnection: Failed to establish internet connection", ex);
 				return false;
 			}
 		}
 	}
 
-	private void print(String text)
+	private synchronized void print(String text)
 	{
 		terminal.writer().print(text);
 		terminal.flush();
 	}
 
-	private void prinln(String text)
+	private synchronized void prinln(String text)
 	{
 		terminal.writer().println(text);
 		terminal.flush();
 	}
 
-	private void printMagenta(String text, boolean bold)
+	private synchronized void printMagenta(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_MAGENTA_STYLE).toAnsi(terminal));
@@ -1251,7 +1815,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void printGreen(String text, boolean bold)
+	private synchronized void printGreen(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_GREEN_STYLE).toAnsi(terminal));
@@ -1261,7 +1825,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void printWhite(String text, boolean bold)
+	private synchronized void printWhite(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_WHITE_STYLE).toAnsi(terminal));
@@ -1271,7 +1835,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void printYellow(String text, boolean bold)
+	private synchronized void printYellow(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_YELLOW_STYLE).toAnsi(terminal));
@@ -1281,7 +1845,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void printRed(String text, boolean bold)
+	private synchronized void printRed(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_RED_STYLE).toAnsi(terminal));
@@ -1290,7 +1854,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private void printBlue(String text, boolean bold)
+	private synchronized void printBlue(String text, boolean bold)
 	{
 		if(bold)
 			terminal.writer().println(new AttributedString(text, BOLD_BLUE_STYLE).toAnsi(terminal));
@@ -1300,7 +1864,7 @@ public class CLI
 		terminal.flush();
 	}
 
-	private String read(boolean demangled)
+	private synchronized String read(boolean demangled)
 	{
 		if(demangled)
 			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ").toLowerCase();
@@ -1308,44 +1872,64 @@ public class CLI
 			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ");
 	}
 
-	private String validateInput(String prompt, List<Option> options, boolean skippable) throws IOException
+	private synchronized String validateInput(String prompt, List<Option> options, boolean skippable) throws IOException
 	{
+		logger.logTrace("validateInput: Starting input validation");
+		logger.logDebug("validateInput: Prompt: " + prompt + ", skippable: " + skippable);
+
 		printWhite(prompt, true);
 
 		for(Option option : options)
+		{
+			logger.logDebug("validateInput: Displaying option - " + option.getDisplayName());
 			printWhite(" - " + option.getDisplayName() + ": " + option.getDescription(), true);
+		}
 
 		for(int i = MAX_ATTEMPTS; i > 0; --i)
 		{
+			logger.logTrace("validateInput: Attempt " + (MAX_ATTEMPTS - i + 1) + "/" + MAX_ATTEMPTS);
 			String input = read(true);
 
 			if(input.isEmpty() && skippable)
+			{
+				logger.logTrace("validateInput: Empty input allowed, returning empty string");
 				return "";
+			}
 
 			Optional<Option> matchedOption = options.stream().filter(opt -> opt.matches(input)).findFirst();
 
 			if(matchedOption.isPresent())
+			{
+				logger.logDebug("validateInput: Valid input received: " + input);
 				return matchedOption.get().getMainCommand();
+			}
 
 			if(i > 1)
 			{
 				String validOptions = options.stream().map(opt -> opt.getDisplayName() + " (" + String.join("/", opt.getAlias()) + ")").collect(Collectors.joining(", "));
+
+				logger.logDebug("validateInput: Invalid input: " + input + ", remaining attempts: " + (i - 1));
 				printYellow("Invalid input. Please enter one of: " + validOptions + ". Remaining attempts: " + (i - 1), true);
 			}
 			else
+			{
+				logger.logDebug("validateInput: Maximum attempts reached");
 				printYellow("Maximum attempts reached. Operation cancelled.", true);
+			}
 		}
+
+		logger.logDebug("validateInput: Returning empty string after all attempts");
 
 		return "";
 	}
 
-	private void printSeparator(AttributedStyle style)
+	private synchronized void printSeparator(AttributedStyle style)
 	{
 		terminal.writer().println(new AttributedString("=".repeat(MAX_WIDTH), style).toAnsi(terminal));
 		terminal.flush();
 	}
 
-	private void printTitleSeparator(String title, AttributedStyle style)
+	private synchronized void printTitleSeparator(String title, AttributedStyle style)
 	{
 		int availableSpace = MAX_WIDTH - title.length() - 4;
 
@@ -1358,19 +1942,28 @@ public class CLI
 		terminal.flush();
 	}
 
-	public void closeResources()
+	public synchronized void closeResources()
 	{
+		logger.logTrace("closeResources: Starting resource cleanup");
+
 		if(running)
+		{
+			logger.logDebug("closeResources: Setting running flag to false");
 			running = false;
+		}
 
 		try
 		{
+			logger.logTrace("closeResources: Attempting to close terminal");
 			terminal.close();
+			logger.logTrace("closeResources: Terminal closed successfully");
 		}
 		catch(IOException e)
 		{
+			logger.logError("closeResources: Failed to close terminal", e);
 			printRed("Failed to close terminal: " + e.getMessage(), true);
-			e.printStackTrace();
 		}
+
+		logger.logTrace("closeResources: Resource cleanup completed");
 	}
 }
