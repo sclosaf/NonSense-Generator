@@ -76,12 +76,11 @@ class TestToxicityValidator
 	void setUp()
 	{
 		mockApiClient = mock(GoogleApiClient.class);
-		mockLogger = mock(LoggerManager.class);
 		mockLanguageClient = mock(LanguageServiceClient.class);
 
 		when(mockApiClient.getClient()).thenReturn(mockLanguageClient);
 
-		validator = new ToxicityValidator(mockApiClient, mockLogger);
+		validator = new ToxicityValidator(mockApiClient);
 	}
 
 	private ModerateTextResponse mockResponse(Map<String, Float> scores)

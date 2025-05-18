@@ -19,6 +19,7 @@ import com.google.cloud.language.v1.AnalyzeSentimentResponse;
 import com.google.cloud.language.v1.LanguageServiceClient;
 
 import unipd.nonsense.util.GoogleApiClient;
+import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.model.SyntaxToken;
 
@@ -40,31 +41,41 @@ public class SentenceAnalyzer implements AutoCloseable
 {
 	private final LanguageServiceClient languageClient;
 	private final ExecutorService executor = Executors.newCachedThreadPool();
+	private final LoggerManager logger = new LoggerManager(SentenceAnalyzer.class);
 	private static final String credentialsPath = "/credentials.json";
+
 
 	public SentenceAnalyzer()
 	{
+		logger.logTrace("Starting initialization");
+
 		try
 		{
+			logger.logTrace("Creating GoogleApiClient");
 			GoogleApiClient manager = new GoogleApiClient(credentialsPath);
 			this.languageClient = manager.getClient();
+			logger.logTrace("Successfully initialized language client");
 		}
 		catch (Exception e)
 		{
+			logger.logError("Failed to initialize", e);
 			throw new FailedClientInitializationException();
 		}
 	}
 
 	public CompletableFuture<String> analyzeSyntaxAsync(String text)
 	{
+		logger.logTrace("analyzeSyntaxAsync: Starting async syntax analysis");
 		return CompletableFuture.supplyAsync(() ->
 			{
 				try
 				{
+					logger.logTrace("analyzeSyntaxAsync: Processing syntax analysis");
 					return analyzeSyntax(text);
 				}
 				catch(IOException e)
 				{
+					logger.logError("analyzeSyntaxAsync: Error during syntax analysis", e);
 					throw new FailedAnalysisException();
 				}
 			}, executor);
@@ -72,14 +83,19 @@ public class SentenceAnalyzer implements AutoCloseable
 
 	private String analyzeSyntax(String text) throws IOException
 	{
+		logger.logTrace("analyzeSyntax: Starting syntax analysis");
 		validateInput(text);
-		Document doc = Document.newBuilder().setContent(text).setType(Document.Type.PLAIN_TEXT).build();
+		Document doc = buildDocument(text);
+
+		logger.logDebug("analyzeSyntax: Analyzing text with length: " + text.length());
 
 		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
 
 		StringBuilder report = new StringBuilder();
 		int tokenIndex = 1;
+
+		logger.logDebug("analyzeSyntax: Processing " + response.getTokensList().size() + " tokens");
 
 		for(Token token : response.getTokensList())
 		{
@@ -111,6 +127,7 @@ public class SentenceAnalyzer implements AutoCloseable
 			report.append("\n");
 		}
 
+		logger.logTrace("analyzeSyntax: Completed syntax analysis");
 		return report.toString().trim();
 	}
 
@@ -122,14 +139,18 @@ public class SentenceAnalyzer implements AutoCloseable
 
 	public CompletableFuture<String> analyzeSentimentAsync(String text)
 	{
+		logger.logTrace("analyzeSentimentAsync: Starting async sentiment analysis");
+
 		return CompletableFuture.supplyAsync(() ->
 			{
 				try
 				{
+					logger.logTrace("analyzeSentimentAsync: Processing sentiment analysis");
 					return analyzeSentiment(text);
 				}
 				catch(IOException e)
 				{
+					logger.logError("analyzeSentimentAsync: Error during sentiment analysis", e);
 					throw new FailedAnalysisException();
 				}
 			}, executor);
@@ -137,32 +158,40 @@ public class SentenceAnalyzer implements AutoCloseable
 
 	private String analyzeSentiment(String text) throws IOException
 	{
+		logger.logTrace("analyzeSentiment: Starting sentiment analysis");
 		validateInput(text);
 		Document doc = buildDocument(text);
+
+		logger.logDebug("analyzeSentiment: Analyzing sentiment for text with length: " + text.length());
+
 		AnalyzeSentimentResponse response = languageClient.analyzeSentiment(doc);
 		Sentiment sentiment = response.getDocumentSentiment();
 
 		if (sentiment == null)
+		{
+			logger.logWarn("analyzeSentiment: No sentiment detected for text");
 			return "No sentiment detected.";
+		}
 
-		return String.format
-			(
-				"Sentiment Score: %.2f (Magnitude: %.2f)",
-				sentiment.getScore(),
-				sentiment.getMagnitude()
-			);
+		logger.logDebug("analyzeSentiment: Detected sentiment score: " + sentiment.getScore() + ", magnitude: " + sentiment.getMagnitude());
+
+		return String.format("Sentiment Score: %.2f (Magnitude: %.2f)", sentiment.getScore(), sentiment.getMagnitude());
 	}
 
 	public CompletableFuture<String> analyzeEntitiesAsync(String text)
 	{
+		logger.logTrace("analyzeEntitiesAsync: Starting async entities analysis");
+
 		return CompletableFuture.supplyAsync(() ->
 			{
 				try
 				{
+					logger.logTrace("analyzeEntitiesAsync: Processing entities analysis");
 					return analyzeEntities(text);
 				}
 				catch(IOException e)
 				{
+					logger.logError("analyzeEntitiesAsync: Error during entities analysis", e);
 					throw new FailedAnalysisException();
 				}
 			}, executor);
@@ -170,8 +199,12 @@ public class SentenceAnalyzer implements AutoCloseable
 
 	private String analyzeEntities(String text) throws IOException
 	{
+		logger.logTrace("analyzeEntities: Starting entities analysis");
 		validateInput(text);
 		Document doc = buildDocument(text);
+
+		logger.logDebug("analyzeEntities: Analyzing entities for text with length: " + text.length());
+
 		AnalyzeEntitiesRequest request = AnalyzeEntitiesRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 		AnalyzeEntitiesResponse response = languageClient.analyzeEntities(request);
 
@@ -179,14 +212,19 @@ public class SentenceAnalyzer implements AutoCloseable
 		List<Entity> entities = response.getEntitiesList();
 
 		if(entities.isEmpty())
+		{
+			logger.logWarn("analyzeEntities: No entities detected in text");
 			return "No entities detected.";
+		}
+
+		logger.logDebug("analyzeEntities: Found " + entities.size() + " entities");
 
 		int entityIndex = 1;
 		for(Entity entity : entities)
 		{
 			report.append(String.format
 				(
-				 	"Entity %d: %s (Type: %s, Salience: %.3f)\n",
+					"Entity %d: %s (Type: %s, Salience: %.3f)\n",
 					entityIndex,
 					entity.getName(),
 					entity.getType(),
@@ -218,19 +256,23 @@ public class SentenceAnalyzer implements AutoCloseable
 			report.append("\n");
 		}
 
+		logger.logTrace("analyzeEntities: Completed entities analysis");
 		return report.toString().trim();
 	}
 
 	public CompletableFuture<List<SyntaxToken>> getSyntaxTokensAsync(String text)
 	{
+		logger.logTrace("getSyntaxTokensAsync: Starting async syntax tokens retrieval");
 		return CompletableFuture.supplyAsync(() ->
 			{
 				try
 				{
+					logger.logTrace("getSyntaxTokensAsync: Processing syntax tokens retrieval");
 					return getSyntaxTokens(text);
 				}
 				catch(IOException e)
 				{
+					logger.logError("getSyntaxTokensAsync: Error during syntax tokens retrieval", e);
 					throw new FailedAnalysisException();
 				}
 			}, executor);
@@ -238,12 +280,17 @@ public class SentenceAnalyzer implements AutoCloseable
 
 	private List<SyntaxToken> getSyntaxTokens(String text) throws IOException
 	{
+		logger.logTrace("getSyntaxTokens: Starting syntax tokens extraction");
 		validateInput(text);
 		Document doc = buildDocument(text);
+
+		logger.logDebug("getSyntaxTokens: Extracting tokens from text with length: " + text.length());
 
 		AnalyzeSyntaxRequest request = AnalyzeSyntaxRequest.newBuilder().setDocument(doc).setEncodingType(EncodingType.UTF16).build();
 
 		AnalyzeSyntaxResponse response = languageClient.analyzeSyntax(request);
+
+		logger.logDebug("getSyntaxTokens: Converting " + response.getTokensList().size() + " tokens to SyntaxToken objects");
 
 		List<SyntaxToken> tokens = new ArrayList<>();
 		for (Token googleToken : response.getTokensList())
@@ -259,40 +306,60 @@ public class SentenceAnalyzer implements AutoCloseable
 				 );
 			tokens.add(token);
 		}
+
+		logger.logTrace("getSyntaxTokens: Completed tokens extraction");
 		return tokens;
 	}
 
 	private void validateInput(String text)
 	{
+		logger.logTrace("validateInput: Validating input text");
+
 		if(text == null)
+		{
+			logger.logError("validateInput: Text is null");
 			throw new InvalidTextException("Input text cannot be null");
+		}
 
 		if(text.trim().isEmpty())
+		{
+			logger.logError("validateInput: Text is empty or whitespace-only");
 			throw new InvalidTextException("Input text cannot be empty or whitespace-only");
+		}
 
 		if(text.length() > 1000)
+		{
+			logger.logError("validateInput: Text length " + text.length() + " exceeds maximum");
 			throw new InvalidTextException("Input text exceeds maximum length (1,000 characters)");
+		}
 	}
 
 	private Document buildDocument(String text)
 	{
+		logger.logTrace("buildDocument: Building document for analysis");
 		return Document.newBuilder().setContent(text).setType(Type.PLAIN_TEXT).build();
 	}
 
 	@Override
 	public void close()
 	{
+		logger.logTrace("close: Closing SentenceAnalyzer resources");
 		try
 		{
 			if(languageClient != null)
+			{
+				logger.logTrace("close: Closing language client");
 				languageClient.close();
+			}
 		}
 		catch(Exception e)
 		{
+			logger.logError("close: Error while closing resources", e);
 			throw e;
 		}
 		finally
 		{
+			logger.logTrace("close: Shutting down executor");
 			executor.shutdownNow();
 		}
 	}

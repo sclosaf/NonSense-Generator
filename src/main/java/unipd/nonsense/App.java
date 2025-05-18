@@ -20,7 +20,6 @@ public class App
 			while(cli.inputCatcher());
 
 			cli.closeResources();
-			logger.logInfo("Application shutdown completed successfully");
 		}
 		catch(Exception e)
 		{
@@ -29,6 +28,7 @@ public class App
 		}
 		finally
 		{
+			logger.logInfo("Application shutdown completed successfully");
 			System.exit(0);
 		}
 	}

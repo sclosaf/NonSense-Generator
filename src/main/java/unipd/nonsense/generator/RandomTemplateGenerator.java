@@ -32,25 +32,34 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	public RandomTemplateGenerator() throws IOException
 	{
+		logger.logTrace("Starting initialization");
+
 		this.templates = new HashMap<>();
 		this.random = new Random();
 
 		try
 		{
+			logger.logTrace("Loading templates from file");
 			loadTemplates();
 			JsonUpdater.addObserver(this);
+			logger.logTrace("Successfully initialized");
 
 		}
 		catch(IOException e)
 		{
-			logger.logError("Failed to initialize RandomTemplateGenerator", e);
+			logger.logError("Failed to initialize", e);
+			throw e;
 		}
 	}
 
 	private void loadTemplates() throws IOException
 	{
+		logger.logTrace("loadTemplates: Starting to load templates");
+
 		for(String key : keys)
 		{
+			logger.logDebug("loadTemplates: Processing key: " + key);
+
 			TemplateType type;
 
 			if(key.equals(keys.get(0)))
@@ -62,8 +71,9 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
 
-			if(jsonList != null)
+			if(jsonList != null && !jsonList.isEmpty())
 			{
+				logger.logDebug("loadTemplates: Found " + jsonList.size() + " templates for key: " + key);
 				List<Template> templateList = jsonList.stream().map(template -> new Template(template, type)).collect(Collectors.toList());
 
 				templates.put(type, templateList);
@@ -71,23 +81,33 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 			else
 				logger.logWarn("loadTemplates: No templates found for key: " + key);
 		}
+
+		logger.logTrace("loadTemplates: Completed loading templates");
 	}
 
 	public Template getRandomTemplate()
 	{
+		logger.logTrace("getRandomTemplate: Starting to get random template");
+
 		TemplateType[] types = TemplateType.values();
 		TemplateType randomType = types[random.nextInt(types.length)];
 
-		return getRandomTemplate(randomType);
+		logger.logDebug("getRandomTemplate: Selected template type: " + randomType);
+
+		Template result = getRandomTemplate(randomType);
+
+		logger.logTrace("getRandomTemplate: Completed getting random template");
+		return result;
 	}
 
 	public Template getRandomTemplate(TemplateType type)
 	{
+		logger.logDebug("getRandomTemplate: Starting to get random template for type: " + type);
 		List<Template> templateList = templates.get(type);
 
 		if(templateList == null || templateList.isEmpty())
 		{
-			logger.logError("getRandomTemplate: No " + type + " templates available");
+			logger.logError("getRandomTemplate: No templates available for type: " + type);
 			throw new InvalidListException();
 		}
 
@@ -95,25 +115,34 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 		Template selected = templateList.get(randomIndex);
 
+		logger.logDebug("getRandomTemplate: Selected template: " + selected.getPattern());
+		logger.logTrace("getRandomTemplate: Completed getting random template");
+
 		return selected;
 	}
 
 	public void cleanup()
 	{
+		logger.logTrace("cleanup: Starting cleanup");
 		JsonUpdater.removeObserver(this);
+		logger.logTrace("cleanup: Completed cleanup");
 	}
 
 	@Override
 	public void onJsonUpdate() throws IOException
 	{
+		logger.logTrace("onJsonUpdate: Starting JSON update handling");
+
 		try
 		{
+			logger.logTrace("onJsonUpdate: Reloading templates");
 			loadTemplates();
+			logger.logTrace("onJsonUpdate: Successfully reloaded templates");
 		}
-		catch (IOException e)
+		catch(IOException e)
 		{
 			logger.logError("onJsonUpdate: Failed to reload templates", e);
 			throw e;
-        }
+		}
 	}
 }
