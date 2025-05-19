@@ -1,6 +1,6 @@
 package unipd.nonsense.model;
 
-import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import unipd.nonsense.util.LoggerManager;
 
@@ -34,7 +34,7 @@ public class Template
 		if(pattern == null || pattern.isEmpty())
 		{
 			logger.logError("Invalid pattern provided");
-			throw new InvalidGrammaticalElementException();
+			throw new InvalidTemplateException();
 		}
 
 		this.pattern = pattern;
