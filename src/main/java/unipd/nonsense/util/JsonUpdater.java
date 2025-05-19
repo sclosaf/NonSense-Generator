@@ -78,6 +78,10 @@ public class JsonUpdater
 
 	public static void loadNoun(String noun, Number num) throws IOException
 	{
+		if(num == null)
+			throw new InvalidNumberException();
+
+
 		logger.logDebug("loadNoun: Loading noun: " + noun + " with number: " + num);
 		String key;
 
@@ -106,6 +110,9 @@ public class JsonUpdater
 
 	public static void loadVerb(String verb, Tense tense) throws IOException
 	{
+		if(tense == null)
+			throw new InvalidTenseException();
+
 		logger.logDebug("loadVerb: Loading verb: " + verb + " with tense: " + tense);
 		String key;
 
@@ -153,6 +160,9 @@ public class JsonUpdater
 
 	public static void loadTemplate(String template, TemplateType type) throws IOException
 	{
+		if(type == null)
+			throw new InvalidTemplateTypeException();
+
 		logger.logDebug("loadTemplate: Loading template: " + template + " with type: " + type);
 		String key;
 
