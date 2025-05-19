@@ -69,7 +69,15 @@ public class SentenceGenerator implements AutoCloseable
 
 		Template result = generateSentenceWithTenseAndNumber(randomTense, randomNumber);
 		logger.logTrace("generateRandomSentence: Completed sentence generation");
-		return result;
+		return new Template(capitalizeFirstLetter(result.getPattern()),result.getType());
+	}
+
+	private String capitalizeFirstLetter(String sentence)
+	{
+		if(sentence == null || sentence.isEmpty())
+			return sentence;
+
+		return sentence.substring(0, 1).toUpperCase() + sentence.substring(1);
 	}
 
 	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
@@ -234,7 +242,7 @@ public class SentenceGenerator implements AutoCloseable
 	{
 		logger.logTrace("generateSentenceFromTemplate: Starting generation from template");
 
-		if(template == null || template.getPattern().isEmpty())
+		if(template == null || template.getPattern() == null || template.getPattern().isEmpty())
 		{
 			logger.logError("generateSentenceFromTemplate: Invalid template provided");
 			throw new InvalidTemplateException();

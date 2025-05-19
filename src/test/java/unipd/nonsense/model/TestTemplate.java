@@ -1,7 +1,7 @@
 package unipd.nonsense.model;
 
 import org.junit.jupiter.api.*;
-import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -29,7 +29,7 @@ class TestTemplate
 	@DisplayName("Test empty pattern throws exception")
 	void testEmptyPattern()
 	{
-		assertThrows(InvalidGrammaticalElementException.class,
+		assertThrows(InvalidTemplateException.class,
 			() -> new Template("", Template.TemplateType.PLURAL));
 	}
 
