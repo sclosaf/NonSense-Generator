@@ -39,6 +39,7 @@ import java.util.concurrent.Executors;
 
 public class SentenceAnalyzer implements AutoCloseable
 {
+	private final GoogleApiClient apiClient;
 	private final LanguageServiceClient languageClient;
 	private final ExecutorService executor = Executors.newCachedThreadPool();
 	private final LoggerManager logger = new LoggerManager(SentenceAnalyzer.class);
@@ -53,6 +54,7 @@ public class SentenceAnalyzer implements AutoCloseable
 		{
 			logger.logTrace("Creating GoogleApiClient");
 			GoogleApiClient manager = new GoogleApiClient(credentialsPath);
+			this.apiClient = manager;
 			this.languageClient = manager.getClient();
 			logger.logTrace("Successfully initialized language client");
 		}
@@ -62,6 +64,12 @@ public class SentenceAnalyzer implements AutoCloseable
 			throw new FailedClientInitializationException();
 		}
 	}
+
+	public SentenceAnalyzer(GoogleApiClient apiClient, LanguageServiceClient languageClient) 
+	{
+        this.apiClient = apiClient;
+        this.languageClient = languageClient;
+    }
 
 	public CompletableFuture<String> analyzeSyntaxAsync(String text)
 	{

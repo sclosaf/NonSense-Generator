@@ -1,0 +1,63 @@
+{
+  "syntaxText": "You can swim in the sea.",
+  "sentimentText": "I love those puppies!",
+  "entitiesText": "Steve Jobs was the founder of Apple.",
+  "expectedTokens": [
+    {
+      "content": "You",
+      "beginOffset": 0,
+      "lemma": "you",
+      "pos": "PRON",
+      "headTokenIndex": 2,
+      "label": "NSUBJ"
+    },
+    {
+      "content": "can",
+      "beginOffset": 4,
+      "lemma": "can",
+      "pos": "VERB",
+      "headTokenIndex": 2,
+      "label": "AUX"
+    },
+    {
+      "content": "swim",
+      "beginOffset": 8,
+      "lemma": "swim",
+      "pos": "VERB",
+      "headTokenIndex": 2,
+      "label": "ROOT"
+    },
+    {
+      "content": "in",
+      "beginOffset": 13,
+      "lemma": "in",
+      "pos": "ADP",
+      "headTokenIndex": 2,
+      "label": "PREP"
+    },
+    {
+      "content": "the",
+      "beginOffset": 16,
+      "lemma": "the",
+      "pos": "DET",
+      "headTokenIndex": 5,
+      "label": "DET"
+    },
+    {
+      "content": "sea",
+      "beginOffset": 20,
+      "lemma": "sea",
+      "pos": "NOUN",
+      "headTokenIndex": 3,
+      "label": "POBJ"
+    },
+    {
+      "content": ".",
+      "beginOffset": 23,
+      "lemma": ".",
+      "pos": "PUNCT",
+      "headTokenIndex": 2,
+      "label": "P"
+    }
+  ]
+}
