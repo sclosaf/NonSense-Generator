@@ -3,6 +3,8 @@ package unipd.nonsense.generator;
 import java.util.List;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Set;
+import java.util.HashSet;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Stack;
@@ -78,7 +80,7 @@ public class SyntaxTreeBuilder
 				{
 					if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
 					{
-						int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+						int newHead = findAppropriateHeadForPunctuation(punctIndex, rootIndex, tokens);
 
 						logger.logDebug("getSyntaxTree: Reattached punctuation at index " + punctIndex + " to new head at index " + newHead);
 
@@ -114,7 +116,7 @@ public class SyntaxTreeBuilder
 					{
 						if(!isConnectedToTree(punctIndex, rootIndex, dependencyMap))
 						{
-							int newHead = findAppropriateHeadForPunctuation(punctIndex, tokens);
+							int newHead = findAppropriateHeadForPunctuation(punctIndex, rootIndex, tokens);
 
 							logger.logDebug("getSyntaxTree: Reattached punctuation at index " + punctIndex + " to new head at index " + newHead + " for sentence " + (i + 1));
 
@@ -167,7 +169,7 @@ public class SyntaxTreeBuilder
 			{
 				int headIdx = token.getHeadTokenIndex();
 
-				if(headIdx == -1)
+				if(headIdx == -1 && !token.getPosTag().equals("PUNCT"))
 				{
 					logger.logDebug("findRootTokens: Found root token with index -1: " + token.getText());
 					rootTokens.add(token);
@@ -183,7 +185,7 @@ public class SyntaxTreeBuilder
 			{
 				int headIdx = token.getHeadTokenIndex();
 
-				if(headIdx >= tokens.size() || headIdx < -1)
+				if((headIdx >= tokens.size() || headIdx < -1) && !token.getPosTag().equals("PUNCT"))
 				{
 					logger.logDebug("findRootTokens: Found invalid head index " + headIdx + " for token: " + token.getText());
 					rootTokens.add(token);
@@ -233,38 +235,62 @@ public class SyntaxTreeBuilder
 	{
 		logger.logDebug("isConnectedToTree: Checking if token " + tokenIndex + " is connected to root " + rootIndex);
 
-		if(dependencyMap.containsKey(rootIndex) && dependencyMap.get(rootIndex).contains(tokenIndex))
+
+		if(dependencyMap.getOrDefault(rootIndex, Collections.emptyList()).contains(tokenIndex))
 		{
 			logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is directly connected to root");
 			return true;
 		}
 
-		for(Map.Entry<Integer, List<Integer>> entry : dependencyMap.entrySet())
+		Deque<Integer> queue = new ArrayDeque<>();
+		queue.add(rootIndex);
+		Set<Integer> visited = new HashSet<>();
+		visited.add(rootIndex);
+
+		while(!queue.isEmpty())
 		{
-			if(entry.getValue().contains(tokenIndex))
+			int current = queue.poll();
+			for(int child : dependencyMap.getOrDefault(current, Collections.emptyList()))
 			{
-				logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is connected via head " + entry.getKey());
-				return true;
+				if(child == tokenIndex)
+				{
+					logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is connected via path through " + current);
+					return true;
+				}
+
+				if(!visited.contains(child))
+				{
+					visited.add(child);
+					queue.add(child);
+				}
 			}
 		}
 
 		logger.logDebug("isConnectedToTree: Token " + tokenIndex + " is not connected to the tree");
-
 		return false;
 	}
 
-	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, List<T> tokens)
+	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, int rootIndex, List<T> tokens)
 	{
 		logger.logDebug("findAppropriateHeadForPunctuation: Finding head for punctuation at index " + punctIndex);
 
-		if(punctIndex > 0)
+		if(punctIndex == 0 || tokens.get(punctIndex).getHeadTokenIndex() == -1)
 		{
-			logger.logDebug("findAppropriateHeadForPunctuation: Using previous token at index " + (punctIndex - 1) + " as head");
-			return punctIndex - 1;
+			logger.logDebug("findAppropriateHeadForPunctuation: Punctuation at start or with invalid head, attaching to root at index " + rootIndex);
+			return rootIndex;
 		}
 
-		logger.logDebug("findAppropriateHeadForPunctuation: No previous token available, using -1 as head");
-		return -1;
+		for(int i = punctIndex - 1; i >= 0; i--)
+		{
+			if(!tokens.get(i).getPosTag().equals("PUNCT"))
+			{
+				logger.logDebug("findAppropriateHeadForPunctuation: Using nearest non-punctuation token at index " + i + " as head");
+				return i;
+			}
+		}
+
+		logger.logDebug("findAppropriateHeadForPunctuation: No appropriate non-punctuation head found, using root as head");
+		return rootIndex;
 	}
 
 	private static <T extends SyntaxToken> Map<Integer, List<Integer>> buildDependencyMap(List<T> tokens)
