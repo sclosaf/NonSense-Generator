@@ -1,13 +1,12 @@
-
 {
-    "singularTemplates": [
-        "Test singular template [noun]",
-        "This is a [noun] template",
-        "A [noun] for testing"
-    ],
-    "pluralTemplates": [
-        "Test plural templates [noun]",
-        "These are [noun] templates",
-        "Many [noun] for testing"
-    ]
+  "singularTemplates": [
+    "Test singular template [noun]",
+    "This is a [noun] template",
+    "A [noun] for testing"
+  ],
+  "pluralTemplates": [
+    "Test plural templates [noun]",
+    "These are [noun] templates",
+    "Many [noun] for testing"
+  ]
 }

@@ -26,7 +26,7 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private static String templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+	private static String templatesPath;
 	private final static List<String> keys = List.of("singularTemplates", "pluralTemplates");
 	private LoggerManager logger = new LoggerManager(RandomTemplateGenerator.class);
 
@@ -36,6 +36,30 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 
 		this.templates = new HashMap<>();
 		this.random = new Random();
+		this.templatesPath = "target" + File.separator + "resources" + File.separator + "templates.json";
+
+		try
+		{
+			logger.logTrace("Loading templates from file");
+			loadTemplates();
+			JsonUpdater.addObserver(this);
+			logger.logTrace("Successfully initialized");
+
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize", e);
+			throw e;
+		}
+	}
+
+	public RandomTemplateGenerator(String filePath) throws IOException
+	{
+		logger.logTrace("Starting initialization");
+
+		this.templates = new HashMap<>();
+		this.random = new Random();
+		this.templatesPath = filePath;
 
 		try
 		{

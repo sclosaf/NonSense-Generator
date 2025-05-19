@@ -198,7 +198,7 @@
 				<executions>
 					<execution>
 						<id>copy-resources-files</id>
-						<phase>prepare-package</phase>
+						<phase>process-resources</phase>
 						<goals>
 							<goal>copy-resources</goal>
 						</goals>
@@ -207,6 +207,22 @@
 							<resources>
 								<resource>
 									<directory>${project.basedir}/src/main/resources</directory>
+									<filtering>true</filtering>
+								</resource>
+							</resources>
+						</configuration>
+					</execution>
+					<execution>
+						<id>copy-test-resources-files</id>
+						<phase>process-test-resources</phase>
+						<goals>
+							<goal>copy-resources</goal>
+						</goals>
+						<configuration>
+							<outputDirectory>${project.build.directory}/resources</outputDirectory>
+							<resources>
+								<resource>
+									<directory>${project.basedir}/src/test/resources</directory>
 									<filtering>true</filtering>
 								</resource>
 							</resources>
