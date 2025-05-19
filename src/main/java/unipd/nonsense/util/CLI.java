@@ -130,8 +130,8 @@ public class CLI
 	private static final List<Option> ELEMENT_OPTIONS = Arrays.asList
 		(
 			new Option("noun", "Enter a noun", "n"),
-			new Option("adjective", "Enter a new adjective", "a"),
-			new Option("verb", "Enter a new verb", "v")
+			new Option("adjective", "Enter an adjective", "a"),
+			new Option("verb", "Enter a verb", "v")
 		);
 
 	private static final List<Option> GENERATION_MODE_OPTIONS = Arrays.asList
@@ -178,7 +178,7 @@ public class CLI
 	private final Map<String, GenerateOptions> generateOptions = new HashMap<>();
 	private final Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 
-	private static final int HISTORY_SIZE = 20;
+	private static final int HISTORY_SIZE = 10;
 	private static final int MAX_ATTEMPTS = 4;
 	private static final int MAX_WIDTH = 106;
 
@@ -266,12 +266,12 @@ public class CLI
 			commands.put("e", Command.EXTEND);
 			commands.put("set tolerance", Command.SETTOLERANCE);
 			commands.put("st", Command.SETTOLERANCE);
+			commands.put("help", Command.HELP);
+			commands.put("h", Command.HELP);
 			commands.put("info", Command.INFO);
 			commands.put("i", Command.INFO);
 			commands.put("verbose", Command.VERBOSE);
 			commands.put("v", Command.VERBOSE);
-			commands.put("help", Command.HELP);
-			commands.put("h", Command.HELP);
 			commands.put("clear", Command.CLEAR);
 			commands.put("c", Command.CLEAR);
 			commands.put("quit", Command.QUIT);
@@ -459,10 +459,10 @@ public class CLI
 			case TREE: treeHandler(); break;
 			case EXTEND: extendHandler(); break;
 			case SETTOLERANCE: setToleranceHandler(); break;
+			case HELP: usage(terminal.writer()); break;
 			case INFO: extendedUsage(); break;
 			case VERBOSE: verboseHandler(); break;
 			case CLEAR: clearTerminal(); break;
-			case HELP: usage(terminal.writer()); break;
 			case QUIT: quit(); break;
 		}
 
@@ -1573,85 +1573,96 @@ public class CLI
 		{
 			{
 				"Default (d)",
-					"Performs both procedures of generation and analysis in one step.\n" +
-					"This is a default combination of commands, for a more specific settings\n" +
-					"use the other commands."
+					"Performs a basic but complete procedure of the functionalities offered,\n" +
+					"this procedure offers the possibility to generate and/or analyze a sentence,\n" +
+					"ending with printig the syntactic tree of the sentence.\n" +
+					"This is a default combination of commands, for a more specific combination\n" +
+					"use 'personalized', instead the rest is for singular the available functionalities."
 			},
 
 			{
 				"Personalized (p)",
-					"Performs the whole process, but every part of it is personalizable\n" +
-					"acordingly to the user choice."
+					"Performs, in a specific order, all the functionalities offered by the programm.\n" +
+					"In each step are available a full combination and personalization of the commands,\n" +
+					"the user can choose each modality and functionality for that process."
 			},
 
 			{
 				"Generate (g)",
-					"Generates a random nonsense sentence.\n" +
-					"The sentece even if it has grammatical sense,\n" +
-					"it's missing all the logical sense.\n" +
-					"The sentence is printed and buffered."
+					"Generates a random nonsense sentence, based on a various pool of\n" +
+					"templates, noun, adjectives and verbs, which are randomly combined.\n" +
+					"The sentece, even if it's grammatically correct,\n" +
+					"it's totally lacking logical sense, indeed the combination is totally random.\n" +
+					"The sentence is printed and cached, for successive analysis,\n" +
+					"only the latest sentence is cached, the previous is overwritten,\n"+
+					"the program begins without any cached sentence."
 			},
 
 			{
 				"Analyze (a)",
-					"Validates the buffered sentence structure and syntax.\n" +
-					"Via different settings can be analyzed accordingly to its:\n" +
-					"'toxicity', 'sentiment' or 'syntax'.\n" +
-					"If no sentence is buffered, no analysis is performed."
+					"Proceeds offering several analysis procedures, which can be used,\n" +
+					"but most importantly it offers various combinations,\n" +
+					"indeed the analysis can be chosen by the user, randomly, costumized or all together.\n" +
+					"The kind of analysis offered are aimed to the syntax, the sentiment, the toxicity or the entity,\n" +
+					"that are contained into the sentence."
 			},
 
 			{
 				"Tree (t)",
-					"Prints the syntactic tree of the buffered sentence.\n" +
-					"Shows the hierarchical structure of the sentence\n" +
-					"components for better understanding.\n" +
-					"If no sentence is buffered, no analysis is performed.\n" +
-					"This function requires to analyze the sentence."
+					"Proceeds to print the syntactic tree of the chosen sentence.\n" +
+					"Shows the hierarchical structure of the sentence and the relationship among the components\n" +
+					"This functionality support even the analysis of more than one sentence.\n" +
+					"This function requires to execute the syntax analysis of the sentence in background.\n" +
+					"Its implicit that this process requires that the sentence has at least grammatical correctness."
 			},
 
 			{
 				"Extend (e)",
-					"Gives the opportunity to the user to input a Noun, an Adjective or a Verb\n" +
-					"to the data dictionaries used by the program."
+					"Proceeds to let the user extend the dictionaries used by the program to generate the sentence\n" +
+					"in particular the user can input nouns, adjectives or verbs, at his choice.\n" +
+					"This update is applyed immediatly to the program, but doesn't last among different sessions."
 			},
 
 			{
 				"Set tolerance (st)",
-					"Changes the tolerance level for the analysis.\n" +
-					"Default 0.7 for toxicity (ranges from 0.0 to 1.0),\n" +
-					"  Defines the level over which a text is considered offensive.\n"
+					"Allows the user to change the tollerance used by the program to consider an analyzed sentence\n" +
+					"via toxicity analysis, indeed toxic, setting the upper bound,\n" +
+					"over which a sentence is considered toxic by the program.\n" +
+					"The default value is setted to 0.7 (it ranges from 0.0 to 1.0, inclusive)"
+			},
+
+			{
+				"Help (h)",
+					"Displays basic help information, for commands and their purpose."
 			},
 
 			{
 				"Info (i)",
-					"Shows detailed information about commands.\n" +
-					"Provides extended help for each available command (even hidden ones)."
+					"Shows detailed information about commands, and their shortcuts.\n" +
+					"Provides extended help for each available command (even hidden ones).\n" +
+					"Each command is explained in detail each fuction use and purpose."
 			},
 
 			{
 				"Verbose (v)",
-					"Toggles verbose output mode.\n" +
-					"When enabled, provides more detailed feedback\n" +
-					"during command execution (for debugging).\n" +
-					"Default is off."
+					"Hidden command that toggles verbose output mode, when enabled, provides a more detailed feedback.\n" +
+					"abount the background activity performed by the program.\n" +
+					"Used for debugging purposes, it not recommended to use for a basic user experience,\n" +
+					"it can cause much 'noise' on the terminal. The default setting for this function is off."
 			},
 
 			{
 				"Clear (c)",
 					"Clears the terminal screen.\n" +
-					"Resets the display and shows the initial menu."
-			},
-
-			{
-				"Help (h)",
-					"Displays basic help information."
+					"Resets the display and shows the title and the initial menu.\n" +
+					"Helpful when there is too much output on the terminal."
 			},
 
 			{
 				"Quit (q)",
 					"Exits the program.\n" +
 					"Terminates the application safely."
-			},
+			}
 		};
 
 		logger.logDebug("extendedUsage: Displaying information for " + commandsInfo.length + " commands");
@@ -1717,15 +1728,15 @@ public class CLI
 		String[] commands =
 		{
 			"Default", "Performs a basic combination of generation and analysis",
-			"Personalized", "Performs the full process, with each step personalizable",
+			"Personalized", "Performs all the functionalities, with each step personalizable",
 			"Generate", "Generates a random nonsense sentence",
-			"Analyze", "Validates sentence structure and syntax",
-			"Tree", "Prints the syntactic tree",
-			"Extend", "User can insert a noun, adjective or verb to the dicionaries",
-			"Set tolerance", "Change tolerance level for the analysis",
+			"Analyze", "Analyses a sentence via several functions",
+			"Tree", "Prints the syntactic tree of a sentence",
+			"Extend", "Allows insertion of a noun, adjective or verb to the dicionaries",
+			"Set tolerance", "Change tolerance level for toxicity analysis",
+			"Help", "Shows this help menu",
 			"Info", "Shows more detailed infos about the commands",
 			"Clear", "Clears the terminal and shows initial menu",
-			"Help", "Shows this help menu",
 			"Quit", "Exits the program"
 		};
 
