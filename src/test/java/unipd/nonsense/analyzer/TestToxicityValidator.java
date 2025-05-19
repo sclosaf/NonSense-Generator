@@ -10,15 +10,20 @@ import unipd.nonsense.util.JsonFileHandler;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
+import java.io.IOException;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
+import org.mockito.MockedStatic;
 
 @DisplayName("Testing ToxicityValidator")
 class TestToxicityValidator
@@ -416,4 +421,115 @@ class TestToxicityValidator
 
 		assertThrows(RuntimeException.class, tempValidator::close);
 	}
+
+	@Test
+	@DisplayName("Test concurrent toxicity checks with multiple texts")
+	void testConcurrentToxicityChecks() {
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(toxicScores));
+
+		List<String> testTexts = IntStream.range(0, 10)
+			.mapToObj(i -> "Test text " + i)
+			.collect(Collectors.toList());
+
+		List<CompletableFuture<Boolean>> futures = testTexts.stream()
+			.map(validator::isTextToxicAsync)
+			.collect(Collectors.toList());
+
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+			futures.toArray(new CompletableFuture[0])
+		);
+
+		allFutures.join();
+
+		for (CompletableFuture<Boolean> future : futures) {
+			assertTrue(future.isDone(), "Future should be completed");
+			assertDoesNotThrow(() -> future.get(), "Future should complete without exception");
+		}
+	}
+
+	@Test
+	@DisplayName("Test multiple concurrent requests with different methods")
+	void testMultipleConcurrentRequests() {
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(toxicScores));
+
+		CompletableFuture<Boolean> toxicFuture = validator.isTextToxicAsync("Toxic text");
+		CompletableFuture<Map<String, Float>> scoresFuture = validator.getToxicityScoresAsync("Score text");
+		CompletableFuture<String> reportFuture = validator.getToxicityReportAsync("Report text");
+		CompletableFuture<ModerateTextResponse> moderateFuture = validator.moderateTextAsync("Moderate text");
+
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(
+			toxicFuture, scoresFuture, reportFuture, moderateFuture
+		);
+
+		allFutures.join();
+
+		assertTrue(toxicFuture.isDone(), "Toxicity check future should be completed");
+		assertTrue(scoresFuture.isDone(), "Scores future should be completed");
+		assertTrue(reportFuture.isDone(), "Report future should be completed");
+		assertTrue(moderateFuture.isDone(), "Moderate future should be completed");
+	}
+
+	@Test
+	@DisplayName("Test toxicity report formatting with multiple categories")
+	void testToxicityReportFormatting() {
+
+		Map<String, Float> formattedScores = new HashMap<>();
+		formattedScores.put("TOXICITY", 0.7532f);
+		formattedScores.put("PROFANITY", 0.4267f);
+		formattedScores.put("SEXUALLY_EXPLICIT", 0.0123f);
+		
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(formattedScores));
+		
+		String report = validator.getToxicityReportAsync("Test text").join();
+
+		assertNotNull(report, "Report should not be null");
+		assertFalse(report.isEmpty(), "Report should not be empty");
+
+		assertTrue(report.contains("TOXICITY                 : 75.3%"), 
+			"Report should format TOXICITY score correctly");
+		assertTrue(report.contains("PROFANITY                : 42.7%"), 
+			"Report should format PROFANITY score correctly");
+		assertTrue(report.contains("SEXUALLY_EXPLICIT        : 1.2%"), 
+			"Report should format SEXUALLY_EXPLICIT score correctly");
+
+		String[] lines = report.split("\n");
+		for (String line : lines) {
+			if (!line.isEmpty()) {
+				assertTrue(line.contains(": "), "Each line should contain ': ' separator");
+				String[] parts = line.split(":");
+				assertEquals(25, parts[0].length(), "Category column should be 25 characters wide");
+			}
+		}
+	}
+	
+	@Test
+	@DisplayName("Test toxicity report formatting with extreme values")
+	void testToxicityReportFormatting_ExtremeValues() {
+
+		Map<String, Float> extremeScores = new HashMap<>();
+		extremeScores.put("ZERO_SCORE", 0.0f);
+		extremeScores.put("FULL_SCORE", 1.0f);
+		extremeScores.put("TINY_SCORE", 0.001f);
+		extremeScores.put("HIGH_SCORE", 0.999f);
+		
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(extremeScores));
+		
+		String report = validator.getToxicityReportAsync("Test text").join();
+
+		assertTrue(report.contains("ZERO_SCORE               : 0.0%"), 
+			"Report should format zero score correctly");
+		assertTrue(report.contains("FULL_SCORE               : 100.0%"), 
+			"Report should format full score correctly");
+		assertTrue(report.contains("TINY_SCORE               : 0.1%"), 
+			"Report should format tiny score correctly (rounded to 1 decimal)");
+		assertTrue(report.contains("HIGH_SCORE               : 99.9%"), 
+			"Report should format high score correctly (rounded to 1 decimal)");
+	}
+	
 }
