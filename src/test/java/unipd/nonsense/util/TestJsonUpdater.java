@@ -10,8 +10,8 @@ import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.util.List;
 
-@DisplayName("Extended Testing JsonUpdater")
-class TestJsonUpdaterExtended
+@DisplayName("Testing JsonUpdater")
+class TestJsonUpdater
 {
 	private static final String TEST_NOUN = "testNoun";
 	private static final String TEST_VERB = "testVerb";
