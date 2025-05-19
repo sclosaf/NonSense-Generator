@@ -16,6 +16,9 @@ public class LoggerManager
 		this.fileLogger = LogManager.getLogger("FileLogger");
 		this.consoleLogger = LogManager.getLogger("ConsoleLogger");
 
+		Configurator.setLevel("FileLogger", Level.ALL);
+		Configurator.setLevel("ConsoleLogger", Level.FATAL);
+
 		this.logClass = loggingClass.getSimpleName();
 		this.verbose = false;
 	}
@@ -40,7 +43,6 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.trace(msg);
-		consoleLogger.trace(msg);
 	}
 
 	public synchronized void logDebug(String entry)
@@ -48,7 +50,8 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.debug(msg);
-		consoleLogger.debug(msg);
+		if(verbose)
+			consoleLogger.debug(msg);
 	}
 
 	public synchronized void logInfo(String entry)
@@ -56,7 +59,8 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.info(msg);
-		consoleLogger.info(msg);
+		if(verbose)
+			consoleLogger.info(msg);
 	}
 
 	public synchronized void logWarn(String entry)
@@ -64,7 +68,8 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.warn(msg);
-		consoleLogger.warn(msg);
+		if(verbose)
+			consoleLogger.warn(msg);
 	}
 
 	public synchronized void logWarn(String entry, Throwable eccept)
@@ -72,7 +77,8 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.warn(msg, eccept);
-		consoleLogger.warn(msg, eccept);
+		if(verbose)
+			consoleLogger.warn(msg, eccept);
 	}
 
 	public synchronized void logError(String entry)
@@ -80,7 +86,8 @@ public class LoggerManager
 		String msg = "[" +logClass + "] " + entry;
 
 		fileLogger.error(msg);
-		consoleLogger.error(msg);
+		if(verbose)
+			consoleLogger.error(msg);
 	}
 
 	public synchronized void logError(String entry, Throwable eccept)
@@ -88,7 +95,8 @@ public class LoggerManager
 		String msg = "[" + logClass + "] " + entry;
 
 		fileLogger.error(msg, eccept);
-		consoleLogger.error(msg, eccept);
+		if(verbose)
+			consoleLogger.error(msg, eccept);
 	}
 
 	public synchronized void logFatal(String entry)

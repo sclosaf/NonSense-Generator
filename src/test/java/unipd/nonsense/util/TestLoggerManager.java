@@ -14,126 +14,251 @@ import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class TestLoggerManager {
+class TestLoggerManager
+{
+	private LoggerManager loggerManager;
+	private TestAppender testAppender;
 
-    private LoggerManager loggerManager;
-    private TestAppender testAppender;
+	static class TestAppender extends AbstractAppender
+	{
+		private final List<LogEvent> events = new ArrayList<>();
 
-    static class TestAppender extends AbstractAppender {
-        private final List<LogEvent> events = new ArrayList<>();
+		protected TestAppender(String name)
+		{
+			super(name, null, PatternLayout.createDefaultLayout(), false);
+		}
 
-        protected TestAppender(String name) {
-            super(name, null, PatternLayout.createDefaultLayout(), false);
-        }
+		@Override
+		public void append(LogEvent event)
+		{
+			events.add(event.toImmutable());
+		}
 
-        @Override
-        public void append(LogEvent event) {
-            events.add(event.toImmutable());
-        }
+		public List<LogEvent> getEvents()
+		{
+			return events;
+		}
 
-        public List<LogEvent> getEvents() {
-            return events;
-        }
-
-        public void clear() {
-            events.clear();
-        }
-    }
-
-    @BeforeEach
-    void setup() {
-        loggerManager = new LoggerManager(TestLoggerManager.class);
-        LoggerContext context = (LoggerContext) LogManager.getContext(false);
-        var config = context.getConfiguration();
-
-        testAppender = new TestAppender("TestAppender");
-        testAppender.start();
-        config.addAppender(testAppender);
-
-        LoggerConfig consoleConfig = config.getLoggerConfig("ConsoleLogger");
-        consoleConfig.addAppender(testAppender, Level.ALL, null);
-        consoleConfig.setLevel(Level.ALL);
-
-        LoggerConfig fileConfig = config.getLoggerConfig("FileLogger");
-        fileConfig.addAppender(testAppender, Level.ALL, null);
-        fileConfig.setLevel(Level.ALL);
-
-        context.updateLoggers();
-    }
-
-    @AfterEach
-    void tearDown() {
-        LoggerContext context = (LoggerContext) LogManager.getContext(false);
-        var config = context.getConfiguration();
-
-        config.getLoggerConfig("ConsoleLogger").removeAppender("TestAppender");
-        config.getLoggerConfig("FileLogger").removeAppender("TestAppender");
-        config.getAppenders().remove("TestAppender");
-
-        context.updateLoggers();
-        testAppender.stop();
-    }
-
-    @Test
-    void testVerboseModeSwitch() {
-        assertFalse(loggerManager.getVerbose());
-        loggerManager.switchVerboseMode();
-        assertTrue(loggerManager.getVerbose());
-        loggerManager.switchVerboseMode();
-        assertFalse(loggerManager.getVerbose());
-    }
-
-    @Test
-    void testLogLevels() {
-        loggerManager.switchVerboseMode();
-
-        loggerManager.logTrace("Trace log");
-        loggerManager.logDebug("Debug log");
-        loggerManager.logInfo("Info log");
-        loggerManager.logWarn("Warn log");
-        loggerManager.logError("Error log");
-        loggerManager.logFatal("Fatal log");
-
-        List<LogEvent> events = testAppender.getEvents();
-
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.TRACE && e.getMessage().getFormattedMessage().contains("Trace log")));
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.DEBUG && e.getMessage().getFormattedMessage().contains("Debug log")));
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.INFO && e.getMessage().getFormattedMessage().contains("Info log")));
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.WARN && e.getMessage().getFormattedMessage().contains("Warn log")));
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.ERROR && e.getMessage().getFormattedMessage().contains("Error log")));
-        assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.FATAL && e.getMessage().getFormattedMessage().contains("Fatal log")));
-    }
-
-    @Test
-	void testLogWithExceptions() {
-	    RuntimeException ex = new RuntimeException("Simulated exception");
-	    loggerManager.logWarn("Warn with exception", ex);
-	    loggerManager.logError("Error with exception", ex);
-	    loggerManager.logFatal("Fatal with exception", ex);
-
-	    List<LogEvent> events = testAppender.getEvents();
-
-	    boolean hasWarn = events.stream().anyMatch(e ->
-	        e.getLevel() == Level.WARN &&
-	        e.getMessage().getFormattedMessage().contains("Warn with exception") &&
-	        e.getThrown() instanceof RuntimeException
-	    );
-
-	    boolean hasError = events.stream().anyMatch(e ->
-	        e.getLevel() == Level.ERROR &&
-	        e.getMessage().getFormattedMessage().contains("Error with exception") &&
-	        e.getThrown() instanceof RuntimeException
-	    );
-
-	    boolean hasFatal = events.stream().anyMatch(e ->
-	        e.getLevel() == Level.FATAL &&
-	        e.getMessage().getFormattedMessage().contains("Fatal with exception") &&
-	        e.getThrown() instanceof RuntimeException
-	    );
-
-	    assertTrue(hasWarn);
-	    assertTrue(hasError);
-	    assertTrue(hasFatal);
+		public void clear()
+		{
+			events.clear();
+		}
 	}
 
+	@BeforeEach
+	void setup()
+	{
+		loggerManager = new LoggerManager(TestLoggerManager.class);
+		LoggerContext context = (LoggerContext) LogManager.getContext(false);
+		var config = context.getConfiguration();
+
+		testAppender = new TestAppender("TestAppender");
+		testAppender.start();
+		config.addAppender(testAppender);
+
+		LoggerConfig consoleConfig = config.getLoggerConfig("ConsoleLogger");
+		consoleConfig.addAppender(testAppender, Level.ALL, null);
+		consoleConfig.setLevel(Level.ALL);
+
+		LoggerConfig fileConfig = config.getLoggerConfig("FileLogger");
+		fileConfig.addAppender(testAppender, Level.ALL, null);
+		fileConfig.setLevel(Level.ALL);
+
+		context.updateLoggers();
+	}
+
+	@AfterEach
+	void tearDown()
+	{
+		LoggerContext context = (LoggerContext) LogManager.getContext(false);
+		var config = context.getConfiguration();
+
+		config.getLoggerConfig("ConsoleLogger").removeAppender("TestAppender");
+		config.getLoggerConfig("FileLogger").removeAppender("TestAppender");
+		config.getAppenders().remove("TestAppender");
+
+		context.updateLoggers();
+		testAppender.stop();
+	}
+
+	@Test
+	@DisplayName("Test default logger configuration")
+	void testDefaultConfiguration()
+	{
+		LoggerManager newLogger = new LoggerManager(String.class);
+		assertNotNull(newLogger);
+		assertFalse(newLogger.getVerbose());
+	}
+
+	@Test
+	@DisplayName("Test switch verbosity")
+	void testVerboseModeSwitch()
+	{
+		assertFalse(loggerManager.getVerbose());
+		loggerManager.switchVerboseMode();
+		assertTrue(loggerManager.getVerbose());
+		loggerManager.switchVerboseMode();
+		assertFalse(loggerManager.getVerbose());
+	}
+
+	@Test
+	@DisplayName("Test all logging levels")
+	void testLogLevels()
+	{
+		loggerManager.switchVerboseMode();
+
+		loggerManager.logTrace("Trace log");
+		loggerManager.logDebug("Debug log");
+		loggerManager.logInfo("Info log");
+		loggerManager.logWarn("Warn log");
+		loggerManager.logError("Error log");
+		loggerManager.logFatal("Fatal log");
+
+		List<LogEvent> events = testAppender.getEvents();
+
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.TRACE && e.getMessage().getFormattedMessage().contains("Trace log")));
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.DEBUG && e.getMessage().getFormattedMessage().contains("Debug log")));
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.INFO && e.getMessage().getFormattedMessage().contains("Info log")));
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.WARN && e.getMessage().getFormattedMessage().contains("Warn log")));
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.ERROR && e.getMessage().getFormattedMessage().contains("Error log")));
+		assertTrue(events.stream().anyMatch(e -> e.getLevel() == Level.FATAL && e.getMessage().getFormattedMessage().contains("Fatal log")));
+	}
+
+	@Test
+	@DisplayName("Testing logging exceptions")
+	void testLogWithExceptions()
+	{
+		RuntimeException ex = new RuntimeException("Simulated exception");
+		loggerManager.logWarn("Warn with exception", ex);
+		loggerManager.logError("Error with exception", ex);
+		loggerManager.logFatal("Fatal with exception", ex);
+
+		List<LogEvent> events = testAppender.getEvents();
+
+		boolean hasWarn = events.stream().anyMatch(e ->
+			e.getLevel() == Level.WARN &&
+			e.getMessage().getFormattedMessage().contains("Warn with exception") &&
+			e.getThrown() instanceof RuntimeException
+			);
+
+		boolean hasError = events.stream().anyMatch(e ->
+			e.getLevel() == Level.ERROR &&
+			e.getMessage().getFormattedMessage().contains("Error with exception") &&
+			e.getThrown() instanceof RuntimeException
+			);
+
+		boolean hasFatal = events.stream().anyMatch(e ->
+			e.getLevel() == Level.FATAL &&
+			e.getMessage().getFormattedMessage().contains("Fatal with exception") &&
+			e.getThrown() instanceof RuntimeException
+			);
+
+		assertTrue(hasWarn);
+		assertTrue(hasError);
+		assertTrue(hasFatal);
+	}
+
+	@Test
+	@DisplayName("Test log filtering in non-verbose mode")
+	void testNonVerboseLogging()
+	{
+		loggerManager.logTrace("Should not appear");
+		loggerManager.logDebug("Should not appear");
+
+		List<LogEvent> events = testAppender.getEvents();
+
+		boolean hasConsoleDebug = events.stream()
+			.anyMatch(e -> e.getLoggerName().equals("ConsoleLogger")
+			&& (e.getLevel() == Level.DEBUG || e.getLevel() == Level.TRACE));
+			assertFalse(hasConsoleDebug);
+
+		boolean hasFileDebug = events.stream()
+			.anyMatch(e -> e.getLoggerName().equals("FileLogger")
+			&& e.getLevel() == Level.DEBUG);
+		assertTrue(hasFileDebug);
+	}
+
+	@Test
+	@DisplayName("Test null message handling")
+	void testNullMessage()
+	{
+		assertDoesNotThrow(() -> loggerManager.logInfo(null));
+		assertDoesNotThrow(() -> loggerManager.logError(null, new RuntimeException()));
+	}
+
+	@Test
+	@DisplayName("Test null exception handling")
+	void testNullException()
+	{
+		assertDoesNotThrow(() -> loggerManager.logError("Message with null exception", null));
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains("Message with null exception") && e.getThrown() == null));
+	}
+
+	@Test
+	@DisplayName("Test thread safety")
+	void testConcurrentLogging() throws InterruptedException
+	{
+		loggerManager.switchVerboseMode();
+		Runnable task = () ->
+			{
+				for(int i = 0; i < 100; i++)
+					loggerManager.logInfo("Thread " + Thread.currentThread().getId() + " - " + i);
+			};
+
+		Thread t1 = new Thread(task);
+		Thread t2 = new Thread(task);
+
+		t1.start();
+		t2.start();
+		t1.join();
+		t2.join();
+
+		assertEquals(400, testAppender.getEvents().size());
+	}
+
+	@Test
+	@DisplayName("Test logging performance threshold")
+	void testLoggingPerformance()
+	{
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i < 1000; i++)
+			loggerManager.logInfo("Perf test " + i);
+
+		long duration = System.currentTimeMillis() - startTime;
+
+		assertTrue(duration < 1000, "Logging 1000 messages took too long: " + duration + "ms");
+	}
+
+	@Test
+	@DisplayName("Test multiple logger instances")
+	void testMultipleLoggers()
+	{
+		LoggerManager secondLogger = new LoggerManager(Integer.class);
+		LoggerManager thirdLogger = new LoggerManager(Float.class);
+
+		loggerManager.switchVerboseMode();
+		secondLogger.switchVerboseMode();
+		thirdLogger.switchVerboseMode();
+
+		loggerManager.logDebug("First logger");
+		secondLogger.logDebug("Second logger");
+		thirdLogger.logDebug("Third logger");
+
+		List<LogEvent> events = testAppender.getEvents();
+
+		assertEquals(6, events.size(), "Should contain 6 elements");
+
+		long consoleEvents = events.stream()
+			.filter(e -> e.getLoggerName().equals("ConsoleLogger"))
+			.count();
+
+		long fileEvents = events.stream()
+			.filter(e -> e.getLoggerName().equals("FileLogger"))
+			.count();
+
+		assertEquals(3, consoleEvents);
+		assertEquals(3, fileEvents);
+	}
 }
