@@ -1,3 +1,15 @@
 {
-	"noun": [ "Phoenix", "Serenity", "Onion" ]
+	"singularNouns":
+	[
+		"test",
+		"noun",
+		"word"
+	],
+	
+	"pluralNouns":
+	[
+		"tests",
+		"nouns",
+		"words"
+	]
 }

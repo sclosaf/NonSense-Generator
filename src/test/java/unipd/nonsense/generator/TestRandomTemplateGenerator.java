@@ -12,7 +12,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
@@ -361,7 +360,7 @@ class TestRandomTemplateGenerator
 		CountDownLatch latch = new CountDownLatch(threadCount);
 		ExecutorService executor = Executors.newFixedThreadPool(10);
 
-		for (int i = 0; i < threadCount; i++)
+		for(int i = 0; i < threadCount; i++)
 		{
 			executor.submit(() ->
 				{

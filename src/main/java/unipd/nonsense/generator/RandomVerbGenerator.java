@@ -29,7 +29,7 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private final static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
+	private static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
 	private final static List<String> keys = List.of("pastVerbs", "presentVerbs", "futureVerbs");
 	private LoggerManager logger = new LoggerManager(RandomVerbGenerator.class);
 
@@ -39,6 +39,29 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 		this.verbs = new HashMap<>();
 		this.random = new Random();
+		this.verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
+
+		try
+		{
+			logger.logTrace("Loading verbs from file");
+			loadVerbs();
+			JsonUpdater.addObserver(this);
+			logger.logTrace("Successfully initialized");
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize", e);
+			throw e;
+		}
+	}
+
+	public RandomVerbGenerator(String filePath) throws IOException
+	{
+		logger.logTrace("Starting initialization");
+
+		this.verbs = new HashMap<>();
+		this.random = new Random();
+		this.verbsPath = filePath;
 
 		try
 		{

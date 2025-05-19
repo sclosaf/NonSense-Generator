@@ -1,3 +1,22 @@
 {
-	"verb": [ "Generate", "Whisper", "Shatter" ]
+	"pastVerbs":
+	[
+		"tested",
+		"climbed",
+		"jumped"
+	],
+
+	"presentVerbs":
+	[
+		"test",
+		"climb",
+		"jump"
+	],
+
+	"futureVerbs":
+	[
+		"will test",
+		"will climb",
+		"will jump"
+	]
 }

@@ -28,7 +28,7 @@ public class RandomNounGenerator implements JsonUpdateObserver
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private final static String nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
+	private static String nounsPath;
 	private final static List<String> keys = List.of("singularNouns", "pluralNouns");
 	private LoggerManager logger = new LoggerManager(RandomNounGenerator.class);
 
@@ -37,6 +37,28 @@ public class RandomNounGenerator implements JsonUpdateObserver
 		logger.logTrace("Starting initialization");
 		this.nouns = new HashMap<>();
 		this.random = new Random();
+		this.nounsPath = "target" + File.separator + "resources" + File.separator + "nouns.json";
+
+		try
+		{
+			logger.logTrace("Loading nouns from file");
+			loadNouns();
+			JsonUpdater.addObserver(this);
+			logger.logTrace("Successfully initialized");
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize", e);
+			throw e;
+		}
+	}
+
+	public RandomNounGenerator(String filePath) throws IOException
+	{
+		logger.logTrace("Starting initialization");
+		this.nouns = new HashMap<>();
+		this.random = new Random();
+		this.nounsPath = filePath;
 
 		try
 		{

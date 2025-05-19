@@ -28,7 +28,7 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
-	private final static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
+	private static String adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
 	private final static List<String> keys = List.of("adjectives");
 
 	private LoggerManager logger = new LoggerManager(RandomAdjectiveGenerator.class);
@@ -39,6 +39,30 @@ public class RandomAdjectiveGenerator implements JsonUpdateObserver
 
 		this.adjectives = new ArrayList<>();
 		this.random = new Random();
+		this.adjectivesPath = "target" + File.separator + "resources" + File.separator + "adjectives.json";
+
+
+		try
+		{
+			logger.logTrace("Loading adjectives from file");
+			loadAdjectives();
+			JsonUpdater.addObserver(this);
+			logger.logTrace("Successfully initialized");
+		}
+		catch(IOException e)
+		{
+			logger.logError("Failed to initialize", e);
+			throw e;
+		}
+	}
+
+	public RandomAdjectiveGenerator(String filePath) throws IOException
+	{
+		logger.logTrace("Starting initialization");
+
+		this.adjectives = new ArrayList<>();
+		this.random = new Random();
+		this.adjectivesPath = filePath;
 
 		try
 		{
