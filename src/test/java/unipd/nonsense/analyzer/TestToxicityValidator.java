@@ -6,7 +6,6 @@ import unipd.nonsense.exceptions.InvalidTextException;
 import unipd.nonsense.exceptions.InvalidThresholdException;
 import unipd.nonsense.util.GoogleApiClient;
 import unipd.nonsense.util.JsonFileHandler;
-import unipd.nonsense.util.LoggerManager;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
@@ -26,7 +25,6 @@ class TestToxicityValidator
 {
 	private ToxicityValidator validator;
 	private GoogleApiClient mockApiClient;
-	private LoggerManager mockLogger;
 	private LanguageServiceClient mockLanguageClient;
 
 	private static final String TEST_JSON_PATH = "src/test/resources/TestToxicity.json";
@@ -207,10 +205,10 @@ class TestToxicityValidator
 			.thenReturn(mockResponse(cleanScores));
 
 		String report = validator.getToxicityReportAsync(cleanText).join();
-		
+
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
-		
+
 		for (String category : cleanScores.keySet()) {
 			assertTrue(report.contains(category), "Report should contain category: " + category);
 		}
@@ -223,14 +221,14 @@ class TestToxicityValidator
 			.thenReturn(mockResponse(toxicScores));
 
 		String report = validator.getToxicityReportAsync(toxicText).join();
-		
+
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
-		
+
 		for (String category : toxicScores.keySet()) {
 			assertTrue(report.contains(category), "Report should contain category: " + category);
 			String expectedPercentage = String.format("%.1f%%", toxicScores.get(category) * 100);
-			assertTrue(report.contains(expectedPercentage), 
+			assertTrue(report.contains(expectedPercentage),
 				"Report should contain formatted percentage: " + expectedPercentage);
 		}
 	}
@@ -242,10 +240,10 @@ class TestToxicityValidator
 			.thenReturn(mockResponse(new HashMap<>()));
 
 		String report = validator.getToxicityReportAsync("Valid text").join();
-		
+
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
-		assertTrue(report.contains("No toxicity categories found"), 
+		assertTrue(report.contains("No toxicity categories found"),
 			"Report should indicate no categories were found");
 	}
 
@@ -256,7 +254,7 @@ class TestToxicityValidator
 			.thenReturn(mockResponse(toxicScores));
 
 		boolean result = validator.isTextToxicAsync(toxicText).join();
-		
+
 		assertTrue(result, "Text should be detected as toxic with default threshold");
 	}
 
@@ -267,7 +265,7 @@ class TestToxicityValidator
 			.thenReturn(mockResponse(cleanScores));
 
 		boolean result = validator.isTextToxicAsync(cleanText).join();
-		
+
 		assertFalse(result, "Text should be detected as non-toxic with default threshold");
 	}
 
@@ -276,14 +274,14 @@ class TestToxicityValidator
 	void testIsTextToxic_ExactThreshold() {
 		Map<String, Float> testScores = new HashMap<>();
 		testScores.put("TEST_CATEGORY", 0.5f);
-		
+
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(testScores));
 
-		assertFalse(validator.isTextToxicAsync("test", 0.5f).join(), 
+		assertFalse(validator.isTextToxicAsync("test", 0.5f).join(),
 			"Text should not be toxic when threshold equals score");
-		
-		assertTrue(validator.isTextToxicAsync("test", 0.49f).join(), 
+
+		assertTrue(validator.isTextToxicAsync("test", 0.49f).join(),
 			"Text should be toxic when threshold is below score");
 	}
 
@@ -292,7 +290,7 @@ class TestToxicityValidator
 	void testIsTextToxic_LowerBoundaryThreshold() {
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
-		
+
 		assertDoesNotThrow(() -> validator.isTextToxicAsync(toxicText, 0.0f).join());
 	}
 
@@ -301,7 +299,7 @@ class TestToxicityValidator
 	void testIsTextToxic_UpperBoundaryThreshold() {
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
-		
+
 		assertDoesNotThrow(() -> validator.isTextToxicAsync(toxicText, 1.0f).join());
 	}
 
@@ -311,7 +309,7 @@ class TestToxicityValidator
 		CompletionException ex = assertThrows(CompletionException.class,
 			() -> validator.isTextToxicAsync(toxicText, -0.1f).join()
 		);
-		
+
 		assertTrue(ex.getCause() instanceof InvalidThresholdException);
 	}
 
@@ -320,8 +318,8 @@ class TestToxicityValidator
 	void testServiceExceptionHandling() {
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenThrow(new RuntimeException("API Service error"));
-		
-		assertThrows(CompletionException.class, 
+
+		assertThrows(CompletionException.class,
 			() -> validator.getToxicityScoresAsync("test text").join());
 	}
 
@@ -329,8 +327,8 @@ class TestToxicityValidator
 	@DisplayName("Test API client with null credentials throws NullPointerException")
 	void testApiClientWithNullCredentials() {
 		when(mockApiClient.getClient()).thenThrow(new NullPointerException("Null credentials"));
-		
-		CompletionException ex = assertThrows(CompletionException.class, 
+
+		CompletionException ex = assertThrows(CompletionException.class,
 			() -> validator.getToxicityScoresAsync("test").join());
 		assertTrue(ex.getCause() instanceof NullPointerException,
 			"Expected NullPointerException to be wrapped in CompletionException");
@@ -342,15 +340,15 @@ class TestToxicityValidator
 		Map<String, Float> testScores = new HashMap<>();
 		testScores.put("TOXICITY", 0.7f);
 		testScores.put("PROFANITY", 0.5f);
-		
+
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(testScores));
-		
+
 		CompletableFuture<Map<String, Float>> future = validator.getToxicityScoresAsync("test");
-		
+
 		assertNotNull(future, "Future result should not be null");
 		assertDoesNotThrow(() -> future.get(1, TimeUnit.SECONDS), "Future should complete within timeout");
-		
+
 		Map<String, Float> result = future.join();
 		assertEquals(2, result.size(), "Result should contain all scores");
 		assertEquals(0.7f, result.get("TOXICITY"), "TOXICITY score should match");
@@ -363,9 +361,9 @@ class TestToxicityValidator
 		ModerateTextResponse expectedResponse = mockResponse(toxicScores);
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(expectedResponse);
-		
+
 		ModerateTextResponse response = validator.moderateTextAsync("test text").join();
-		
+
 		assertNotNull(response, "Response should not be null");
 		assertEquals(expectedResponse.getModerationCategoriesCount(), response.getModerationCategoriesCount(),
 			"Response should have the same number of categories");
@@ -376,9 +374,9 @@ class TestToxicityValidator
 	void testClientUsage() {
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(new HashMap<>()));
-		
+
 		validator.moderateTextAsync("test text").join();
-		
+
 		verify(mockApiClient, times(1)).getClient();
 		verify(mockLanguageClient, times(1)).moderateText(any(ModerateTextRequest.class));
 	}
@@ -388,12 +386,12 @@ class TestToxicityValidator
 	void testBoundaryTextLength() {
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(new HashMap<>()));
-		
+
 		String maxLengthText = String.join("", Collections.nCopies(1000, "a"));
 		assertDoesNotThrow(() -> validator.getToxicityScoresAsync(maxLengthText).join());
-		
+
 		String tooLongText = maxLengthText + "a";
-		assertThrows(CompletionException.class, 
+		assertThrows(CompletionException.class,
 			() -> validator.getToxicityScoresAsync(tooLongText).join());
 	}
 
@@ -402,9 +400,9 @@ class TestToxicityValidator
 	void testClose() {
 		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
 		ToxicityValidator tempValidator = new ToxicityValidator(tempMockClient);
-		
+
 		tempValidator.close();
-		
+
 		verify(tempMockClient, times(1)).close();
 	}
 
@@ -413,9 +411,9 @@ class TestToxicityValidator
 	void testExceptionDuringClose() {
 		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
 		doThrow(new RuntimeException("Close error")).when(tempMockClient).close();
-		
+
 		ToxicityValidator tempValidator = new ToxicityValidator(tempMockClient);
-		
+
 		assertThrows(RuntimeException.class, tempValidator::close);
 	}
 }
