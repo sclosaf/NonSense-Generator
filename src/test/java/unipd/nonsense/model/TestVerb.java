@@ -1,56 +1,48 @@
 package unipd.nonsense.model;
 
-import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 import org.junit.jupiter.api.*;
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 import static org.junit.jupiter.api.Assertions.*;
-import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
 
 @DisplayName("Testing Verb")
-public class TestVerb{
+class TestVerb
+{
+	private Verb verb;
 
-	Verb pastVerb = new Verb("pastVerbExample", Tense.PAST);
-	Verb presentVerb = new Verb("presentVerbExample", Tense.PRESENT);
-	Verb futureVerb = new Verb("futureVerbExample", Tense.FUTURE);
-	
-	@Test
-	@DisplayName("Test correct verb building success")
-	public void testVerb_CorrectCreation(){
-		Verb testVerbBuilding = new Verb("verbBuildingExample", Tense.PAST);
-		assertNotNull(testVerbBuilding, "Should have correctly built a verb");
-		assertNotNull(testVerbBuilding.getVerb(), "Should return the verb's string");
-		assertNotNull(testVerbBuilding.getTense(), "Should return the verb's tense");
+	@BeforeEach
+	void setup()
+	{
+		verb = new Verb("run", Verb.Tense.PRESENT);
 	}
 
 	@Test
-	@DisplayName("Test building verb with invalid arguments")
-	public void testVerb_InvalidElement(){
-		assertThrows(InvalidGrammaticalElementException.class, () -> 
-			new Verb("", Tense.PAST), "Should throw InvalidGrammaticalElementException");
+	@DisplayName("Test valid construction")
+	void testValidConstruction()
+	{
+		assertNotNull(verb);
+		assertEquals("run", verb.getVerb());
+		assertEquals(Verb.Tense.PRESENT, verb.getTense());
 	}
 
 	@Test
-	@DisplayName("Getting verbs")
-	public void testGetVerb_VerbString(){
-		assertEquals(pastVerb.getVerb(), "pastVerbExample");
+	@DisplayName("Test empty verb throws exception")
+	void testEmptyVerb()
+	{
+		assertThrows(InvalidGrammaticalElementException.class,
+			() -> new Verb("", Verb.Tense.PAST));
 	}
 
 	@Test
-	@DisplayName("Getting past tense")
-	public void testGetTense_PAST(){
-		assertEquals(pastVerb.getTense(), Tense.PAST);
-	}
+	@DisplayName("Test all tense values")
+	void testAllTenses()
+	{
+		Verb pastVerb = new Verb("ran", Verb.Tense.PAST);
+		Verb presentVerb = new Verb("run", Verb.Tense.PRESENT);
+		Verb futureVerb = new Verb("will run", Verb.Tense.FUTURE);
 
-	@Test
-	@DisplayName("Getting present tense")
-	public void testGetTense_PRESENT(){
-		assertEquals(presentVerb.getTense(), Tense.PRESENT);
+		assertEquals(Verb.Tense.PAST, pastVerb.getTense());
+		assertEquals(Verb.Tense.PRESENT, presentVerb.getTense());
+		assertEquals(Verb.Tense.FUTURE, futureVerb.getTense());
 	}
-
-	@Test
-	@DisplayName("Getting future tense")
-	public void testGetTense_FUTURE(){
-		assertEquals(futureVerb.getTense(), Tense.FUTURE);
-	}
-
 }

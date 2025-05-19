@@ -1,33 +1,34 @@
 package unipd.nonsense.model;
 
-import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 import org.junit.jupiter.api.*;
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
 import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Testing Adjective")
-public class TestAdjective{
+class TestAdjective
+{
+	private Adjective adjective;
 
-	Adjective adj = new Adjective("adjectiveExample");
-	
-	@Test
-	@DisplayName("Test correct adjective building success")
-	public void testAdjective_CorrectCreation(){
-		Adjective testAdjectiveBuilding = new Adjective("adjectiveBuildingExample");
-		assertNotNull(testAdjectiveBuilding, "Should have correctly built and adjective");
-		assertNotNull(testAdjectiveBuilding.getAdjective(), "Should return the adjective's string");
+	@BeforeEach
+	void setup()
+	{
+		adjective = new Adjective("happy");
 	}
 
 	@Test
-	@DisplayName("Test building adjectives with invalid arguments")
-	public void testAdjective_InvalidElement(){
-		assertThrows(InvalidGrammaticalElementException.class, () -> 
-			new Adjective(""), "Should throw InvalidGrammaticalElementException");
+	@DisplayName("Test valid construction")
+	void testValidConstruction()
+	{
+		assertNotNull(adjective);
+		assertEquals("happy", adjective.getAdjective());
 	}
 
 	@Test
-	@DisplayName("Getting adjectives")
-	public void testGetAdjective_AdjectiveString(){
-		assertEquals(adj.getAdjective(), "adjectiveExample");
+	@DisplayName("Test empty adjective throws exception")
+	void testEmptyAdjective()
+	{
+		assertThrows(InvalidGrammaticalElementException.class,
+			() -> new Adjective(""));
 	}
-
 }

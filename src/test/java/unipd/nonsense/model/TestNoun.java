@@ -1,50 +1,60 @@
 package unipd.nonsense.model;
 
-import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 import org.junit.jupiter.api.*;
-import static org.junit.jupiter.api.Assertions.*;
 import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
+
+import static org.junit.jupiter.api.Assertions.*;
 
 @DisplayName("Testing Noun")
-public class TestNoun{
+class TestNoun
+{
+	private Noun noun;
 
-	Noun singularNoun = new Noun("singularNounExample", Number.SINGULAR);
-	Noun pluralNoun = new Noun("pluralNounExample", Number.PLURAL);
-	
-	
+	@BeforeEach
+	void setup()
+	{
+		noun = new Noun("dog", Noun.Number.SINGULAR);
+	}
+
 	@Test
-	@DisplayName("Test correct noun building success")
-	public void testNoun_CorrectCreation(){
-		Noun testNounBuilding = new Noun("NounBuildingExample", Number.SINGULAR);
-		assertNotNull(testNounBuilding, "Should have correctly built a noun");
-		assertNotNull(testNounBuilding.getNoun(), "Should return the noun's string");
-		assertNotNull(testNounBuilding.getNumber(), "Should return the noun's number");
+	@DisplayName("Test valid construction")
+	void testValidConstruction()
+	{
+		assertNotNull(noun);
+		assertEquals("dog", noun.getNoun());
+		assertEquals(Noun.Number.SINGULAR, noun.getNumber());
 	}
 
 	@Test
 	@DisplayName("Test building noun with invalid arguments")
 	public void testNoun_InvalidElement(){
-		assertThrows(InvalidGrammaticalElementException.class, () -> 
+		assertThrows(InvalidGrammaticalElementException.class, () ->
 			new Noun("", Number.SINGULAR), "Should throw InvalidGrammaticalElementException");
 	}
 
 	@Test
-	@DisplayName("Getting nouns")
-	public void testGetNoun_NounString(){
-		assertEquals(singularNoun.getNoun(), "singularNounExample");
+	@DisplayName("Test null noun throws exception")
+	void testNullNoun()
+	{
+		assertThrows(InvalidGrammaticalElementException.class,
+			() -> new Noun(null, Noun.Number.PLURAL));
 	}
+
 
 	@Test
 	@DisplayName("Getting singular number")
-	public void testGetNumber_SINGULAR(){
-		assertEquals(singularNoun.getNumber(), Number.SINGULAR);
+	public void testGetNumber_SINGULAR()
+	{
+		assertEquals(noun.getNumber(), Number.SINGULAR);
 	}
 
 	@Test
 	@DisplayName("Getting plural number")
-	public void testGetNumber_PLURAL(){
-		assertEquals(pluralNoun.getNumber(), Number.PLURAL);
+	public void testGetNumber_PLURAL()
+	{
+		noun = new Noun("dogs", Number.PLURAL);
+		assertEquals(noun.getNumber(), Number.PLURAL);
 	}
-
 }
