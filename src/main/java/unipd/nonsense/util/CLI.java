@@ -48,22 +48,22 @@ import java.net.InetAddress;
 
 public class CLI
 {
-	private static enum Command
+	public static enum Command
 	{
 		DEFAULT, PERSONALIZED, GENERATE, ANALYZE, TREE, EXTEND, SETTOLERANCE, INFO, VERBOSE, HELP, CLEAR, QUIT
 	}
 
-	private static enum GenerateOptions
+	public static enum GenerateOptions
 	{
 		RANDOM, NUMBER, TENSE, BOTH
 	}
 
-	private static enum AnalyzeOptions
+	public static enum AnalyzeOptions
 	{
 		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, ENTITY, COMBINED
 	}
 
-	private static class Option
+	public static class Option
 	{
 		private final String mainCommand;
 		private final String description;

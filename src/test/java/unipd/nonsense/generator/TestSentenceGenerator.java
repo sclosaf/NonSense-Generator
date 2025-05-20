@@ -12,7 +12,7 @@ import java.util.Arrays;
 import java.util.regex.Pattern;
 
 @DisplayName("Extended Testing SentenceGenerator")
-class TestSentenceGeneratorExtended
+class TestSentenceGenerator
 {
 	private SentenceGenerator sentenceGenerator;
 
@@ -64,7 +64,7 @@ class TestSentenceGeneratorExtended
 		List<Noun> nouns = new ArrayList<>();
 		nouns.add(new Noun("computer", Noun.Number.SINGULAR));
 
-		result = sentenceGenerator.generateSentenceWith(nouns, null, null);
+		result = sentenceGenerator.generateSentenceWith(nouns, new ArrayList<>(), new ArrayList<>());
 		assertNotNull(result);
 		assertFalse(result.getPattern().isEmpty());
 
