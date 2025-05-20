@@ -1,8 +1,25 @@
 package unipd.nonsense.analyzer;
 
-import com.google.cloud.language.v1.*;
+import com.google.cloud.language.v1.AnalyzeEntitiesRequest;
+import com.google.cloud.language.v1.AnalyzeEntitiesResponse;
+import com.google.cloud.language.v1.AnalyzeSentimentResponse;
+import com.google.cloud.language.v1.AnalyzeSyntaxRequest;
+import com.google.cloud.language.v1.AnalyzeSyntaxResponse;
+import com.google.cloud.language.v1.DependencyEdge;
+import com.google.cloud.language.v1.Document;
+import com.google.cloud.language.v1.Entity;
+import com.google.cloud.language.v1.LanguageServiceClient;
+import com.google.cloud.language.v1.PartOfSpeech;
+import com.google.cloud.language.v1.Sentiment;
+import com.google.cloud.language.v1.TextSpan;
+import com.google.cloud.language.v1.Token;
 
-import org.junit.jupiter.api.*;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+
 import unipd.nonsense.util.GoogleApiClient;
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.SyntaxToken;
@@ -10,11 +27,18 @@ import unipd.nonsense.model.SyntaxToken;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
-import java.util.*;
+import java.util.List;
+import java.util.ArrayList;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
+
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 @DisplayName("Testing SentenceAnalyzer")
 class TestSentenceAnalyzer
