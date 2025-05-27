@@ -12,6 +12,8 @@ import com.google.gson.JsonArray;
 
 import java.io.IOException;
 import java.util.*;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
@@ -481,20 +483,20 @@ class TestToxicityValidator
 		formattedScores.put("TOXICITY", 0.7532f);
 		formattedScores.put("PROFANITY", 0.4267f);
 		formattedScores.put("SEXUALLY_EXPLICIT", 0.0123f);
-		
+
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(formattedScores));
-		
+
 		String report = validator.getToxicityReportAsync("Test text").join();
 
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
 
-		assertTrue(report.contains("TOXICITY                 : 75.3%"), 
+		assertTrue(Pattern.compile("TOXICITY\\s+:\\s*75[\\.,]3%").matcher(report).find(),
 			"Report should format TOXICITY score correctly");
-		assertTrue(report.contains("PROFANITY                : 42.7%"), 
+		assertTrue(Pattern.compile("PROFANITY\\s+:\\s*42[\\.,]7%").matcher(report).find(),
 			"Report should format PROFANITY score correctly");
-		assertTrue(report.contains("SEXUALLY_EXPLICIT        : 1.2%"), 
+		assertTrue(Pattern.compile("SEXUALLY_EXPLICIT\\s+:\\s*1[\\.,]2%").matcher(report).find(),
 			"Report should format SEXUALLY_EXPLICIT score correctly");
 
 		String[] lines = report.split("\n");
@@ -506,7 +508,7 @@ class TestToxicityValidator
 			}
 		}
 	}
-	
+
 	@Test
 	@DisplayName("Test toxicity report formatting with extreme values")
 	void testToxicityReportFormatting_ExtremeValues() {
@@ -516,20 +518,19 @@ class TestToxicityValidator
 		extremeScores.put("FULL_SCORE", 1.0f);
 		extremeScores.put("TINY_SCORE", 0.001f);
 		extremeScores.put("HIGH_SCORE", 0.999f);
-		
+
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(extremeScores));
-		
+
 		String report = validator.getToxicityReportAsync("Test text").join();
 
-		assertTrue(report.contains("ZERO_SCORE               : 0.0%"), 
-			"Report should format zero score correctly");
-		assertTrue(report.contains("FULL_SCORE               : 100.0%"), 
-			"Report should format full score correctly");
-		assertTrue(report.contains("TINY_SCORE               : 0.1%"), 
-			"Report should format tiny score correctly (rounded to 1 decimal)");
-		assertTrue(report.contains("HIGH_SCORE               : 99.9%"), 
-			"Report should format high score correctly (rounded to 1 decimal)");
+		assertTrue(Pattern.compile("ZERO_SCORE\\s+:\\s*0[\\.,]0%").matcher(report).find(),
+			"Report should format zero score correctly (0.0%)");
+		assertTrue(Pattern.compile("FULL_SCORE\\s+:\\s*100[\\.,]0%").matcher(report).find(),
+			"Report should format full score correctly (100.0%)");
+		assertTrue(Pattern.compile("TINY_SCORE\\s+:\\s*0[\\.,]1%").matcher(report).find(),
+			"Report should format tiny score correctly (0.1%)");
+		assertTrue(Pattern.compile("HIGH_SCORE\\s+:\\s*99[\\.,]9%").matcher(report).find(),
+			"Report should format high score correctly (99.9%)");
 	}
-	
 }
