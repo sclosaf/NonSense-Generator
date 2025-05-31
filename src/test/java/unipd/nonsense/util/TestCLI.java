@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.HashMap;
+import java.util.Random;
+import java.util.Collections;
 
 import org.jline.reader.LineReader;
 import org.jline.reader.LineReaderBuilder;
@@ -364,5 +366,265 @@ class TestCLI
 
 		assertFalse(cli.inputCatcher());
 		verify(mockPrintWriter).println(contains("Program ended"));
+	}
+
+	@Test
+	@DisplayName("Test analyze combined handler with multiple options")
+	void testAnalyzeCombinedHandler() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("combined")
+			.thenReturn("input")
+			.thenReturn("Test sentence")
+			.thenReturn("syntax")
+			.thenReturn("sentiment")
+			.thenReturn("");
+
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Syntax result");
+		when(mockProcessor.analyzeSentiment(anyString())).thenReturn("Sentiment result");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).analyzeSyntax("Test sentence");
+		verify(mockProcessor).analyzeSentiment("Test sentence");
+		verify(mockProcessor, never()).analyzeToxicity(anyString());
+		verify(mockProcessor, never()).analyzeEntity(anyString());
+	}
+
+	@Test
+	@DisplayName("Test generate handler - tense option")
+	void testGenerateHandler_Tense() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("tense")
+			.thenReturn("future");
+
+		String generatedSentence = "Future generated sentence";
+		when(mockProcessor.generateWithTense(any())).thenReturn(generatedSentence);
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).generateWithTense(Verb.Tense.FUTURE);
+		verify(mockPrintWriter).println(contains(generatedSentence));
+	}
+
+	@Test
+	@DisplayName("Test generate handler - both option")
+	void testGenerateHandler_Both() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("both")
+			.thenReturn("plural")
+			.thenReturn("past");
+
+		String generatedSentence = "Plural past generated sentence";
+		when(mockProcessor.generateWithBoth(any(), any())).thenReturn(generatedSentence);
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).generateWithBoth(Noun.Number.PLURAL, Verb.Tense.PAST);
+		verify(mockPrintWriter).println(contains(generatedSentence));
+	}
+
+	@Test
+	@DisplayName("Test analyze handler with cached sentence")
+	void testAnalyzeHandler_Cached() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("syntax")
+			.thenReturn("cached");
+
+		String cachedSentence = "Cached sentence";
+		when(mockProcessor.isSentenceCached()).thenReturn(true);
+		when(mockProcessor.getCachedSentence()).thenReturn(cachedSentence);
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Cached analysis");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).analyzeSyntax(cachedSentence);
+	}
+
+	@Test
+	@DisplayName("Test analyze handler with template choice")
+	void testAnalyzeHandler_TemplateChoice() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("syntax")
+			.thenReturn("choose")
+			.thenReturn("1");
+
+		Template mockTemplate = mock(Template.class);
+		List<Template> templates = List.of(mockTemplate);
+		when(mockProcessor.getRandomTemplates()).thenReturn(templates);
+
+		String generatedSentence = "Template generated sentence";
+		when(mockProcessor.generateWithTemplate(any())).thenReturn(generatedSentence);
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Template analysis");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).generateWithTemplate(mockTemplate);
+		verify(mockProcessor).analyzeSyntax(generatedSentence);
+	}
+
+	@Test
+	@DisplayName("Test tree handler with cached sentence")
+	void testTreeHandler_Cached() throws IOException {
+		when(mockCommandReader.readLine(anyString())).thenReturn("tree");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("cached");
+
+		String cachedSentence = "Cached sentence";
+		when(mockProcessor.isSentenceCached()).thenReturn(true);
+		when(mockProcessor.getCachedSentence()).thenReturn(cachedSentence);
+		when(mockProcessor.generateSyntaxTree(anyString())).thenReturn("Cached tree");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).generateSyntaxTree(cachedSentence);
+	}
+
+	@Test
+	@DisplayName("Test input validation with empty allowed input")
+	void testInputValidation_EmptyAllowed() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("")
+			.thenReturn("random");
+		when(mockProcessor.generateRandom()).thenReturn("Test sentence");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Test sentence"));
+	}
+
+	@Test
+	@DisplayName("Test input validation with invalid then valid input")
+	void testInputValidation_InvalidThenValid() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("invalid")
+			.thenReturn("number")
+			.thenReturn("singular");
+		when(mockProcessor.generateWithNumber(any())).thenReturn("Valid sentence");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Valid sentence"));
+	}
+
+	@Test
+	@DisplayName("Test analyze random handler")
+	void testAnalyzeRandomHandler() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("analyze")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("random")
+			.thenReturn("input")
+			.thenReturn("Test sentence");
+
+
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("result");
+		when(mockProcessor.analyzeSentiment(anyString())).thenReturn("result");
+		when(mockProcessor.analyzeToxicity(anyString())).thenReturn("result");
+		when(mockProcessor.analyzeEntity(anyString())).thenReturn("result");
+
+		assertTrue(cli.inputCatcher());
+	}
+
+	@Test
+	@DisplayName("Test extend handler with nouns")
+	void testExtendHandler_Nouns() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("noun")
+			.thenReturn("singular")
+			.thenReturn("computer")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).append(argThat(list -> !list.isEmpty()), argThat(List::isEmpty), argThat(List::isEmpty));
+	}
+
+	@Test
+	@DisplayName("Test extend handler with adjectives")
+	void testExtendHandler_Adjectives() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("adjective")
+			.thenReturn("red")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).append(argThat(List::isEmpty), argThat(list -> !list.isEmpty()), argThat(List::isEmpty));
+	}
+
+	@Test
+	@DisplayName("Test extend handler with verbs")
+	void testExtendHandler_Verbs() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("verb")
+			.thenReturn("past")
+			.thenReturn("ran")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+    verify(mockProcessor).append(argThat(List::isEmpty), argThat(List::isEmpty), argThat(list -> !list.isEmpty()));
+	}
+
+	@Test
+	@DisplayName("Test extend handler with multiple parts of speech")
+	void testExtendHandler_MultipleParts() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("noun")
+			.thenReturn("plural")
+			.thenReturn("computers")
+			.thenReturn("adjective")
+			.thenReturn("fast")
+			.thenReturn("verb")
+			.thenReturn("present")
+			.thenReturn("run")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).append(argThat(list -> !list.isEmpty()), argThat(list -> !list.isEmpty()), argThat(list -> !list.isEmpty()));
+	}
+
+	@Test
+	@DisplayName("Test input validation with max attempts")
+	void testInputValidation_MaxAttempts() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("generate")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("invalid1")
+			.thenReturn("invalid2")
+			.thenReturn("invalid3")
+			.thenReturn("invalid4")
+			.thenReturn("random");
+
+		when(mockProcessor.generateRandom()).thenReturn("Fallback sentence");
+
+		assertTrue(cli.inputCatcher());
+
+		verify(mockPrintWriter).println(contains("Maximum attempts reached. Operation cancelled."));
+		verify(mockProcessor, never()).generateRandom();
 	}
 }

@@ -262,7 +262,7 @@ public class CLI
 			commands.put("a", Command.ANALYZE);
 			commands.put("tree", Command.TREE);
 			commands.put("t", Command.TREE);
-			commands.put("extends", Command.EXTEND);
+			commands.put("extend", Command.EXTEND);
 			commands.put("e", Command.EXTEND);
 			commands.put("set tolerance", Command.SETTOLERANCE);
 			commands.put("st", Command.SETTOLERANCE);
@@ -1344,7 +1344,6 @@ public class CLI
 					logger.logTrace("extendHandler: Completed due to cancellation");
 					return;
 				}
-
 
 				Number number;
 				if(num.equals("singular") || num.equals("s"))

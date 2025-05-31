@@ -11,6 +11,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonArray;
 
 import java.io.IOException;
+import java.io.File;
 import java.util.*;
 import java.util.regex.Pattern;
 import java.util.regex.Matcher;
@@ -34,7 +35,7 @@ class TestToxicityValidator
 	private GoogleApiClient mockApiClient;
 	private LanguageServiceClient mockLanguageClient;
 
-	private static final String TEST_JSON_PATH = "src/test/resources/TestToxicity.json";
+	private static final String TEST_JSON_PATH = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "TestToxicity.json";
 
 	private static Map<String, Float> cleanScores;
 	private static Map<String, Float> toxicScores;

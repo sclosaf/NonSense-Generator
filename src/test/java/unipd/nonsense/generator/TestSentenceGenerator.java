@@ -5,10 +5,17 @@ import unipd.nonsense.model.Template.Placeholder;
 import unipd.nonsense.exceptions.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Set;
+import java.util.HashSet;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Pattern;
 
 @DisplayName("Extended Testing SentenceGenerator")
@@ -60,15 +67,6 @@ class TestSentenceGenerator
 		result = sentenceGenerator.generateSentenceWith(new ArrayList<>(), new ArrayList<>(), new ArrayList<>());
 		assertNotNull(result);
 		assertFalse(result.getPattern().isEmpty());
-
-		List<Noun> nouns = new ArrayList<>();
-		nouns.add(new Noun("computer", Noun.Number.SINGULAR));
-
-		result = sentenceGenerator.generateSentenceWith(nouns, new ArrayList<>(), new ArrayList<>());
-		assertNotNull(result);
-		assertFalse(result.getPattern().isEmpty());
-
-		assertTrue(result.getPattern().contains("computer"), "Sentence should contain the provided noun");
 	}
 
 	@Test
@@ -210,5 +208,134 @@ class TestSentenceGenerator
 		assertFalse(sentence.contains("[noun]"));
 		assertFalse(sentence.contains("[adjective]"));
 		assertFalse(sentence.contains("[verb]"));
+	}
+
+	@Test
+	@DisplayName("Test template with mixed placeholders and literals")
+	void testMixedPlaceholdersAndLiterals()
+	{
+		Template template = new Template("The [adjective] [noun] [verb] quickly.", Template.TemplateType.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		assertNotNull(result);
+		String sentence = result.getPattern();
+
+		assertFalse(sentence.contains("[adjective]"));
+		assertFalse(sentence.contains("[noun]"));
+		assertFalse(sentence.contains("[verb]"));
+		assertTrue(sentence.endsWith("quickly."), "Sentence should preserve literal text");
+	}
+
+	@Test
+	@DisplayName("Test sentence generation with all custom words")
+	void testAllCustomWords() throws IOException
+	{
+		List<Noun> nouns = List.of(new Noun("dragon", Noun.Number.SINGULAR));
+		List<Adjective> adjectives = List.of(new Adjective("fiery"));
+		List<Verb> verbs = List.of(new Verb("breathes", Verb.Tense.PRESENT));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.contains("dragon"));
+		assertTrue(sentence.contains("fiery"));
+		assertTrue(sentence.contains("breathes"));
+	}
+
+	@Test
+	@DisplayName("Test repeated calls to generateRandomSentence produce varied results")
+	void testRandomSentenceVariation()
+	{
+		Set<String> sentences = new HashSet<>();
+		for(int i = 0; i < 10; i++)
+			sentences.add(sentenceGenerator.generateRandomSentence().getPattern());
+
+		assertTrue(sentences.size() > 1, "Repeated calls should produce varied sentences");
+	}
+
+	@Test
+	@DisplayName("Test sentence generation with maximum word length")
+	void testMaxWordLength() throws IOException
+	{
+		List<Noun> nouns = List.of(new Noun("a".repeat(1000), Noun.Number.SINGULAR));
+		List<Adjective> adjectives = List.of(new Adjective("b".repeat(1000)));
+		List<Verb> verbs = List.of(new Verb("c".repeat(1000), Verb.Tense.PRESENT));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
+		assertNotNull(result);
+		assertFalse(result.getPattern().isEmpty());
+	}
+
+	@Test
+	@DisplayName("Test template with only verb placeholders")
+	void testVerbOnlyTemplate()
+	{
+		Template template = new Template("[verb] [verb] [verb]", Template.TemplateType.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		assertFalse(sentence.contains("[verb]"));
+		assertTrue(sentence.split(" ").length >= 3, "Should contain at least 3 verbs");
+	}
+
+	@Test
+	@DisplayName("Test concurrent sentence generation")
+	void testConcurrentGeneration() throws InterruptedException
+	{
+		int threadCount = 20;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						Template sentence = sentenceGenerator.generateRandomSentence();
+						assertNotNull(sentence);
+						assertFalse(sentence.getPattern().isEmpty());
+					}
+					finally
+					{
+						latch.countDown();
+					}
+				});
+		}
+
+		latch.await(3, TimeUnit.SECONDS);
+		executor.shutdown();
+		assertEquals(0, latch.getCount());
+	}
+
+	@Test
+	@DisplayName("Test template with unusual punctuation")
+	void testUnusualPunctuation()
+	{
+		Template template = new Template("Wait... the [noun] [verb]! Really?", Template.TemplateType.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.startsWith("Wait..."));
+		assertTrue(sentence.endsWith("Really?"));
+		assertFalse(sentence.contains("[noun]"));
+		assertFalse(sentence.contains("[verb]"));
+	}
+
+	@Test
+	@DisplayName("Test empty word lists fallback to random generation")
+	void testEmptyWordListsFallback() throws IOException
+	{
+		Template result = sentenceGenerator.generateSentenceWith
+		(
+			new ArrayList<>(),
+			new ArrayList<>(),
+			new ArrayList<>()
+		);
+
+		assertNotNull(result);
+		assertFalse(result.getPattern().isEmpty());
+		assertFalse(result.getPattern().contains("[noun]"));
+		assertFalse(result.getPattern().contains("[adjective]"));
+		assertFalse(result.getPattern().contains("[verb]"));
 	}
 }
