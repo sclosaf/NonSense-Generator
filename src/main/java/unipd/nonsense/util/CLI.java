@@ -171,7 +171,7 @@ public class CLI
 		(
 			new Option("past", "Use simple past tense", "pa"),
 			new Option("present", "Use simple present tense", "pr"),
-			new Option("future", "Use simple future tense", "f")
+			new Option("future", "Use will future tense", "f")
 		);
 
 	private final Map<String, Command> commands = new HashMap<>();
@@ -478,7 +478,7 @@ public class CLI
 
 		printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
 
-		printWhite("Proceding with the default process.", true);
+		printWhite("Proceeding with the default process.", true);
 		printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elabotation):", true);
 
 		logger.logTrace("defaultHandler: Prompt for sentence input displayed");
@@ -487,12 +487,12 @@ public class CLI
 
 		if(userInput.isEmpty())
 		{
-			printWhite("Sentence input skipped, proceding by generating one from scratch", true);
+			printWhite("Sentence input skipped, proceeding by generating one from scratch", true);
 			userInput = processor.generateRandom();
 			printWhite("Generated sentence: '" + userInput + "'", true);
 			logger.logDebug("defaultHandler: Generated random sentence: " + userInput);
 
-			printWhite("Proceding with a standard analysis of the generated sentence", true);
+			printWhite("Proceeding with a standard analysis of the generated sentence", true);
 			printWhite("This passage includes syntactic and toxicity analysis of the generated sentence", true);
 			printWhite("Followed by the generation of the syntactic tree of the generated sentence", true);
 			logger.logTrace("defaultHandler: Starting analysis of generated sentence");
@@ -508,19 +508,19 @@ public class CLI
 		}
 		else
 		{
-			printWhite("Proceding with the standard synctactic analysis of the given sentence", true);
+			printWhite("Proceeding with the standard synctactic analysis of the given sentence", true);
 			logger.logTrace("defaultHandler: Starting analysis of user-provided sentence");
 			analyzeSyntax(userInput);
 			logger.logTrace("defaultHandler: Completed syntactic analysis for user-provided sentence");
 
 			printSeparator(BOLD_BLUE_STYLE);
-			printWhite("Generating a new sentence by using, nouns, adjectives and verbs of the inserted one", true);
+			printWhite("Generating a new sentence by using nouns, adjectives and verbs of the inserted one", true);
 			String generated = processor.generateFrom(userInput);
 
 			printWhite("Generated sentence: '" + generated + "'", true);
 			logger.logDebug("defaultHandler: Generated sentence from user input: " + generated);
 
-			printWhite("Proceding with a standard analysis of the generated sentence", true);
+			printWhite("Proceeding with a standard analysis of the generated sentence", true);
 			printWhite("This passage includes the syntactic and toxicity analysis of the generated sentence", true);
 			printWhite("Followed by the creation of its synctactic tree", true);
 			logger.logTrace("defaultHandler: Starting analysis of sentence generated from user input");
@@ -542,12 +542,12 @@ public class CLI
 		logger.logTrace("personalizedHandler: Starting personalized procedure");
 
 		printTitleSeparator("Personalized procedure", BOLD_BLUE_STYLE);
-		printWhite("Proceding with the personalized process.", true);
+		printWhite("Proceeding with the personalized process.", true);
 		printWhite("This procedure lets the user go through several options that this program offers", true);
 
 		logger.logTrace("personalizedHandler: Displayed procedure introduction");
 
-		printWhite("As option the user can add new nouns, adjectives and verbs to the dictionaries", true);
+		printWhite("As an option the user can add new nouns, adjectives and verbs to the dictionaries", true);
 		logger.logTrace("personalizedHandler: Prompting for dictionary extension");
 		extendHandler();
 		logger.logTrace("personalizedHandler: Completed dictionary extension");
@@ -567,13 +567,13 @@ public class CLI
 		else
 			logger.logDebug("personalizedHandler: User provided sentence for processing: " + userInput);
 
-		printWhite("Proceding with the analysis", true);
+		printWhite("Proceeding with the analysis", true);
 
 		logger.logTrace("personalizedHandler: Starting sentence analysis");
 		analyzeHandler();
 		logger.logTrace("personalizedHandler: Completed sentence analysis");
 
-		printWhite("Proceding by building the synctactic tree", true);
+		printWhite("Proceeding by building the synctactic tree", true);
 		logger.logTrace("personalizedHandler: Starting syntactic tree generation");
 		treeHandler();
 
@@ -585,7 +585,7 @@ public class CLI
 	{
 		logger.logTrace("generateHandler: Starting sentence generation procedure");
 		printTitleSeparator("Generation procedure", BOLD_BLUE_STYLE);
-		String userInput = validateInput("Proceding generating a random sentence, select one of the following options:", GENERATION_MODE_OPTIONS, false);
+		String userInput = validateInput("Proceeding to generate a random sentence, select one of the following options:", GENERATION_MODE_OPTIONS, false);
 
 		logger.logDebug("generateHandler: Selected generation option: " + (userInput.isEmpty() ? "CANCELLED" : userInput));
 
@@ -640,7 +640,7 @@ public class CLI
 		if(userInput.equals("singular") || userInput.equals("s"))
 		{
 			logger.logTrace("generateNumber: Selected number: singular");
-			printWhite("Proceding generating a sentence with singular nouns", true);
+			printWhite("Proceeding to generate a sentence with singular nouns", true);
 
 			String sentence = processor.generateWithNumber(Number.SINGULAR);
 			logger.logDebug("generateNumber: Generated sentence: " + sentence);
@@ -651,7 +651,7 @@ public class CLI
 		else if(userInput.equals("plural") || userInput.equals("p"))
 		{
 			logger.logTrace("generateNumber: Selected number: plural");
-			printWhite("Proceding generating a sentence with plural nouns", true);
+			printWhite("Proceeding to generate a sentence with plural nouns", true);
 
 			String sentence = processor.generateWithNumber(Number.PLURAL);
 			logger.logDebug("generateNumber: Generated sentence: " + sentence);
@@ -683,7 +683,7 @@ public class CLI
 		if(userInput.equals("past") || userInput.equals("pa"))
 		{
 			logger.logTrace("generateTense: Selected tense: past");
-			printWhite("Proceding generating a sentence with past tense", true);
+			printWhite("Proceeding to generate a sentence with past tense", true);
 
 			String sentence = processor.generateWithTense(Tense.PAST);
 			logger.logDebug("generateTense: Generated sentence: " + sentence);
@@ -694,7 +694,7 @@ public class CLI
 		else if(userInput.equals("present") || userInput.equals("pr"))
 		{
 			logger.logTrace("generateTense: Selected tense: present");
-			printWhite("Proceding generating a sentence with present tense", true);
+			printWhite("Proceeding to generate a sentence with present tense", true);
 
 			String sentence = processor.generateWithTense(Tense.PRESENT);
 			logger.logDebug("generateTense: Generated sentence: " + sentence);
@@ -705,7 +705,7 @@ public class CLI
 		else if(userInput.equals("future") || userInput.equals("f"))
 		{
 			logger.logTrace("generateTense: Selected tense: future");
-			printWhite("Proceding generating a sentence with future tense", true);
+			printWhite("Proceeding to generate a sentence with future tense", true);
 
 			String sentence = processor.generateWithTense(Tense.FUTURE);
 			logger.logDebug("generateTense: Generated sentence: " + sentence);
@@ -779,7 +779,7 @@ public class CLI
 		}
 
 		logger.logDebug("generateBoth: Proceeding with number: " + number.name().toLowerCase() + ", tense: " + tense.name().toLowerCase());
-		printWhite("Proceding generating a sentence with " + number.name().toLowerCase() + " nouns and " + tense.name().toLowerCase() + " tense", true);
+		printWhite("Proceeding generating a sentence with " + number.name().toLowerCase() + " nouns and " + tense.name().toLowerCase() + " tense", true);
 		String sentence = processor.generateWithBoth(number, tense);
 
 		logger.logDebug("generateBoth: Generated sentence: " + sentence);
@@ -806,7 +806,7 @@ public class CLI
 			return;
 		}
 
-		String mode = validateInput("Select what sentence do you want to analyze:", INPUT_MODE_OPTIONS, false);
+		String mode = validateInput("Select which sentence you want to analyze:", INPUT_MODE_OPTIONS, false);
 		logger.logTrace("analyzeHandler: Prompt for input mode displayed");
 		logger.logDebug("analyzeHandler: Received input mode: " + (mode.isEmpty() ? "NONE" : mode));
 
@@ -823,7 +823,7 @@ public class CLI
 		if(mode.equals("generate") || mode.equals("g"))
 		{
 			logger.logTrace("analyzeHandler: Selected input mode: generate");
-			printWhite("Proceeding generating a random sentence", true);
+			printWhite("Proceeding to generate a random sentence", true);
 
 			userInput = processor.generateRandom();
 			logger.logDebug("analyzeHandler: Generated sentence: " + userInput);
@@ -874,7 +874,7 @@ public class CLI
 				return;
 			}
 
-			printWhite("Proceding analyzing the cached sentence: '" + processor.getCachedSentence() + "'", true);
+			printWhite("Proceeding to analyze the cached sentence: '" + processor.getCachedSentence() + "'", true);
 			userInput = processor.getCachedSentence();
 
 			logger.logDebug("analyzeHandler: Using cached sentence: " + userInput);
@@ -978,7 +978,7 @@ public class CLI
 		logger.logTrace("analyzeAll: Starting complete analysis procedure");
 
 		printTitleSeparator("Complete analysis", BOLD_BLUE_STYLE);
-		printWhite("Proceding with all the analysis", true);
+		printWhite("Proceeding with all the analysis", true);
 
 		logger.logTrace("analyzeAll: Executing syntax analysis");
 		analyzeSyntax(input);
@@ -1172,7 +1172,7 @@ public class CLI
 		logger.logTrace("treeHandler: Starting syntax tree generation procedure");
 
 		printTitleSeparator("Syntax tree procedure", BOLD_BLUE_STYLE);
-		String mode = validateInput("Select what sentence do you want to print the syntactic tree:", INPUT_MODE_OPTIONS, false);
+		String mode = validateInput("Select the sentence you want to print the syntactic tree of:", INPUT_MODE_OPTIONS, false);
 
 		logger.logTrace("treeHandler: Prompt for input mode displayed");
 		logger.logDebug("treeHandler: Received input mode: " + (mode.isEmpty() ? "NONE" : mode));
@@ -1190,7 +1190,7 @@ public class CLI
 		if(mode.equals("generate") || mode.equals("g"))
 		{
 			logger.logTrace("treeHandler: Selected input mode: generate");
-			printWhite("Proceeding generating a random sentence", true);
+			printWhite("Proceeding to generate a random sentence", true);
 
 			userInput = processor.generateRandom();
 			logger.logDebug("treeHandler: Generated sentence: " + userInput);
@@ -1498,7 +1498,7 @@ public class CLI
 		}
 		else
 		{
-			printWhite("Proceeding adding the new elements", true);
+			printWhite("Proceeding to add the new elements", true);
 			logger.logTrace("extendHandler: Proceeding to add new elements");
 			processor.append(nounList, adjectiveList, verbList);
 			logger.logDebug("extendHandler: Adding " + nounList.size() + " nouns, " + adjectiveList.size() + " adjectives, " + verbList.size() + " verbs");
@@ -1573,60 +1573,60 @@ public class CLI
 			{
 				"Default (d)",
 					"Performs a basic but complete procedure of the functionalities offered,\n" +
-					"this procedure offers the possibility to generate and/or analyze a sentence,\n" +
-					"ending with printig the syntactic tree of the sentence.\n" +
+					"this procedure offers the possibility to generate and/or analyze a sentence\n" +
+					"and ends with the syntactic tree of the sentence being displayed.\n" +
 					"This is a default combination of commands, for a more specific combination\n" +
-					"use 'personalized', instead the rest is for singular the available functionalities."
+					"use 'personalized'; the other entries perform singular functionalities."
 			},
 
 			{
 				"Personalized (p)",
-					"Performs, in a specific order, all the functionalities offered by the programm.\n" +
-					"In each step are available a full combination and personalization of the commands,\n" +
-					"the user can choose each modality and functionality for that process."
+					"Performs, in a specific order, all the functionalities offered by the program.\n" +
+					"In each step a full personalization of the commands is available,\n" +
+					"the user can choose every modality and functionality for each process."
 			},
 
 			{
 				"Generate (g)",
-					"Generates a random nonsense sentence, based on a various pool of\n" +
-					"templates, noun, adjectives and verbs, which are randomly combined.\n" +
-					"The sentece, even if it's grammatically correct,\n" +
-					"it's totally lacking logical sense, indeed the combination is totally random.\n" +
-					"The sentence is printed and cached, for successive analysis,\n" +
-					"only the latest sentence is cached, the previous is overwritten,\n"+
+					"Generates a random nonsense sentence, based on a pool of various\n" +
+					"templates, nouns, adjectives and verbs, which are randomly combined.\n" +
+					"The sentence, although grammatically correct, totally lacks\n" +
+					"logical sense, as the combination is completely random.\n" +
+					"The sentence is printed and cached for future analysis, only the\n" +
+					"last generated sentence is cached, any previous is overwritten;\n"+
 					"the program begins without any cached sentence."
 			},
 
 			{
 				"Analyze (a)",
-					"Proceeds offering several analysis procedures, which can be used,\n" +
-					"but most importantly it offers various combinations,\n" +
-					"indeed the analysis can be chosen by the user, randomly, costumized or all together.\n" +
-					"The kind of analysis offered are aimed to the syntax, the sentiment, the toxicity or the entity,\n" +
-					"that are contained into the sentence."
+					"Offers a number of analysis procedures which can be used\n" +
+					"in various combinations, as the analysis can be\n" +
+					"chosen by the user, be random, costumized or all of the above.\n" +
+					"The types of analysis offered are ones regarding the syntax, the sentiment,\n" +
+					"the toxicity or the entities that are contained in the sentence."
 			},
 
 			{
 				"Tree (t)",
 					"Proceeds to print the syntactic tree of the chosen sentence.\n" +
-					"Shows the hierarchical structure of the sentence and the relationship among the components\n" +
-					"This functionality support even the analysis of more than one sentence.\n" +
-					"This function requires to execute the syntax analysis of the sentence in background.\n" +
-					"Its implicit that this process requires that the sentence has at least grammatical correctness."
+					"Shows the hierarchical structure of the sentence and the relationship among its components.\n" +
+					"This functionality can support the analysis of more than one sentence.\n" +
+					"This function requires the execution of the syntax analysis of the sentence in background.\n" +
+					"It is implicit that this process requires the sentence to be at least grammatically correct."
 			},
 
 			{
 				"Extend (e)",
-					"Proceeds to let the user extend the dictionaries used by the program to generate the sentence\n" +
-					"in particular the user can input nouns, adjectives or verbs, at his choice.\n" +
-					"This update is applyed immediatly to the program, but doesn't last among different sessions."
+					"Proceeds to let the user extend the dictionaries used by the program to generate the sentence;\n" +
+					"in particular the user can input nouns, adjectives or verbs at will.\n" +
+					"This update is immediately applied to the program, but doesn't last among different sessions."
 			},
 
 			{
 				"Set tolerance (st)",
-					"Allows the user to change the tollerance used by the program to consider an analyzed sentence\n" +
-					"via toxicity analysis, indeed toxic, setting the upper bound,\n" +
-					"over which a sentence is considered toxic by the program.\n" +
+					"Allows the user to change the program's tolerance when considering\n" +
+					"an analyzed sentence via toxicity analysis, setting the upper bound\n" +
+					"over which a sentence is considered to be toxic by the program.\n" +
 					"The default value is setted to 0.7 (it ranges from 0.0 to 1.0, inclusive)"
 			},
 
@@ -1637,16 +1637,16 @@ public class CLI
 
 			{
 				"Info (i)",
-					"Shows detailed information about commands, and their shortcuts.\n" +
-					"Provides extended help for each available command (even hidden ones).\n" +
-					"Each command is explained in detail each fuction use and purpose."
+					"Shows detailed information about commands and their shortcuts.\n" +
+					"Provides extended help for each available command (including hidden ones).\n" +
+					"Fuction, use and purpose are explained in detail for each command."
 			},
 
 			{
 				"Verbose (v)",
-					"Hidden command that toggles verbose output mode, when enabled, provides a more detailed feedback.\n" +
-					"abount the background activity performed by the program.\n" +
-					"Used for debugging purposes, it not recommended to use for a basic user experience,\n" +
+					"Hidden command that toggles verbose output mode. When enabled, it provides a more \n" +
+					"detailed feedback about the background activity performed by the program.\n" +
+					"Used for debugging purposes, its use is not recommended for a basic user experience, as\n" +
 					"it can cause much 'noise' on the terminal. The default setting for this function is off."
 			},
 
@@ -1729,12 +1729,12 @@ public class CLI
 			"Default", "Performs a basic combination of generation and analysis",
 			"Personalized", "Performs all the functionalities, with each step personalizable",
 			"Generate", "Generates a random nonsense sentence",
-			"Analyze", "Analyses a sentence via several functions",
+			"Analyze", "Analyzes a sentence via several functions",
 			"Tree", "Prints the syntactic tree of a sentence",
 			"Extend", "Allows insertion of a noun, adjective or verb to the dicionaries",
 			"Set tolerance", "Change tolerance level for toxicity analysis",
 			"Help", "Shows this help menu",
-			"Info", "Shows more detailed infos about the commands",
+			"Info", "Shows more detailed info about the commands",
 			"Clear", "Clears the terminal and shows initial menu",
 			"Quit", "Exits the program"
 		};
