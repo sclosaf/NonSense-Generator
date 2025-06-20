@@ -1,9 +1,9 @@
 ## Use Cases
-1 Analyze and extract sentence components \n
-2 Generate a nonsense sentence from a template \n
-3 Validate a generated sentence for toxicity \n
-4 Reuse user input words by updating dictionaries \n
-5 Define the functionalities of the program \n
+1. Analyze and extract sentence components
+2. Generate a nonsense sentence from a template
+3. Validate a generated sentence for toxicity
+4. Reuse user input words by updating dictionaries
+5. Define the functionalities of the program
 
 # Use Case tables
 
