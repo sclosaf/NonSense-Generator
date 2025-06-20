@@ -57,8 +57,10 @@
 | Post\-Conditions   | A list and description of commands is displayed on screen                                                            |
 | Notes              | Both a "help" and "info" command are granted, as the second one grants a more accurate description                   |
 
+# Use Cases Diagram
+![UseCasesDiagram](https://github.com/user-attachments/assets/a1231cee-d29c-465c-a790-baf7c5f42670)
 
-
+```plantuml
 @startuml
 left to right direction
 actor User <<Human>>
@@ -85,3 +87,4 @@ UC1 .> I1 :<<include>>
 UC2 .> I2 :<<include>>
 UC4 .> I4 :<<include>>
 @enduml
+```
