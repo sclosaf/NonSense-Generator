@@ -56,3 +56,32 @@
 | Alternate Scenario | The user can input the "help" or "info" command to be granted information at any given time during program execution |
 | Post\-Conditions   | A list and description of commands is displayed on screen                                                            |
 | Notes              | Both a "help" and "info" command are granted, as the second one grants a more accurate description                   |
+
+
+
+@startuml
+left to right direction
+actor User <<Human>>
+actor "Google API" as G << External API>>
+rectangle NonsenseGenerator{
+  usecase "Analyze and extract components" as UC1
+  usecase "Display single components on screen" as I1
+  usecase "Generate sentence from template" as UC2
+  usecase "Display list of templates" as I2
+  usecase "Validate sentence for toxicity" as UC3
+  usecase "Reuse input words" as UC4
+  usecase "Update system dictionaries" as I4
+  usecase "Define program functionalities" as UC5
+
+}
+User -->UC1
+User -->UC2
+User -->UC3
+User -->UC4
+User -->UC5
+UC1 -- G
+UC3 -- G
+UC1 .> I1 :<<include>>
+UC2 .> I2 :<<include>>
+UC4 .> I4 :<<include>>
+@enduml
