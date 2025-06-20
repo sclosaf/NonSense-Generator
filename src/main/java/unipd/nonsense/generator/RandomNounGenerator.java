@@ -5,7 +5,7 @@ import unipd.nonsense.util.JsonUpdater;
 
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidListException;
@@ -29,7 +29,11 @@ public class RandomNounGenerator implements JsonUpdateObserver
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String nounsPath;
-	private final static List<String> keys = List.of("singularNouns", "pluralNouns");
+	private final static Map<Number, String> keys = Map.of(
+		Number.SINGULAR, "singularNouns",
+		Number.PLURAL, "pluralNouns"
+	);
+
 	private LoggerManager logger = new LoggerManager(RandomNounGenerator.class);
 
 	public RandomNounGenerator() throws IOException
@@ -78,28 +82,27 @@ public class RandomNounGenerator implements JsonUpdateObserver
 	{
 		logger.logTrace("loadNouns: Starting to load nouns");
 
-		for(String key : keys)
+		for(Map.Entry<Number, String> entry : keys.entrySet())
 		{
-			logger.logDebug("loadNouns: Processing key: " + key);
-			Number num;
+			Number num = entry.getKey();
+			String jsonKey = entry.getValue();
 
-			if(key.equals(keys.get(0)))
-				num = Number.SINGULAR;
-			else
-				num = Number.PLURAL;
-
+			logger.logDebug("loadNouns: Processing key: " + jsonKey);
 			nouns.computeIfAbsent(num, k -> new ArrayList<>());
 
-			List<String> jsonList = jsonHandler.readListFromJson(nounsPath, key);
+			List<String> jsonList = jsonHandler.readListFromJson(nounsPath, jsonKey);
 
-			if(jsonList != null && !jsonList.isEmpty())
+			if (jsonList != null && !jsonList.isEmpty())
 			{
-				logger.logDebug("loadNouns: Found " + jsonList.size() + " nouns for key: " + key);
-				List<Noun> nounList = jsonList.stream().map(noun -> new Noun(noun, num)).collect(Collectors.toList());
+				logger.logDebug("loadNouns: Found " + jsonList.size() + " nouns for key: " + jsonKey);
+				List<Noun> nounList = jsonList.stream()
+					.map(noun -> new Noun(noun, num))
+					.collect(Collectors.toList());
+
 				nouns.put(num, nounList);
 			}
 			else
-				logger.logWarn("loadNouns: No nouns found for key: " + key);
+				logger.logWarn("loadNouns: No nouns found for key: " + jsonKey);
 		}
 
 		logger.logTrace("loadNouns: Completed loading nouns");

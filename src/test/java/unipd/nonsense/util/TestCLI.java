@@ -6,6 +6,8 @@ import unipd.nonsense.model.Noun;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Verb;
 import unipd.nonsense.model.Template;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
 
 import java.io.PrintWriter;
 import java.io.InputStream;
@@ -212,7 +214,7 @@ class TestCLI
 		when(mockProcessor.generateWithNumber(any())).thenReturn(generatedSentence);
 
 		assertTrue(cli.inputCatcher());
-		verify(mockProcessor).generateWithNumber(Noun.Number.SINGULAR);
+		verify(mockProcessor).generateWithNumber(Number.SINGULAR);
 		verify(mockPrintWriter).println(contains(generatedSentence));
 	}
 
@@ -402,7 +404,7 @@ class TestCLI
 		when(mockProcessor.generateWithTense(any())).thenReturn(generatedSentence);
 
 		assertTrue(cli.inputCatcher());
-		verify(mockProcessor).generateWithTense(Verb.Tense.FUTURE);
+		verify(mockProcessor).generateWithTense(Tense.FUTURE);
 		verify(mockPrintWriter).println(contains(generatedSentence));
 	}
 
@@ -419,7 +421,7 @@ class TestCLI
 		when(mockProcessor.generateWithBoth(any(), any())).thenReturn(generatedSentence);
 
 		assertTrue(cli.inputCatcher());
-		verify(mockProcessor).generateWithBoth(Noun.Number.PLURAL, Verb.Tense.PAST);
+		verify(mockProcessor).generateWithBoth(Number.PLURAL, Tense.PAST);
 		verify(mockPrintWriter).println(contains(generatedSentence));
 	}
 
@@ -575,6 +577,7 @@ class TestCLI
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("verb")
 			.thenReturn("past")
+			.thenReturn("plural")
 			.thenReturn("ran")
 			.thenReturn("");
 
@@ -598,6 +601,7 @@ class TestCLI
 			.thenReturn("fast")
 			.thenReturn("verb")
 			.thenReturn("present")
+			.thenReturn("plural")
 			.thenReturn("run")
 			.thenReturn("");
 

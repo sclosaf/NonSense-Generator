@@ -1,19 +1,40 @@
 {
-	"pastVerbs":
+	"pastSingularVerbs":
 	[
 		"tested",
 		"climbed",
 		"jumped"
 	],
 
-	"presentVerbs":
+	"pastPluralVerbs":
+	[
+		"tested",
+		"climbed",
+		"jumped"
+	],
+
+	"presentSingularVerbs":
+	[
+		"tests",
+		"climbs",
+		"jumps"
+	],
+
+	"presentPluralVerbs":
 	[
 		"test",
 		"climb",
 		"jump"
 	],
 
-	"futureVerbs":
+	"futureSingularVerbs":
+	[
+		"will test",
+		"will climb",
+		"will jump"
+	],
+
+	"futurePluralVerbs":
 	[
 		"will test",
 		"will climb",

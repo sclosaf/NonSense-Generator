@@ -4,10 +4,10 @@ import unipd.nonsense.util.CommandProcessor;
 import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
+import unipd.nonsense.model.Tense;
 import unipd.nonsense.model.Template;
 
 import unipd.nonsense.exceptions.MissingInternetConnectionException;
@@ -1453,6 +1453,28 @@ public class CLI
 					logger.logTrace("extendHandler: Selected verb tense: future");
 				}
 
+				String textNumber = validateInput("Enter the number for the verb: ", NUMBER_OPTIONS, false);
+				logger.logDebug("extendHandler: Received verb number: " + (textNumber.isEmpty() ? "<empty>" : textNumber));
+
+				if(textNumber.isEmpty())
+				{
+					logger.logWarn("entendHandler: Operation cancelled due to invalid input");
+					logger.logTrace("extendHandler: Completed due to cancellation");
+					return;
+				}
+
+				Number number;
+
+				if(textNumber.equals("singular") || textNumber.equals("s"))
+				{
+					number = Number.SINGULAR;
+					logger.logTrace("extendHandler: Selected verb number: singular");
+				}
+				else
+				{
+					number = Number.PLURAL;
+					logger.logTrace("extendHandler: Selected verb number: plural");
+				}
 				printWhite("Insert the new verb:", true);
 
 				String text = new String();
@@ -1481,7 +1503,7 @@ public class CLI
 					}
 				}
 
-				verbList.add(new Verb(text, tense));
+				verbList.add(new Verb(text, number, tense));
 				logger.logDebug("extendHandler: Added verb: " + text + " (" + tense.name().toLowerCase() + ")");
 			}
 

@@ -1,7 +1,7 @@
 package unipd.nonsense.generator;
 
 import unipd.nonsense.model.Template;
-import unipd.nonsense.model.Template.TemplateType;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.exceptions.InvalidListException;
 import unipd.nonsense.exceptions.InvalidJsonStateException;
 import unipd.nonsense.exceptions.InvalidTemplateException;
@@ -123,15 +123,15 @@ class TestRandomTemplateGenerator
 		Template template = generator.getRandomTemplate();
 		assertNotNull(template, "Should return a valid template");
 		assertNotNull(template.getPattern(), "Template should have a pattern");
-		assertNotNull(template.getType(), "Template should have a type");
+		assertNotNull(template.getNumber(), "Template should have a number");
 	}
 
 	@Test
 	@DisplayName("Test success of getRandomTemplate with SINGULAR type")
 	void testGetRandomTemplate_SingularSuccess()
 	{
-		Template template = generator.getRandomTemplate(TemplateType.SINGULAR);
-		assertEquals(TemplateType.SINGULAR, template.getType(), "Template type should be SINGULAR");
+		Template template = generator.getRandomTemplate(Number.SINGULAR);
+		assertEquals(Number.SINGULAR, template.getNumber(), "Template type should be SINGULAR");
 		assertTrue(template.getPattern().contains("[noun]"), "Template should contain a noun placeholder");
 	}
 
@@ -139,8 +139,8 @@ class TestRandomTemplateGenerator
 	@DisplayName("Test success of getRandomTemplate with PLURAL type")
 	void testGetRandomTemplate_PluralSuccess()
 	{
-		Template template = generator.getRandomTemplate(TemplateType.PLURAL);
-		assertEquals(TemplateType.PLURAL, template.getType(), "Template type should be PLURAL");
+		Template template = generator.getRandomTemplate(Number.PLURAL);
+		assertEquals(Number.PLURAL, template.getNumber(), "Template type should be PLURAL");
 		assertTrue(template.getPattern().contains("[noun]"), "Template should contain a noun placeholder");
 	}
 
@@ -161,9 +161,9 @@ class TestRandomTemplateGenerator
 
 		assertThrows(InvalidListException.class, () -> generator.getRandomTemplate(),
 			"Should throw InvalidListException when no templates available");
-		assertThrows(InvalidListException.class, () -> generator.getRandomTemplate(TemplateType.SINGULAR),
+		assertThrows(InvalidListException.class, () -> generator.getRandomTemplate(Number.SINGULAR),
 			"Should throw InvalidListException when no singular templates available");
-		assertThrows(InvalidListException.class, () -> generator.getRandomTemplate(TemplateType.PLURAL),
+		assertThrows(InvalidListException.class, () -> generator.getRandomTemplate(Number.PLURAL),
 			"Should throw InvalidListException when no plural templates available");
 	}
 
@@ -188,15 +188,15 @@ class TestRandomTemplateGenerator
 		templatesField.setAccessible(true);
 
 		@SuppressWarnings("unchecked")
-		var templatesMap = (Map<TemplateType, List<Template>>) templatesField.get(generator);
+		var templatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
 
 		JsonObject testTemplates = JsonParser.parseString(Files.readString(testFile.toPath())).getAsJsonObject();
 		int expectedSingularCount = testTemplates.getAsJsonArray("singularTemplates").size();
 		int expectedPluralCount = testTemplates.getAsJsonArray("pluralTemplates").size();
 
-		assertEquals(expectedSingularCount, templatesMap.get(TemplateType.SINGULAR).size(),
+		assertEquals(expectedSingularCount, templatesMap.get(Number.SINGULAR).size(),
 			"Number of singular templates should match the JSON file");
-		assertEquals(expectedPluralCount, templatesMap.get(TemplateType.PLURAL).size(),
+		assertEquals(expectedPluralCount, templatesMap.get(Number.PLURAL).size(),
 			"Number of plural templates should match the JSON file");
 	}
 
@@ -219,14 +219,14 @@ class TestRandomTemplateGenerator
 	@DisplayName("Test templates properties are preserved")
 	void testTemplatePropertiesPreserved()
 	{
-		Template singularTemplate = generator.getRandomTemplate(TemplateType.SINGULAR);
-		Template pluralTemplate = generator.getRandomTemplate(TemplateType.PLURAL);
+		Template singularTemplate = generator.getRandomTemplate(Number.SINGULAR);
+		Template pluralTemplate = generator.getRandomTemplate(Number.PLURAL);
 
 		assertTrue(singularTemplate.getPattern().contains("[noun]"), "Singular template should contain [noun] placeholder");
 		assertTrue(pluralTemplate.getPattern().contains("[noun]"), "Plural template should contain [noun] placeholder");
 
-		assertEquals(TemplateType.SINGULAR, singularTemplate.getType(), "Template type should be SINGULAR");
-		assertEquals(TemplateType.PLURAL, pluralTemplate.getType(), "Template type should be PLURAL");
+		assertEquals(Number.SINGULAR, singularTemplate.getNumber(), "Template type should be SINGULAR");
+		assertEquals(Number.PLURAL, pluralTemplate.getNumber(), "Template type should be PLURAL");
 	}
 
 	@Test
@@ -237,8 +237,8 @@ class TestRandomTemplateGenerator
 		templatesField.setAccessible(true);
 
 		@SuppressWarnings("unchecked")
-		var initialTemplatesMap = (Map<TemplateType, List<Template>>) templatesField.get(generator);
-		int initialSingularCount = initialTemplatesMap.get(TemplateType.SINGULAR).size();
+		var initialTemplatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
+		int initialSingularCount = initialTemplatesMap.get(Number.SINGULAR).size();
 
 		JsonObject updatedJson = new JsonObject();
 		JsonArray updatedSingularTemplates = new JsonArray();
@@ -265,8 +265,8 @@ class TestRandomTemplateGenerator
 		generator.onJsonUpdate();
 
 		@SuppressWarnings("unchecked")
-		var updatedTemplatesMap = (Map<TemplateType, List<Template>>) templatesField.get(generator);
-		int updatedSingularCount = updatedTemplatesMap.get(TemplateType.SINGULAR).size();
+		var updatedTemplatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
+		int updatedSingularCount = updatedTemplatesMap.get(Number.SINGULAR).size();
 
 		assertEquals(5, updatedSingularCount, "Number of singular templates should be updated to 5");
 		assertTrue(updatedSingularCount > initialSingularCount, "Template count should increase after update");
@@ -300,10 +300,10 @@ class TestRandomTemplateGenerator
 
 		RandomTemplateGenerator partialGenerator = new RandomTemplateGenerator(testFilePath);
 
-		Template singularTemplate = partialGenerator.getRandomTemplate(TemplateType.SINGULAR);
+		Template singularTemplate = partialGenerator.getRandomTemplate(Number.SINGULAR);
 		assertNotNull(singularTemplate, "Should return a singular template");
 
-		assertThrows(InvalidListException.class, () -> partialGenerator.getRandomTemplate(TemplateType.PLURAL),
+		assertThrows(InvalidListException.class, () -> partialGenerator.getRandomTemplate(Number.PLURAL),
 			"Should throw InvalidListException when plural templates list is empty");
 
 		partialGenerator.cleanup();
@@ -323,7 +323,7 @@ class TestRandomTemplateGenerator
 		try
 		{
 			generator.getRandomTemplate();
-			generator.getRandomTemplate(TemplateType.SINGULAR);
+			generator.getRandomTemplate(Number.SINGULAR);
 			generator.cleanup();
 
 			verify(mockLogger, atLeastOnce()).logTrace(anyString());
@@ -402,311 +402,330 @@ class TestRandomTemplateGenerator
 		}
 
 		RandomTemplateGenerator longTemplateGenerator = new RandomTemplateGenerator(testFilePath);
-		Template template = longTemplateGenerator.getRandomTemplate(TemplateType.SINGULAR);
+		Template template = longTemplateGenerator.getRandomTemplate(Number.SINGULAR);
 
 		assertEquals(longTemplate, template.getPattern());
 		longTemplateGenerator.cleanup();
 	}
 
 	@Test
-    @DisplayName("Test constructor with invalid file path")
-    void testConstructorWithInvalidFilePath()
-    {
-        String nonExistentPath = "non/existent/path/templates.json";
-        assertThrows(IOException.class, () -> new RandomTemplateGenerator(nonExistentPath),
-            "Should throw IOException when file path does not exist");
-    }
+	@DisplayName("Test constructor with invalid file path")
+	void testConstructorWithInvalidFilePath()
+	{
+		String nonExistentPath = "non/existent/path/templates.json";
+		assertThrows(IOException.class, () -> new RandomTemplateGenerator(nonExistentPath),
+			"Should throw IOException when file path does not exist");
+	}
 
-    @Test
-    @DisplayName("Test template retrieval with mocked Random")
-    void testTemplateRetrievalWithMockedRandom() throws Exception
-    {
-        Field randomField = RandomTemplateGenerator.class.getDeclaredField("random");
-        randomField.setAccessible(true);
-        
-        Random originalRandom = (Random) randomField.get(null);
-        
-        try {
-            Random mockRandom = mock(Random.class);
-            when(mockRandom.nextInt(anyInt())).thenReturn(0);
-            
-            randomField.set(null, mockRandom);
-            
-            Template firstSingularTemplate = generator.getRandomTemplate(TemplateType.SINGULAR);
-            Template secondSingularTemplate = generator.getRandomTemplate(TemplateType.SINGULAR);
-            assertEquals(firstSingularTemplate.getPattern(), secondSingularTemplate.getPattern(), 
-                "With mocked Random, templates should be identical");
-            
-            Template firstPluralTemplate = generator.getRandomTemplate(TemplateType.PLURAL);
-            Template secondPluralTemplate = generator.getRandomTemplate(TemplateType.PLURAL);
-            assertEquals(firstPluralTemplate.getPattern(), secondPluralTemplate.getPattern(), 
-                "With mocked Random, templates should be identical");
-            
-            when(mockRandom.nextInt(eq(TemplateType.values().length))).thenReturn(0);
-            Template randomTypeTemplate = generator.getRandomTemplate();
-            assertEquals(TemplateType.SINGULAR, randomTypeTemplate.getType(), 
-                "With mocked Random, type should be SINGULAR");
-        } finally {
-            randomField.set(null, originalRandom);
-        }
-    }
+	@Test
+	@DisplayName("Test template retrieval with mocked Random")
+	void testTemplateRetrievalWithMockedRandom() throws Exception
+	{
+		Field randomField = RandomTemplateGenerator.class.getDeclaredField("random");
+		randomField.setAccessible(true);
 
-    @Test
-    @DisplayName("Test behavior with large number of templates")
-    void testLargeNumberOfTemplates() throws Exception
-    {
-        JsonObject largeTemplatesJson = new JsonObject();
-        JsonArray largeSingularArray = new JsonArray();
-        JsonArray largePluralArray = new JsonArray();
-        
-        for (int i = 0; i < 1000; i++) {
-            largeSingularArray.add("Singular template " + i + " with [noun]");
-        }
-        
-        for (int i = 0; i < 1000; i++) {
-            largePluralArray.add("Plural templates " + i + " with [noun]");
-        }
-        
-        largeTemplatesJson.add("singularTemplates", largeSingularArray);
-        largeTemplatesJson.add("pluralTemplates", largePluralArray);
-        
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(largeTemplatesJson.toString());
-        }
-        
-        RandomTemplateGenerator largeGenerator = new RandomTemplateGenerator(testFilePath);
-        
-        long startTime = System.currentTimeMillis();
-        for (int i = 0; i < 100; i++) {
-            Template template = largeGenerator.getRandomTemplate();
-            assertNotNull(template, "Template should not be null");
-        }
-        long endTime = System.currentTimeMillis();
-        
-        assertTrue((endTime - startTime) < 1000, 
-            "Template generation with large file should be efficient (< 1 second for 100 operations)");
-        
-        Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
-        templatesField.setAccessible(true);
-        
-        @SuppressWarnings("unchecked")
-        Map<TemplateType, List<Template>> templatesMap = (Map<TemplateType, List<Template>>) templatesField.get(largeGenerator);
-        
-        assertEquals(1000, templatesMap.get(TemplateType.SINGULAR).size(), 
-            "Should have loaded 1000 singular templates");
-        assertEquals(1000, templatesMap.get(TemplateType.PLURAL).size(), 
-            "Should have loaded 1000 plural templates");
-        
-        largeGenerator.cleanup();
-    }
+		Random originalRandom = (Random) randomField.get(null);
 
-    @Test
-    @DisplayName("Test invalid templates handling")
-    void testInvalidTemplatesHandling() throws Exception
-    {
-        JsonObject invalidTemplatesJson = new JsonObject();
-        JsonArray invalidSingularArray = new JsonArray();
-        JsonArray validPluralArray = new JsonArray();
-        
-        invalidSingularArray.add("Invalid template without placeholder");
-        invalidSingularArray.add("Another invalid template");
-        invalidSingularArray.add("This one is valid with [noun]");
-        
-        validPluralArray.add("Valid plural template with [noun]");
-        
-        invalidTemplatesJson.add("singularTemplates", invalidSingularArray);
-        invalidTemplatesJson.add("pluralTemplates", validPluralArray);
-        
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(invalidTemplatesJson.toString());
-        }
-        
-        RandomTemplateGenerator invalidGenerator = new RandomTemplateGenerator(testFilePath);
-        
-        Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
-        templatesField.setAccessible(true);
-        
-        @SuppressWarnings("unchecked")
-        Map<TemplateType, List<Template>> templatesMap = (Map<TemplateType, List<Template>>) templatesField.get(invalidGenerator);
-        
-        assertEquals(3, templatesMap.get(TemplateType.SINGULAR).size(), 
-            "Should have loaded all templates regardless of validity");
-        
-        boolean foundInvalidTemplate = false;
-        for (int i = 0; i < 30; i++) {
-            Template template = invalidGenerator.getRandomTemplate(TemplateType.SINGULAR);
-            if (!template.getPattern().contains("[noun]")) {
-                foundInvalidTemplate = true;
-                break;
-            }
-        }
-        
-        assertTrue(foundInvalidTemplate, 
-            "Should be able to return templates without [noun] placeholder");
-        
-        invalidGenerator.cleanup();
-    }
+		try
+		{
+			Random mockRandom = mock(Random.class);
+			when(mockRandom.nextInt(anyInt())).thenReturn(0);
 
-    @Test
-    @DisplayName("Test recovery after JSON file corruption during update")
-    void testRecoveryAfterJsonCorruption() throws Exception
-    {
-        Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
-        templatesField.setAccessible(true);
-        
-        @SuppressWarnings("unchecked")
-        Map<TemplateType, List<Template>> initialTemplatesMap = (Map<TemplateType, List<Template>>) templatesField.get(generator);
-        int initialSingularCount = initialTemplatesMap.get(TemplateType.SINGULAR).size();
-        
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write("{ corrupted json content");
-        }
-        
-        assertThrows(InvalidJsonStateException.class, () -> generator.onJsonUpdate(), 
-            "Should throw InvalidJsonStateException when JSON is corrupted during update");
-        
-        Template template = generator.getRandomTemplate(TemplateType.SINGULAR);
-        assertNotNull(template, "Should still be able to generate templates after failed update");
-        
-        JsonObject fixedJson = createDefaultTestTemplates();
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(fixedJson.toString());
-        }
-        
-        generator.onJsonUpdate();
-        
-        @SuppressWarnings("unchecked")
-        Map<TemplateType, List<Template>> recoveredTemplatesMap = (Map<TemplateType, List<Template>>) templatesField.get(generator);
-        int recoveredSingularCount = recoveredTemplatesMap.get(TemplateType.SINGULAR).size();
-        
-        assertEquals(initialSingularCount, recoveredSingularCount, 
-            "Should recover and have the same number of templates after fixing JSON");
-    }
+			randomField.set(null, mockRandom);
+			Template firstSingularTemplate = generator.getRandomTemplate(Number.SINGULAR);
+			Template secondSingularTemplate = generator.getRandomTemplate(Number.SINGULAR);
+			assertEquals(firstSingularTemplate.getPattern(), secondSingularTemplate.getPattern(),
+				"With mocked Random, templates should be identical");
 
-    @Test
-    @DisplayName("Test thread safety of template retrieval")
-    void testThreadSafetyOfTemplateRetrieval() throws Exception
-    {
-        int threadCount = 20;
-        int iterationsPerThread = 100;
-        CountDownLatch startLatch = new CountDownLatch(1);
-        CountDownLatch doneLatch = new CountDownLatch(threadCount);
-        ExecutorService executor = Executors.newFixedThreadPool(threadCount);
-        
-        List<Exception> exceptions = new ArrayList<>();
-        
-        for (int i = 0; i < threadCount; i++) {
-            executor.submit(() -> {
-                try {
-                    startLatch.await();
-                    
-                    for (int j = 0; j < iterationsPerThread; j++) {
-                        Template template = generator.getRandomTemplate();
-                        assertNotNull(template);
-                        assertNotNull(template.getPattern());
-                        assertNotNull(template.getType());
-                    }
-                } catch (Exception e) {
-                    synchronized (exceptions) {
-                        exceptions.add(e);
-                    }
-                } finally {
-                    doneLatch.countDown();
-                }
-            });
-        }
-        
-        startLatch.countDown();
-        
-        boolean allDone = doneLatch.await(30, java.util.concurrent.TimeUnit.SECONDS);
-        executor.shutdown();
-        
-        assertTrue(allDone, "All threads should complete in time");
-        assertTrue(exceptions.isEmpty(), "No exceptions should be thrown during concurrent access");
-    }
+			Template firstPluralTemplate = generator.getRandomTemplate(Number.PLURAL);
+			Template secondPluralTemplate = generator.getRandomTemplate(Number.PLURAL);
+			assertEquals(firstPluralTemplate.getPattern(), secondPluralTemplate.getPattern(),
+				"With mocked Random, templates should be identical");
 
-    @Test
-    @DisplayName("Test with malformed template entries (expecting InvalidTemplateException)")
-    void testWithMalformedTemplateEntries() throws Exception
-    {
-        JsonObject malformedJson = new JsonObject();
-        JsonArray malformedSingularArray = new JsonArray();
-        JsonArray malformedPluralArray = new JsonArray();
+			when(mockRandom.nextInt(eq(Number.values().length))).thenReturn(0);
+			Template randomTemplate = generator.getRandomTemplate();
+			assertEquals(Number.SINGULAR, randomTemplate.getNumber(),
+				"With mocked Random, type should be SINGULAR");
+		}
+		finally
+		{
+			randomField.set(null, originalRandom);
+		}
+	}
 
-        malformedSingularArray.add("Valid template [noun]");
-        malformedSingularArray.add("");
-        JsonObject objElement = new JsonObject();
-        objElement.addProperty("text", "Object as element");
-        malformedSingularArray.add(objElement);
+	@Test
+	@DisplayName("Test behavior with large number of templates")
+	void testLargeNumberOfTemplates() throws Exception
+	{
+		JsonObject largeTemplatesJson = new JsonObject();
+		JsonArray largeSingularArray = new JsonArray();
+		JsonArray largePluralArray = new JsonArray();
 
-        malformedPluralArray.add("Valid plural template [noun]");
+		for (int i = 0; i < 1000; i++)
+			largeSingularArray.add("Singular template " + i + " with [noun]");
 
-        malformedJson.add("singularTemplates", malformedSingularArray);
-        malformedJson.add("pluralTemplates", malformedPluralArray);
+		for (int i = 0; i < 1000; i++)
+			largePluralArray.add("Plural templates " + i + " with [noun]");
 
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(malformedJson.toString());
-        }
+		largeTemplatesJson.add("singularTemplates", largeSingularArray);
+		largeTemplatesJson.add("pluralTemplates", largePluralArray);
 
-        Exception thrownException = assertThrows(InvalidTemplateException.class, () -> {
-            new RandomTemplateGenerator(testFilePath);
-        }, "Expected RandomTemplateGenerator constructor to throw InvalidTemplateException " +
-           "when a JsonObject is provided as a template string.");
-    }
+		try (FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(largeTemplatesJson.toString());
+		}
 
-    @Test
-    @DisplayName("Test constructor with temp file")
-    void testConstructorWithTempFile() throws Exception
-    {
-        File tempFile = File.createTempFile("tempTemplates", ".json");
-        String tempFilePath = tempFile.getAbsolutePath();
-        
-        try (FileWriter writer = new FileWriter(tempFile)) {
-            writer.write(createDefaultTestTemplates().toString());
-        }
-        
-        RandomTemplateGenerator tempGenerator = new RandomTemplateGenerator(tempFilePath);
-        
-        Template template = tempGenerator.getRandomTemplate();
-        assertNotNull(template, "Should generate template from temporary file");
-        
-        boolean deleted = tempFile.delete();
-        
-        Template templateAfterDeletion = tempGenerator.getRandomTemplate();
-        assertNotNull(templateAfterDeletion, "Should still generate template after file deletion");
-        
-        tempGenerator.cleanup();
-    }
+		RandomTemplateGenerator largeGenerator = new RandomTemplateGenerator(testFilePath);
 
-    @Test
-    @DisplayName("Test with empty JSON file")
-    void testWithEmptyJsonFile() throws Exception
-    {
-        JsonObject emptyJson = new JsonObject();
-        
-        try (FileWriter writer = new FileWriter(testFile)) {
-            writer.write(emptyJson.toString());
-        }
-        
-        assertThrows(Exception.class, () -> new RandomTemplateGenerator(testFilePath),
-            "Should throw exception when JSON file doesn't contain required keys");
-    }
+		long startTime = System.currentTimeMillis();
+		for (int i = 0; i < 100; i++)
+		{
+			Template template = largeGenerator.getRandomTemplate();
+			assertNotNull(template, "Template should not be null");
+		}
 
-    @Test
-    @DisplayName("Test performance of repeated template generations")
-    void testGenerationPerformance()
-    {
-        int iterations = 10000;
-        long startTime = System.currentTimeMillis();
-        
-        for (int i = 0; i < iterations; i++) {
-            generator.getRandomTemplate();
-        }
-        
-        long endTime = System.currentTimeMillis();
-        long duration = endTime - startTime;
-        
-        assertTrue(duration < 2000, 
-            "Should be able to generate 10000 templates in less than 2 seconds (took " + duration + "ms)");
-    }
+		long endTime = System.currentTimeMillis();
+
+		assertTrue((endTime - startTime) < 1000,
+			"Template generation with large file should be efficient (< 1 second for 100 operations)");
+
+		Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
+		templatesField.setAccessible(true);
+
+		@SuppressWarnings("unchecked")
+		Map<Number, List<Template>> templatesMap = (Map<Number, List<Template>>) templatesField.get(largeGenerator);
+
+		assertEquals(1000, templatesMap.get(Number.SINGULAR).size(),
+			"Should have loaded 1000 singular templates");
+		assertEquals(1000, templatesMap.get(Number.PLURAL).size(),
+			"Should have loaded 1000 plural templates");
+
+		largeGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test invalid templates handling")
+	void testInvalidTemplatesHandling() throws Exception
+	{
+		JsonObject invalidTemplatesJson = new JsonObject();
+		JsonArray invalidSingularArray = new JsonArray();
+		JsonArray validPluralArray = new JsonArray();
+
+		invalidSingularArray.add("Invalid template without placeholder");
+		invalidSingularArray.add("Another invalid template");
+		invalidSingularArray.add("This one is valid with [noun]");
+
+		validPluralArray.add("Valid plural template with [noun]");
+
+		invalidTemplatesJson.add("singularTemplates", invalidSingularArray);
+		invalidTemplatesJson.add("pluralTemplates", validPluralArray);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(invalidTemplatesJson.toString());
+		}
+
+		RandomTemplateGenerator invalidGenerator = new RandomTemplateGenerator(testFilePath);
+
+		Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
+		templatesField.setAccessible(true);
+
+		@SuppressWarnings("unchecked")
+		Map<Number, List<Template>> templatesMap = (Map<Number, List<Template>>) templatesField.get(invalidGenerator);
+
+		assertEquals(3, templatesMap.get(Number.SINGULAR).size(),
+			"Should have loaded all templates regardless of validity");
+
+		boolean foundInvalidTemplate = false;
+		for (int i = 0; i < 30; i++)
+		{
+			Template template = invalidGenerator.getRandomTemplate(Number.SINGULAR);
+
+			if(!template.getPattern().contains("[noun]"))
+			{
+				foundInvalidTemplate = true;
+				break;
+			}
+		}
+
+		assertTrue(foundInvalidTemplate, "Should be able to return templates without [noun] placeholder");
+
+		invalidGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test recovery after JSON file corruption during update")
+	void testRecoveryAfterJsonCorruption() throws Exception
+	{
+		Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
+		templatesField.setAccessible(true);
+
+		@SuppressWarnings("unchecked")
+		Map<Number, List<Template>> initialTemplatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
+		int initialSingularCount = initialTemplatesMap.get(Number.SINGULAR).size();
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write("{ corrupted json content");
+		}
+
+		assertThrows(InvalidJsonStateException.class, () -> generator.onJsonUpdate(),
+			"Should throw InvalidJsonStateException when JSON is corrupted during update");
+
+		Template template = generator.getRandomTemplate(Number.SINGULAR);
+		assertNotNull(template, "Should still be able to generate templates after failed update");
+
+		JsonObject fixedJson = createDefaultTestTemplates();
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(fixedJson.toString());
+		}
+
+		generator.onJsonUpdate();
+
+		@SuppressWarnings("unchecked")
+		Map<Number, List<Template>> recoveredTemplatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
+		int recoveredSingularCount = recoveredTemplatesMap.get(Number.SINGULAR).size();
+
+		assertEquals(initialSingularCount, recoveredSingularCount,
+			"Should recover and have the same number of templates after fixing JSON");
+	}
+
+	@Test
+	@DisplayName("Test thread safety of template retrieval")
+	void testThreadSafetyOfTemplateRetrieval() throws Exception
+	{
+		int threadCount = 20;
+		int iterationsPerThread = 100;
+		CountDownLatch startLatch = new CountDownLatch(1);
+		CountDownLatch doneLatch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+		List<Exception> exceptions = new ArrayList<>();
+
+		for (int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+				{
+					try
+					{
+						startLatch.await();
+
+						for(int j = 0; j < iterationsPerThread; j++)
+						{
+							Template template = generator.getRandomTemplate();
+							assertNotNull(template);
+							assertNotNull(template.getPattern());
+							assertNotNull(template.getNumber());
+						}
+					}
+					catch(Exception e)
+					{
+							synchronized(exceptions)
+							{
+								exceptions.add(e);
+							}
+					}
+					finally
+					{
+						doneLatch.countDown();
+					}
+				});
+		}
+
+		startLatch.countDown();
+
+		boolean allDone = doneLatch.await(30, java.util.concurrent.TimeUnit.SECONDS);
+		executor.shutdown();
+
+		assertTrue(allDone, "All threads should complete in time");
+		assertTrue(exceptions.isEmpty(), "No exceptions should be thrown during concurrent access");
+	}
+
+	@Test
+	@DisplayName("Test with malformed template entries (expecting InvalidTemplateException)")
+	void testWithMalformedTemplateEntries() throws Exception
+	{
+		JsonObject malformedJson = new JsonObject();
+		JsonArray malformedSingularArray = new JsonArray();
+		JsonArray malformedPluralArray = new JsonArray();
+
+		malformedSingularArray.add("Valid template [noun]");
+		malformedSingularArray.add("");
+		JsonObject objElement = new JsonObject();
+		objElement.addProperty("text", "Object as element");
+		malformedSingularArray.add(objElement);
+
+		malformedPluralArray.add("Valid plural template [noun]");
+
+		malformedJson.add("singularTemplates", malformedSingularArray);
+		malformedJson.add("pluralTemplates", malformedPluralArray);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(malformedJson.toString());
+		}
+
+		Exception thrownException = assertThrows(InvalidTemplateException.class, () ->
+			{
+				new RandomTemplateGenerator(testFilePath);
+			}, "Expected RandomTemplateGenerator constructor to throw InvalidTemplateException " +
+				"when a JsonObject is provided as a template string.");
+	}
+
+	@Test
+	@DisplayName("Test constructor with temp file")
+	void testConstructorWithTempFile() throws Exception
+	{
+		File tempFile = File.createTempFile("tempTemplates", ".json");
+		String tempFilePath = tempFile.getAbsolutePath();
+
+		try(FileWriter writer = new FileWriter(tempFile))
+		{
+			writer.write(createDefaultTestTemplates().toString());
+		}
+
+		RandomTemplateGenerator tempGenerator = new RandomTemplateGenerator(tempFilePath);
+
+		Template template = tempGenerator.getRandomTemplate();
+		assertNotNull(template, "Should generate template from temporary file");
+
+		boolean deleted = tempFile.delete();
+
+		Template templateAfterDeletion = tempGenerator.getRandomTemplate();
+		assertNotNull(templateAfterDeletion, "Should still generate template after file deletion");
+
+		tempGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test with empty JSON file")
+	void testWithEmptyJsonFile() throws Exception
+	{
+		JsonObject emptyJson = new JsonObject();
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(emptyJson.toString());
+		}
+
+		assertThrows(Exception.class, () -> new RandomTemplateGenerator(testFilePath),
+			"Should throw exception when JSON file doesn't contain required keys");
+	}
+
+	@Test
+	@DisplayName("Test performance of repeated template generations")
+	void testGenerationPerformance()
+	{
+		int iterations = 10000;
+		long startTime = System.currentTimeMillis();
+
+		for(int i = 0; i < iterations; i++)
+			generator.getRandomTemplate();
+
+		long endTime = System.currentTimeMillis();
+		long duration = endTime - startTime;
+
+		assertTrue(duration < 2000, "Should be able to generate 10000 templates in less than 2 seconds (took " + duration + "ms)");
+	}
 }

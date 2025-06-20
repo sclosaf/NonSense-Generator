@@ -11,10 +11,10 @@ import unipd.nonsense.analyzer.ToxicityValidator;
 import unipd.nonsense.generator.SentenceGenerator;
 
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
+import unipd.nonsense.model.Tense;
 import unipd.nonsense.model.Template;
 
 import unipd.nonsense.exceptions.SentenceNotCachedException;
@@ -106,8 +106,9 @@ public class CommandProcessor implements AutoCloseable
 			else if(posTag.equals("VERB"))
 			{
 				PartOfSpeech.Tense tense = token.getPartOfSpeech().getTense();
-				if(tense == PartOfSpeech.Tense.PAST || tense == PartOfSpeech.Tense.PRESENT || tense == PartOfSpeech.Tense.FUTURE)
-					verbList.add(new Verb(token.getText(), fromPartOfSpeechTenseToTense(tense)));
+				PartOfSpeech.Number number = token.getPartOfSpeech().getNumber();
+				if((tense == PartOfSpeech.Tense.PAST || tense == PartOfSpeech.Tense.PRESENT || tense == PartOfSpeech.Tense.FUTURE) && (number == PartOfSpeech.Number.SINGULAR || number == PartOfSpeech.Number.PLURAL))
+					verbList.add(new Verb(token.getText(), fromPartOfSpeechNumberToNumber(number), fromPartOfSpeechTenseToTense(tense)));
 			}
 		}
 
@@ -121,12 +122,12 @@ public class CommandProcessor implements AutoCloseable
 	}
 
 
-	public String generateWithNumber(Number num)
+	public String generateWithNumber(Number number)
 	{
 		logger.logTrace("generateWithNumber: Generating sentence with number");
-		String result = generator.generateSentenceWithNumber(num).getPattern();
+		String result = generator.generateSentenceWithNumber(number).getPattern();
 		cachedString = result;
-		logger.logDebug("generateWithNumber: Generated sentence with number " + num + ": " + result);
+		logger.logDebug("generateWithNumber: Generated sentence with number " + number + ": " + result);
 
 		return result;
 	}
@@ -141,12 +142,12 @@ public class CommandProcessor implements AutoCloseable
 		return result;
 	}
 
-	public String generateWithBoth(Number num, Tense tense)
+	public String generateWithBoth(Number number, Tense tense)
 	{
 		logger.logTrace("generateWithBoth: Generating sentence with number and tense");
-		String result = generator.generateSentenceWithTenseAndNumber(tense, num).getPattern();
+		String result = generator.generateSentenceWithTenseAndNumber(tense, number).getPattern();
 		cachedString = result;
-		logger.logDebug("generateWithBoth: Generated sentence with number " + num + " and tense " + tense + ": " + result);
+		logger.logDebug("generateWithBoth: Generated sentence with number " + number + " and tense " + tense + ": " + result);
 
 		return result;
 
@@ -178,13 +179,13 @@ public class CommandProcessor implements AutoCloseable
 		return templates;
 	}
 
-	private Number fromPartOfSpeechNumberToNumber(PartOfSpeech.Number num)
+	private Number fromPartOfSpeechNumberToNumber(PartOfSpeech.Number number)
 	{
 		logger.logTrace("fromPartOfSpeechNumberToNumber: Converting number");
 
 		try
 		{
-			switch(num)
+			switch(number)
 			{
 				case SINGULAR: return Number.SINGULAR;
 				case PLURAL: return Number.PLURAL;

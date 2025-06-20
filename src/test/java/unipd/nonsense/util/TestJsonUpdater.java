@@ -1,9 +1,11 @@
 package unipd.nonsense.util;
 
-import unipd.nonsense.model.*;
-import unipd.nonsense.model.Noun.Number;
-import unipd.nonsense.model.Verb.Tense;
-import unipd.nonsense.model.Template.TemplateType;
+import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Adjective;
+import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Template;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
 import unipd.nonsense.exceptions.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -65,15 +67,15 @@ class TestJsonUpdater
 	@DisplayName("Test verb loading with valid tense")
 	void testLoadVerbWithValidTense() throws IOException
 	{
-		JsonUpdater.loadVerb(TEST_VERB, Tense.PAST);
+		JsonUpdater.loadVerb(TEST_VERB, Tense.PAST, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb(TEST_VERB, Tense.PRESENT);
+		JsonUpdater.loadVerb(TEST_VERB, Tense.PRESENT, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb(TEST_VERB, Tense.FUTURE);
+		JsonUpdater.loadVerb(TEST_VERB, Tense.FUTURE, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 	}
 
@@ -82,7 +84,7 @@ class TestJsonUpdater
 	void testLoadVerbWithInvalidTense()
 	{
 		assertThrows(InvalidTenseException.class, () -> {
-			JsonUpdater.loadVerb(TEST_VERB, null);
+			JsonUpdater.loadVerb(TEST_VERB, null, null);
 		});
 	}
 
@@ -98,11 +100,11 @@ class TestJsonUpdater
 	@DisplayName("Test template loading with valid type")
 	void testLoadTemplateWithValidType() throws IOException
 	{
-		JsonUpdater.loadTemplate(TEST_TEMPLATE, TemplateType.SINGULAR);
+		JsonUpdater.loadTemplate(TEST_TEMPLATE, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 
 		observerNotified = false;
-		JsonUpdater.loadTemplate(TEST_TEMPLATE, TemplateType.PLURAL);
+		JsonUpdater.loadTemplate(TEST_TEMPLATE, Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 	}
 
@@ -120,9 +122,9 @@ class TestJsonUpdater
 	void testObjectBasedLoading() throws IOException
 	{
 		Noun noun = new Noun(TEST_NOUN, Number.SINGULAR);
-		Verb verb = new Verb(TEST_VERB, Tense.PRESENT);
+		Verb verb = new Verb(TEST_VERB, Number.SINGULAR, Tense.PRESENT);
 		Adjective adjective = new Adjective(TEST_ADJECTIVE);
-		Template template = new Template(TEST_TEMPLATE, TemplateType.SINGULAR);
+		Template template = new Template(TEST_TEMPLATE, Number.SINGULAR);
 
 		JsonUpdater.loadNoun(noun);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");

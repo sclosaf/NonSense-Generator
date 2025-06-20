@@ -1,16 +1,13 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.model.Number;
+
 import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 
 import unipd.nonsense.util.LoggerManager;
 
 public class Noun
 {
-	public static enum Number
-	{
-		SINGULAR, PLURAL
-	}
-
 	private final String noun;
 	private final Number number;
 	private static final LoggerManager logger = new LoggerManager(Noun.class);

@@ -1,5 +1,8 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Placeholder;
+
 import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import unipd.nonsense.util.LoggerManager;
@@ -10,24 +13,11 @@ import java.util.Random;
 
 public class Template
 {
-	public static enum TemplateType
-	{
-		SINGULAR,
-		PLURAL
-	}
-
-	public static enum Placeholder
-	{
-		NOUN,
-		VERB,
-		ADJECTIVE
-	}
-
 	private String pattern;
-	private final TemplateType type;
+	private final Number number;
 	private static final LoggerManager logger = new LoggerManager(Template.class);
 
-	public Template(String pattern, TemplateType type)
+	public Template(String pattern, Number number)
 	{
 		logger.logTrace("Creating Template instance");
 
@@ -38,9 +28,9 @@ public class Template
 		}
 
 		this.pattern = pattern;
-		this.type = type;
+		this.number = number;
 
-		logger.logDebug("Successfully created Template with pattern: " + pattern + " and type: " + type);
+		logger.logDebug("Successfully created Template with pattern: " + pattern + " and number: " + number);
 	}
 
 	public String getPattern()
@@ -49,10 +39,10 @@ public class Template
 		return pattern;
 	}
 
-	public TemplateType getType()
+	public Number getNumber()
 	{
-		logger.logTrace("getType: Returning type");
-		return type;
+		logger.logTrace("getNumber: Returning number");
+		return number;
 	}
 
 	public boolean containsPlaceholder(Placeholder placeholder)
@@ -140,7 +130,7 @@ public class Template
 		else
 			logger.logWarn("withReplacement: No placeholders found to replace");
 
-		return new Template(newPattern, this.type);
+		return new Template(newPattern, this.number);
 	}
 
 	@Override

@@ -1,22 +1,21 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+
 import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 
 import unipd.nonsense.util.LoggerManager;
 
 public class Verb
 {
-	public static enum Tense
-	{
-		PAST, PRESENT, FUTURE
-	}
-
 	private final String verb;
 	private final Tense tense;
+	private final Number number;
 
 	private static final LoggerManager logger = new LoggerManager(Verb.class);
 
-	public Verb(String verb, Tense tense)
+	public Verb(String verb, Number number, Tense tense)
 	{
 		logger.logTrace("Creating Verb instance");
 
@@ -28,8 +27,9 @@ public class Verb
 
 		this.verb = verb;
 		this.tense = tense;
+		this.number = number;
 
-		logger.logDebug("Successfully created Verb with value: " + verb + " and tense: " + tense);
+		logger.logDebug("Successfully created Verb with value: " + verb + ", number: " + number + " and tense: " + tense);
 	}
 
 	public String getVerb()
@@ -44,4 +44,9 @@ public class Verb
 		return tense;
 	}
 
+	public Number getNumber()
+	{
+		logger.logTrace("getNumber: Returning number");
+		return number;
+	}
 }

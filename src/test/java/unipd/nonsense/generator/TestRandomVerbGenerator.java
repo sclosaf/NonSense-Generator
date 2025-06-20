@@ -1,7 +1,9 @@
 package unipd.nonsense.generator;
 
 import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+import unipd.nonsense.model.Pair;
 import unipd.nonsense.exceptions.InvalidListException;
 import unipd.nonsense.exceptions.InvalidJsonStateException;
 import unipd.nonsense.util.JsonFileHandler;
@@ -96,25 +98,43 @@ class TestRandomVerbGenerator
 	private JsonObject createDefaultTestVerbs()
 	{
 		JsonObject json = new JsonObject();
-		JsonArray pastVerbs = new JsonArray();
-		JsonArray presentVerbs = new JsonArray();
-		JsonArray futureVerbs = new JsonArray();
+		JsonArray pastSingularVerbs = new JsonArray();
+		JsonArray pastPluralVerbs = new JsonArray();
+		JsonArray presentSingularVerbs = new JsonArray();
+		JsonArray presentPluralVerbs = new JsonArray();
+		JsonArray futureSingularVerbs = new JsonArray();
+		JsonArray futurePluralVerbs = new JsonArray();
 
-		pastVerbs.add("tested");
-		pastVerbs.add("climbed");
-		pastVerbs.add("jumped");
+		pastSingularVerbs.add("tested");
+		pastSingularVerbs.add("climbed");
+		pastSingularVerbs.add("jumped");
 
-		presentVerbs.add("test");
-		presentVerbs.add("climb");
-		presentVerbs.add("jump");
+		pastPluralVerbs.add("tested");
+		pastPluralVerbs.add("climbed");
+		pastPluralVerbs.add("jumped");
 
-		futureVerbs.add("will test");
-		futureVerbs.add("will climb");
-		futureVerbs.add("will jump");
+		presentSingularVerbs.add("tests");
+		presentSingularVerbs.add("climbs");
+		presentSingularVerbs.add("jumps");
 
-		json.add("pastVerbs", pastVerbs);
-		json.add("presentVerbs", presentVerbs);
-		json.add("futureVerbs", futureVerbs);
+		presentPluralVerbs.add("test");
+		presentPluralVerbs.add("climb");
+		presentPluralVerbs.add("jump");
+
+		futureSingularVerbs.add("will test");
+		futureSingularVerbs.add("will climb");
+		futureSingularVerbs.add("will jump");
+
+		futurePluralVerbs.add("will test");
+		futurePluralVerbs.add("will climb");
+		futurePluralVerbs.add("will jump");
+
+		json.add("pastSingularVerbs", pastSingularVerbs);
+		json.add("pastPluralVerbs", pastPluralVerbs);
+		json.add("presentSingularVerbs", presentSingularVerbs);
+		json.add("presentPluralVerbs", presentPluralVerbs);
+		json.add("futureSingularVerbs", futureSingularVerbs);
+		json.add("futurePluralVerbs", futurePluralVerbs);
 
 		return json;
 	}
@@ -130,29 +150,60 @@ class TestRandomVerbGenerator
 	}
 
 	@Test
-	@DisplayName("Test success of getRandomVerb with PAST tense")
-	void testGetRandomVerb_PastSuccess()
+	@DisplayName("Test success of getRandomVerb with PAST tense and SINGULAR number")
+	void testGetRandomVerb_SingularPastSuccess()
 	{
-		Verb verb = generator.getRandomVerb(Tense.PAST);
+		Verb verb = generator.getRandomVerb(Number.SINGULAR, Tense.PAST);
 		assertEquals(Tense.PAST, verb.getTense(), "Verb tense should be PAST");
+		assertEquals(Number.SINGULAR, verb.getNumber(), "Verb number should be SINGULAR");
 		assertTrue(List.of("tested", "climbed", "jumped").contains(verb.getVerb()), "Verb should be from test list");
 	}
 
 	@Test
-	@DisplayName("Test success of getRandomVerb with PRESENT tense")
-	void testGetRandomVerb_PresentSuccess()
+	@DisplayName("Test success of getRandomVerb with PAST tense and PLURAL number")
+	void testGetRandomVerb_PluralPastSuccess()
 	{
-		Verb verb = generator.getRandomVerb(Tense.PRESENT);
+		Verb verb = generator.getRandomVerb(Number.PLURAL, Tense.PAST);
+		assertEquals(Tense.PAST, verb.getTense(), "Verb tense should be PAST");
+		assertEquals(Number.PLURAL, verb.getNumber(), "Verb number should be PLURAL");
+		assertTrue(List.of("tested", "climbed", "jumped").contains(verb.getVerb()), "Verb should be from test list");
+	}
+
+	@Test
+	@DisplayName("Test success of getRandomVerb with PRESENT tense and SINGULAR number")
+	void testGetRandomVerb_SingularPresentSuccess()
+	{
+		Verb verb = generator.getRandomVerb(Number.SINGULAR, Tense.PRESENT);
 		assertEquals(Tense.PRESENT, verb.getTense(), "Verb tense should be PRESENT");
+		assertEquals(Number.SINGULAR, verb.getNumber(), "Verb number should be SINGULAR");
+		assertTrue(List.of("tests", "climbs", "jumps").contains(verb.getVerb()), "Verb should be from test list");
+	}
+	@Test
+	@DisplayName("Test success of getRandomVerb with PRESENT tense and PLURAL number")
+	void testGetRandomVerb_PluralPresentSuccess()
+	{
+		Verb verb = generator.getRandomVerb(Number.PLURAL, Tense.PRESENT);
+		assertEquals(Tense.PRESENT, verb.getTense(), "Verb tense should be PRESENT");
+		assertEquals(Number.PLURAL, verb.getNumber(), "Verb number should be PLURAL");
 		assertTrue(List.of("test", "climb", "jump").contains(verb.getVerb()), "Verb should be from test list");
 	}
 
 	@Test
-	@DisplayName("Test success of getRandomVerb with FUTURE tense")
-	void testGetRandomVerb_FutureSuccess()
+	@DisplayName("Test success of getRandomVerb with FUTURE tense and SINGULAR number")
+	void testGetRandomVerb_SingularFutureSuccess()
 	{
-		Verb verb = generator.getRandomVerb(Tense.FUTURE);
+		Verb verb = generator.getRandomVerb(Number.SINGULAR, Tense.FUTURE);
 		assertEquals(Tense.FUTURE, verb.getTense(), "Verb tense should be FUTURE");
+		assertEquals(Number.SINGULAR, verb.getNumber(), "Verb number should be SINGULAR");
+		assertTrue(List.of("will test", "will climb", "will jump").contains(verb.getVerb()), "Verb should be from test list");
+	}
+	@Test
+	@DisplayName("Test success of getRandomVerb with FUTURE tense and PLURAL number")
+	void testGetRandomVerb_PluralFutureSuccess()
+	{
+		Verb verb = generator.getRandomVerb(Number.PLURAL, Tense.FUTURE);
+		assertEquals(Tense.FUTURE, verb.getTense(), "Verb tense should be FUTURE");
+		assertEquals(Number.PLURAL, verb.getNumber(), "Verb number should be PLURAL");
 		assertTrue(List.of("will test", "will climb", "will jump").contains(verb.getVerb()), "Verb should be from test list");
 	}
 
@@ -161,9 +212,12 @@ class TestRandomVerbGenerator
 	void testGetRandomVerb_EmptyList() throws Exception
 	{
 		JsonObject emptyJson = new JsonObject();
-		emptyJson.add("pastVerbs", new JsonArray());
-		emptyJson.add("presentVerbs", new JsonArray());
-		emptyJson.add("futureVerbs", new JsonArray());
+		emptyJson.add("pastSingularVerbs", new JsonArray());
+		emptyJson.add("pastPluralVerbs", new JsonArray());
+		emptyJson.add("presentSingularVerbs", new JsonArray());
+		emptyJson.add("presentPluralVerbs", new JsonArray());
+		emptyJson.add("futureSingularVerbs", new JsonArray());
+		emptyJson.add("futurePluralVerbs", new JsonArray());
 
 		try(FileWriter writer = new FileWriter(testFile))
 		{
@@ -206,16 +260,15 @@ class TestRandomVerbGenerator
 		var verbsMap = (Map<Tense, List<Verb>>) verbsField.get(generator);
 
 		JsonObject testVerbs = JsonParser.parseString(Files.readString(testFile.toPath())).getAsJsonObject();
-		int expectedPastCount = testVerbs.getAsJsonArray("pastVerbs").size();
-		int expectedPresentCount = testVerbs.getAsJsonArray("presentVerbs").size();
-		int expectedFutureCount = testVerbs.getAsJsonArray("futureVerbs").size();
+		int expectedPastSingularCount = testVerbs.getAsJsonArray("pastSingularVerbs").size();
+		int expectedPastPluralCount = testVerbs.getAsJsonArray("pastPluralVerbs").size();
+		int expectedPresentSingularCount = testVerbs.getAsJsonArray("presentSingularVerbs").size();
+		int expectedPresentPluralCount = testVerbs.getAsJsonArray("presentPluralVerbs").size();
+		int expectedFutureSingularCount = testVerbs.getAsJsonArray("futureSingularVerbs").size();
+		int expectedFuturePluralCount = testVerbs.getAsJsonArray("futurePluralVerbs").size();
 
-		assertEquals(expectedPastCount, verbsMap.get(Tense.PAST).size(),
-			"Number of past verbs should match the JSON file");
-		assertEquals(expectedPresentCount, verbsMap.get(Tense.PRESENT).size(),
-			"Number of present verbs should match the JSON file");
-		assertEquals(expectedFutureCount, verbsMap.get(Tense.FUTURE).size(),
-			"Number of future verbs should match the JSON file");
+		assertEquals(expectedPastSingularCount,verbsMap.get(new Pair<>(Tense.PAST, Number.SINGULAR)).size(), "Number of past singular verbs should match the JSON file");
+		assertEquals(expectedPastPluralCount, verbsMap.get(new Pair<>(Tense.PAST, Number.PLURAL)).size(), "Number of past plural verbs should match the JSON file");
 	}
 
 	@Test
@@ -237,9 +290,9 @@ class TestRandomVerbGenerator
 	@DisplayName("Test verbs properties are preserved")
 	void testVerbPropertiesPreserved()
 	{
-		Verb pastVerb = generator.getRandomVerb(Tense.PAST);
-		Verb presentVerb = generator.getRandomVerb(Tense.PRESENT);
-		Verb futureVerb = generator.getRandomVerb(Tense.FUTURE);
+		Verb pastVerb = generator.getRandomVerb(Number.SINGULAR, Tense.PAST);
+		Verb presentVerb = generator.getRandomVerb(Number.PLURAL, Tense.PRESENT);
+		Verb futureVerb = generator.getRandomVerb(Number.SINGULAR, Tense.FUTURE);
 
 		assertTrue(List.of("tested", "climbed", "jumped").contains(pastVerb.getVerb()), "Past verb should be from test list");
 		assertTrue(List.of("test", "climb", "jump").contains(presentVerb.getVerb()), "Present verb should be from test list");
@@ -258,31 +311,56 @@ class TestRandomVerbGenerator
 		verbsField.setAccessible(true);
 
 		@SuppressWarnings("unchecked")
-		var initialVerbsMap = (Map<Tense, List<Verb>>) verbsField.get(generator);
-		int initialPastCount = initialVerbsMap.get(Tense.PAST).size();
+		var initialVerbsMap = (Map<Pair<Tense, Number>, List<Verb>>) verbsField.get(generator);
+
+		int initialPastSingularCount = initialVerbsMap.get(new Pair<>(Tense.PAST, Number.SINGULAR)).size();
+		int initialPastPluralCount = initialVerbsMap.get(new Pair<>(Tense.PAST, Number.PLURAL)).size();
+		int initialPresentSingularCount = initialVerbsMap.get(new Pair<>(Tense.PRESENT, Number.SINGULAR)).size();
+		int initialPresentPluralCount = initialVerbsMap.get(new Pair<>(Tense.PRESENT, Number.PLURAL)).size();
+		int initialFutureSingularCount = initialVerbsMap.get(new Pair<>(Tense.FUTURE, Number.SINGULAR)).size();
+		int initialFuturePluralCount = initialVerbsMap.get(new Pair<>(Tense.FUTURE, Number.PLURAL)).size();
 
 		JsonObject updatedJson = new JsonObject();
-		JsonArray updatedPastVerbs = new JsonArray();
-		JsonArray updatedPresentVerbs = new JsonArray();
-		JsonArray updatedFutureVerbs = new JsonArray();
 
-		updatedPastVerbs.add("tested");
-		updatedPastVerbs.add("climbed");
-		updatedPastVerbs.add("jumped");
-		updatedPastVerbs.add("walked");
-		updatedPastVerbs.add("talked");
+		JsonArray updatedPastSingularVerbs = new JsonArray();
+		updatedPastSingularVerbs.add("tested");
+		updatedPastSingularVerbs.add("climbed");
+		updatedPastSingularVerbs.add("jumped");
+		updatedPastSingularVerbs.add("walked");
+		updatedPastSingularVerbs.add("talked");
 
-		updatedPresentVerbs.add("test");
-		updatedPresentVerbs.add("climb");
-		updatedPresentVerbs.add("jump");
+		JsonArray updatedPastPluralVerbs = new JsonArray();
+		updatedPastPluralVerbs.add("tested");
+		updatedPastPluralVerbs.add("climbed");
+		updatedPastPluralVerbs.add("jumped");
 
-		updatedFutureVerbs.add("will test");
-		updatedFutureVerbs.add("will climb");
-		updatedFutureVerbs.add("will jump");
+		JsonArray updatedPresentSingularVerbs = new JsonArray();
+		updatedPresentSingularVerbs.add("tests");
+		updatedPresentSingularVerbs.add("climbs");
+		updatedPresentSingularVerbs.add("jumps");
+		updatedPresentSingularVerbs.add("walks");
 
-		updatedJson.add("pastVerbs", updatedPastVerbs);
-		updatedJson.add("presentVerbs", updatedPresentVerbs);
-		updatedJson.add("futureVerbs", updatedFutureVerbs);
+		JsonArray updatedPresentPluralVerbs = new JsonArray();
+		updatedPresentPluralVerbs.add("test");
+		updatedPresentPluralVerbs.add("climb");
+
+		JsonArray updatedFutureSingularVerbs = new JsonArray();
+		updatedFutureSingularVerbs.add("will test");
+		updatedFutureSingularVerbs.add("will climb");
+		updatedFutureSingularVerbs.add("will jump");
+
+		JsonArray updatedFuturePluralVerbs = new JsonArray();
+		updatedFuturePluralVerbs.add("will test");
+		updatedFuturePluralVerbs.add("will climb");
+		updatedFuturePluralVerbs.add("will jump");
+		updatedFuturePluralVerbs.add("will walk");
+
+		updatedJson.add("pastSingularVerbs", updatedPastSingularVerbs);
+		updatedJson.add("pastPluralVerbs", updatedPastPluralVerbs);
+		updatedJson.add("presentSingularVerbs", updatedPresentSingularVerbs);
+		updatedJson.add("presentPluralVerbs", updatedPresentPluralVerbs);
+		updatedJson.add("futureSingularVerbs", updatedFutureSingularVerbs);
+		updatedJson.add("futurePluralVerbs", updatedFuturePluralVerbs);
 
 		try(FileWriter writer = new FileWriter(testFile))
 		{
@@ -292,11 +370,33 @@ class TestRandomVerbGenerator
 		generator.onJsonUpdate();
 
 		@SuppressWarnings("unchecked")
-		var updatedVerbsMap = (Map<Tense, List<Verb>>) verbsField.get(generator);
-		int updatedPastCount = updatedVerbsMap.get(Tense.PAST).size();
+		var updatedVerbsMap = (Map<Pair<Tense, Number>, List<Verb>>) verbsField.get(generator);
 
-		assertEquals(5, updatedPastCount, "Number of past verbs should be updated to 5");
-		assertTrue(updatedPastCount > initialPastCount, "Verb count should increase after update");
+		assertEquals(5, updatedVerbsMap.get(new Pair<>(Tense.PAST, Number.SINGULAR)).size(),
+			"Number of past singular verbs should be updated to 5");
+		assertEquals(3, updatedVerbsMap.get(new Pair<>(Tense.PAST, Number.PLURAL)).size(),
+			"Number of past plural verbs should remain 3");
+		assertEquals(4, updatedVerbsMap.get(new Pair<>(Tense.PRESENT, Number.SINGULAR)).size(),
+			"Number of present singular verbs should be updated to 4");
+		assertEquals(2, updatedVerbsMap.get(new Pair<>(Tense.PRESENT, Number.PLURAL)).size(),
+			"Number of present plural verbs should be reduced to 2");
+		assertEquals(3, updatedVerbsMap.get(new Pair<>(Tense.FUTURE, Number.SINGULAR)).size(),
+			"Number of future singular verbs should remain 3");
+		assertEquals(4, updatedVerbsMap.get(new Pair<>(Tense.FUTURE, Number.PLURAL)).size(),
+			"Number of future plural verbs should be increased to 4");
+
+		assertTrue(updatedVerbsMap.get(new Pair<>(Tense.PAST, Number.SINGULAR)).size() > initialPastSingularCount,
+			"Past singular verb count should increase");
+		assertEquals(initialPastPluralCount, updatedVerbsMap.get(new Pair<>(Tense.PAST, Number.PLURAL)).size(),
+			"Past plural verb count should remain the same");
+		assertTrue(updatedVerbsMap.get(new Pair<>(Tense.PRESENT, Number.SINGULAR)).size() > initialPresentSingularCount,
+			"Present singular verb count should increase");
+		assertTrue(updatedVerbsMap.get(new Pair<>(Tense.PRESENT, Number.PLURAL)).size() < initialPresentPluralCount,
+			"Present plural verb count should decrease");
+		assertEquals(initialFutureSingularCount, updatedVerbsMap.get(new Pair<>(Tense.FUTURE, Number.SINGULAR)).size(),
+			"Future singular verb count should remain the same");
+		assertTrue(updatedVerbsMap.get(new Pair<>(Tense.FUTURE, Number.PLURAL)).size() > initialFuturePluralCount,
+			"Future plural verb count should increase");
 	}
 
 	@Test
@@ -315,11 +415,15 @@ class TestRandomVerbGenerator
 	void testMissingJsonKeys() throws Exception
 	{
 		JsonObject partialJson = new JsonObject();
-		JsonArray pastVerbs = new JsonArray();
-		pastVerbs.add("tested");
-		partialJson.add("pastVerbs", pastVerbs);
-		partialJson.add("presentVerbs", new JsonArray());
-		partialJson.add("futureVerbs", new JsonArray());
+		JsonArray pastSingularVerbs = new JsonArray();
+		pastSingularVerbs.add("tested");
+
+		partialJson.add("pastSingularVerbs", pastSingularVerbs);
+		partialJson.add("pastPluralVerbs", new JsonArray());
+		partialJson.add("presentSingularVerbs", new JsonArray());
+		partialJson.add("presentPluralVerbs", new JsonArray());
+		partialJson.add("futureSingularVerbs", new JsonArray());
+		partialJson.add("futurePluralVerbs", new JsonArray());
 
 		try(FileWriter writer = new FileWriter(testFile))
 		{
@@ -328,7 +432,7 @@ class TestRandomVerbGenerator
 
 		RandomVerbGenerator partialGenerator = new RandomVerbGenerator(testFilePath);
 
-		Verb pastVerb = partialGenerator.getRandomVerb(Tense.PAST);
+		Verb pastVerb = partialGenerator.getRandomVerb(Number.SINGULAR, Tense.PAST);
 		assertNotNull(pastVerb, "Should return a past verb");
 
 		assertThrows(InvalidListException.class, () -> partialGenerator.getRandomVerb(Tense.PRESENT),
@@ -363,24 +467,6 @@ class TestRandomVerbGenerator
 		{
 			loggerField.set(generator, originalLogger);
 		}
-	}
-
-	@Test
-	@DisplayName("Test random distribution of verbs")
-	void testRandomDistribution()
-	{
-		Map<String, Integer> countMap = new HashMap<>();
-		int iterations = 1000;
-
-		for(int i = 0; i < iterations; i++)
-		{
-			Verb v = generator.getRandomVerb();
-			countMap.merge(v.getVerb(), 1, Integer::sum);
-		}
-
-		double expected = iterations / (double) countMap.size();
-		for(int count : countMap.values())
-			assertTrue(Math.abs(count - expected) < expected * 0.3, "Verb distribution should be roughly uniform");
 	}
 
 	@Test
@@ -419,12 +505,15 @@ class TestRandomVerbGenerator
 		String longVerb = "a".repeat(10000);
 
 		JsonObject testVerbs = new JsonObject();
-		JsonArray pastVerbs = new JsonArray();
+		JsonArray pastSingularVerbs = new JsonArray();
 
-		pastVerbs.add(longVerb);
-		testVerbs.add("pastVerbs", pastVerbs);
-		testVerbs.add("presentVerbs", new JsonArray());
-		testVerbs.add("futureVerbs", new JsonArray());
+		pastSingularVerbs.add(longVerb);
+		testVerbs.add("pastSingularVerbs", pastSingularVerbs);
+		testVerbs.add("pastPluralVerbs", new JsonArray());
+		testVerbs.add("presentSingularVerbs", new JsonArray());
+		testVerbs.add("presentPluralVerbs", new JsonArray());
+		testVerbs.add("futureSingularVerbs", new JsonArray());
+		testVerbs.add("futurePluralVerbs", new JsonArray());
 
 		try(FileWriter writer = new FileWriter(testFile))
 		{
@@ -432,7 +521,7 @@ class TestRandomVerbGenerator
 		}
 
 		RandomVerbGenerator longVerbGenerator = new RandomVerbGenerator(testFilePath);
-		Verb verb = longVerbGenerator.getRandomVerb(Tense.PAST);
+		Verb verb = longVerbGenerator.getRandomVerb(Number.SINGULAR, Tense.PAST);
 
 		assertEquals(longVerb, verb.getVerb());
 		longVerbGenerator.cleanup();

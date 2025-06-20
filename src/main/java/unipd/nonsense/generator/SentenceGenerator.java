@@ -1,13 +1,12 @@
 package unipd.nonsense.generator;
 
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
 import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
 import unipd.nonsense.model.Adjective;
 import unipd.nonsense.model.Template;
-import unipd.nonsense.model.Template.TemplateType;
-import unipd.nonsense.model.Template.Placeholder;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+import unipd.nonsense.model.Placeholder;
 
 import unipd.nonsense.generator.RandomNounGenerator;
 import unipd.nonsense.generator.RandomVerbGenerator;
@@ -43,10 +42,12 @@ public class SentenceGenerator implements AutoCloseable
 		try
 		{
 			logger.logTrace("Initializing component generators");
+
 			this.nounGenerator = new RandomNounGenerator();
 			this.adjectiveGenerator = new RandomAdjectiveGenerator();
 			this.verbGenerator = new RandomVerbGenerator();
 			this.templateGenerator = new RandomTemplateGenerator();
+
 			logger.logTrace("Successfully initialized");
 		}
 		catch(IOException e)
@@ -59,17 +60,15 @@ public class SentenceGenerator implements AutoCloseable
 	public Template generateRandomSentence()
 	{
 		logger.logTrace("generateRandomSentence: Starting sentence generation");
-		Number[] numbers = Number.values();
-		Tense[] tenses = Tense.values();
 
-		Number randomNumber = numbers[random.nextInt(numbers.length)];
-		Tense randomTense = tenses[random.nextInt(tenses.length)];
+		Number randomNumber = getRandomNumber();
+		Tense randomTense = getRandomTense();
 
 		logger.logDebug("generateRandomSentence: Selected number: " + randomNumber + ", tense: " + randomTense);
 
 		Template result = generateSentenceWithTenseAndNumber(randomTense, randomNumber);
 		logger.logTrace("generateRandomSentence: Completed sentence generation");
-		return new Template(capitalizeFirstLetter(result.getPattern()),result.getType());
+		return new Template(capitalizeFirstLetter(result.getPattern()),result.getNumber());
 	}
 
 	private String capitalizeFirstLetter(String sentence)
@@ -90,9 +89,10 @@ public class SentenceGenerator implements AutoCloseable
 
 		logger.logDebug("generateSentenceWith: Received " + nouns.size() + " nouns, " + adjectives.size() + " adjectives, " + verbs.size() + " verbs");
 
-		Number number = getRandomNumber();
-		TemplateType templateType = convertNumberToTemplateType(number);
-		Template template = templateGenerator.getRandomTemplate(templateType);
+		Template template = templateGenerator.getRandomTemplate();
+
+		if(nouns != null && !nouns.isEmpty())
+			template = templateGenerator.getRandomTemplate(nouns.get(0).getNumber());
 
 		try
 		{
@@ -151,11 +151,10 @@ public class SentenceGenerator implements AutoCloseable
 	private void replaceNounPlaceholders(Template template, List<Noun> nouns)
 	{
 		logger.logTrace("replaceNounPlaceholders: Starting noun replacement");
-		Number number = convertTemplateTypeToNumber(template.getType());
 
 		while(template.countPlaceholders(Placeholder.NOUN) > 0)
 		{
-			String noun = !nouns.isEmpty() ? nouns.remove(0).getNoun() : nounGenerator.getRandomNoun(number).getNoun();
+			String noun = !nouns.isEmpty() ? nouns.remove(0).getNoun() : nounGenerator.getRandomNoun(template.getNumber()).getNoun();
 			logger.logDebug("replaceNounPlaceholders: Replacing with noun: " + noun);
 			template.replacePlaceholder(Placeholder.NOUN, noun);
 		}
@@ -183,8 +182,8 @@ public class SentenceGenerator implements AutoCloseable
 
 		while(template.countPlaceholders(Placeholder.VERB) > 0)
 		{
-			String verb = !verbs.isEmpty() ? verbs.remove(0).getVerb() : verbGenerator.getRandomVerb(tense).getVerb();
-			logger.logDebug("replaceVerbPlaceholders: Replacing with verb: " + verb + " (tense: " + tense + ")");
+			String verb = !verbs.isEmpty() ? verbs.remove(0).getVerb() : verbGenerator.getRandomVerb(template.getNumber(), tense).getVerb();
+			logger.logDebug("replaceVerbPlaceholders: Replacing with verb: " + verb);
 			template.replacePlaceholder(Placeholder.VERB, verb);
 		}
 
@@ -210,8 +209,7 @@ public class SentenceGenerator implements AutoCloseable
 	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
 	{
 		logger.logDebug("generateSentenceWithTenseAndNumber: Starting generation with tense: " + tense + ", number: " + number);
-		TemplateType templateType = convertNumberToTemplateType(number);
-		Template template = templateGenerator.getRandomTemplate(templateType);
+		Template template = templateGenerator.getRandomTemplate(number);
 
 		while(template.countPlaceholders(Placeholder.NOUN) != 0)
 		{
@@ -229,7 +227,7 @@ public class SentenceGenerator implements AutoCloseable
 
 		while(template.countPlaceholders(Placeholder.VERB) != 0)
 		{
-			String verb = verbGenerator.getRandomVerb(tense).getVerb();
+			String verb = verbGenerator.getRandomVerb(number, tense).getVerb();
 			logger.logDebug("generateSentenceWithTenseAndNumber: Replacing verb with: " + verb);
 			template.replacePlaceholder(Placeholder.VERB, verb);
 		}
@@ -248,11 +246,9 @@ public class SentenceGenerator implements AutoCloseable
 			throw new InvalidTemplateException();
 		}
 
-		Number number = convertTemplateTypeToNumber(template.getType());
-
 		while(template.countPlaceholders(Placeholder.NOUN) != 0)
 		{
-			String noun = nounGenerator.getRandomNoun(number).getNoun();
+			String noun = nounGenerator.getRandomNoun(template.getNumber()).getNoun();
 			logger.logDebug("generateSentenceFromTemplate: Replacing noun with: " + noun);
 			template.replacePlaceholder(Placeholder.NOUN, noun);
 		}
@@ -266,7 +262,7 @@ public class SentenceGenerator implements AutoCloseable
 
 		while(template.countPlaceholders(Placeholder.VERB) != 0)
 		{
-			String verb = verbGenerator.getRandomVerb(getRandomTense()).getVerb();
+			String verb = verbGenerator.getRandomVerb(template.getNumber(), getRandomTense()).getVerb();
 			logger.logDebug("generateSentenceFromTemplate: Replacing verb with: " + verb);
 			template.replacePlaceholder(Placeholder.VERB, verb);
 		}
@@ -312,68 +308,16 @@ public class SentenceGenerator implements AutoCloseable
 		return randomTense;
 	}
 
-	private TemplateType convertNumberToTemplateType(Number number)
-	{
-		logger.logTrace("convertNumberToTemplateType: Converting number to template type");
-		try
-		{
-			switch(number)
-			{
-				case SINGULAR:
-					logger.logDebug("convertNumberToTemplateType: Converted to SINGULAR");
-					return TemplateType.SINGULAR;
-
-				case PLURAL:
-					logger.logDebug("convertNumberToTemplateType: Converted to PLURAL");
-					return TemplateType.PLURAL;
-
-				default:
-					logger.logError("convertNumberToTemplateType: Invalid number value: " + number);
-					throw new InvalidNumberException();
-			}
-		}
-		catch(InvalidNumberException e)
-		{
-			logger.logError("convertNumberToTemplateType: Invalid number value: " + number, e);
-			throw e;
-		}
-	}
-
-	private Number convertTemplateTypeToNumber(TemplateType type)
-	{
-		logger.logTrace("convertTemplateTypeToNumber: Converting template type to number");
-		try
-		{
-			switch(type)
-			{
-				case SINGULAR:
-					logger.logDebug("convertTemplateTypeToNumber: Converted to SINGULAR");
-					return Number.SINGULAR;
-
-				case PLURAL:
-					logger.logDebug("convertTemplateTypeToNumber: Converted to PLURAL");
-					return Number.PLURAL;
-
-				default:
-					logger.logError("convertTemplateTypeToNumber: Invalid template type: " + type);
-					throw new InvalidTemplateTypeException();
-			}
-		}
-		catch(InvalidTemplateTypeException e)
-		{
-			logger.logError("convertTemplateTypeToNumber: Invalid template type: " + type, e);
-			throw e;
-		}
-	}
-
 	@Override
 	public void close()
 	{
 		logger.logTrace("close: Starting cleanup");
+
 		nounGenerator.cleanup();
 		adjectiveGenerator.cleanup();
 		verbGenerator.cleanup();
 		templateGenerator.cleanup();
+
 		logger.logTrace("close: Completed cleanup");
 	}
 }

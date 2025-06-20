@@ -152,7 +152,7 @@ class TestSentenceAnalyzer
 		String result = analyzer.analyzeSentimentAsync(sentimentText).get();
 
 		assertNotNull(result);
-		assertEquals("Sentiment Score: 0.80 (Magnitude: 1.20)", result,
+		assertEquals("Sentiment Score: 0[\\.,]80 (Magnitude: 1[\\.,]20)", result,
 			"Should format sentiment results correctly");
 	}
 
@@ -178,7 +178,7 @@ class TestSentenceAnalyzer
 		assertNotNull(report);
 		assertTrue(report.contains("Entity 1: TestEntity"), "Should contain entity name");
 		assertTrue(report.contains("Type: PERSON"), "Should contain entity type");
-		assertTrue(report.contains("Salience: 0.900"), "Should contain salience score");
+		assertTrue(report.contains("Salience: 0[\\.,]900"), "Should contain salience score");
 	}
 
 	@Test
@@ -284,7 +284,7 @@ class TestSentenceAnalyzer
 
 		String result = analyzer.analyzeSentimentAsync("Test").get();
 
-		assertEquals("Sentiment Score: 0.00 (Magnitude: 0.00)", result);
+		assertEquals("Sentiment Score: 0[\\.,]00 (Magnitude: 0[\\.,]00)", result);
 	}
 
 	@Test
@@ -553,7 +553,7 @@ class TestSentenceAnalyzer
 		assertNotNull(report);
 		assertTrue(report.contains("Entity 1: TestEntity"), "Should contain entity name");
 		assertTrue(report.contains("Type: PERSON"), "Should contain entity type");
-		assertTrue(report.contains("Salience: 0.900"), "Should contain salience score");
+		assertTrue(report.contains("Salience: 0[\\.,]900"), "Should contain salience score");
 		assertTrue(report.contains("- Test (Type: PROPER"), "Should contain mention");
 	}
 }

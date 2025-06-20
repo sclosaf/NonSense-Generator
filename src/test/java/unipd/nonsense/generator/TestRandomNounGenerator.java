@@ -1,7 +1,7 @@
 package unipd.nonsense.generator;
 
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.exceptions.InvalidListException;
 import unipd.nonsense.exceptions.InvalidJsonStateException;
 import unipd.nonsense.util.JsonFileHandler;

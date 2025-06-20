@@ -1,5 +1,9 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+
 import org.junit.jupiter.api.*;
 import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 
@@ -13,7 +17,7 @@ class TestVerb
 	@BeforeEach
 	void setup()
 	{
-		verb = new Verb("run", Verb.Tense.PRESENT);
+		verb = new Verb("run", Number.PLURAL, Tense.PRESENT);
 	}
 
 	@Test
@@ -22,7 +26,7 @@ class TestVerb
 	{
 		assertNotNull(verb);
 		assertEquals("run", verb.getVerb());
-		assertEquals(Verb.Tense.PRESENT, verb.getTense());
+		assertEquals(Tense.PRESENT, verb.getTense());
 	}
 
 	@Test
@@ -30,19 +34,19 @@ class TestVerb
 	void testEmptyVerb()
 	{
 		assertThrows(InvalidGrammaticalElementException.class,
-			() -> new Verb("", Verb.Tense.PAST));
+			() -> new Verb("", Number.SINGULAR, Tense.PAST));
 	}
 
 	@Test
 	@DisplayName("Test all tense values")
 	void testAllTenses()
 	{
-		Verb pastVerb = new Verb("ran", Verb.Tense.PAST);
-		Verb presentVerb = new Verb("run", Verb.Tense.PRESENT);
-		Verb futureVerb = new Verb("will run", Verb.Tense.FUTURE);
+		Verb pastVerb = new Verb("ran", Number.PLURAL, Tense.PAST);
+		Verb presentVerb = new Verb("run", Number.PLURAL, Tense.PRESENT);
+		Verb futureVerb = new Verb("will run", Number.PLURAL, Tense.FUTURE);
 
-		assertEquals(Verb.Tense.PAST, pastVerb.getTense());
-		assertEquals(Verb.Tense.PRESENT, presentVerb.getTense());
-		assertEquals(Verb.Tense.FUTURE, futureVerb.getTense());
+		assertEquals(Tense.PAST, pastVerb.getTense());
+		assertEquals(Tense.PRESENT, presentVerb.getTense());
+		assertEquals(Tense.FUTURE, futureVerb.getTense());
 	}
 }

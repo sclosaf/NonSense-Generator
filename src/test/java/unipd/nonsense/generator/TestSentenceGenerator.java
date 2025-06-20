@@ -1,7 +1,12 @@
 package unipd.nonsense.generator;
 
-import unipd.nonsense.model.*;
-import unipd.nonsense.model.Template.Placeholder;
+import unipd.nonsense.model.Noun;
+import unipd.nonsense.model.Verb;
+import unipd.nonsense.model.Adjective;
+import unipd.nonsense.model.Template;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+import unipd.nonsense.model.Placeholder;
 import unipd.nonsense.exceptions.*;
 import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
@@ -42,9 +47,9 @@ class TestSentenceGenerator
 		Template[] sentences =
 		{
 			sentenceGenerator.generateRandomSentence(),
-			sentenceGenerator.generateSentenceWithTense(Verb.Tense.PAST),
-			sentenceGenerator.generateSentenceWithNumber(Noun.Number.PLURAL),
-			sentenceGenerator.generateSentenceWithTenseAndNumber(Verb.Tense.FUTURE,	 Noun.Number.SINGULAR)
+			sentenceGenerator.generateSentenceWithTense(Tense.PAST),
+			sentenceGenerator.generateSentenceWithNumber(Number.PLURAL),
+			sentenceGenerator.generateSentenceWithTenseAndNumber(Tense.FUTURE, Number.SINGULAR)
 		};
 
 		for(Template sentence : sentences)
@@ -73,7 +78,7 @@ class TestSentenceGenerator
 	@DisplayName("Test template with excessive placeholders")
 	void testExcessivePlaceholders()
 	{
-		Template template = new Template("The [adjective] [noun] [verb] while the [adjective] [noun] [verb] and the [adjective] [noun] [verb].", Template.TemplateType.SINGULAR);
+		Template template = new Template("The [adjective] [noun] [verb] while the [adjective] [noun] [verb] and the [adjective] [noun] [verb].", Number.SINGULAR);
 
 		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
 		assertNotNull(result);
@@ -88,11 +93,11 @@ class TestSentenceGenerator
 	@DisplayName("Test custom words actually appear in sentence")
 	void testCustomWordsAppearance() throws IOException
 	{
-		List<Noun> nouns = Arrays.asList(new Noun("elephant", Noun.Number.SINGULAR), new Noun("mountain", Noun.Number.SINGULAR));
+		List<Noun> nouns = Arrays.asList(new Noun("elephant", Number.SINGULAR), new Noun("mountain", Number.SINGULAR));
 
 		List<Adjective> adjectives = Arrays.asList(new Adjective("enormous"), new Adjective("purple"));
 
-		List<Verb> verbs = Arrays.asList(new Verb("exploded", Verb.Tense.PAST), new Verb("danced", Verb.Tense.PRESENT));
+		List<Verb> verbs = Arrays.asList(new Verb("exploded", Number.SINGULAR, Tense.PAST), new Verb("danced", Number.SINGULAR, Tense.PRESENT));
 
 		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
 		String sentence = result.getPattern();
@@ -117,17 +122,17 @@ class TestSentenceGenerator
 	{
 		assertThrows(InvalidTemplateException.class, () -> {sentenceGenerator.generateSentenceFromTemplate(null);});
 
-		assertThrows(InvalidTemplateException.class, () -> {sentenceGenerator.generateSentenceFromTemplate(new Template("", Template.TemplateType.SINGULAR));});
+		assertThrows(InvalidTemplateException.class, () -> {sentenceGenerator.generateSentenceFromTemplate(new Template("", Number.SINGULAR));});
 	}
 
 	@Test
 	@DisplayName("Test sentence consistency across methods")
 	void testSentenceConsistency()
 	{
-		Template sentenceWithPastTense = sentenceGenerator.generateSentenceWithTense(Verb.Tense.PAST);
-		Template sentenceWithPluralNumber = sentenceGenerator.generateSentenceWithNumber(Noun.Number.PLURAL);
+		Template sentenceWithPastTense = sentenceGenerator.generateSentenceWithTense(Tense.PAST);
+		Template sentenceWithPluralNumber = sentenceGenerator.generateSentenceWithNumber(Number.PLURAL);
 
-		assertEquals(Template.TemplateType.PLURAL, sentenceWithPluralNumber.getType(), "Template type should be PLURAL when using plural number");
+		assertEquals(Number.PLURAL, sentenceWithPluralNumber.getNumber(), "Template type should be PLURAL when using plural number");
 
 		List<Template> templates = sentenceGenerator.getRandomTemplates();
 		assertEquals(5, templates.size());
@@ -151,17 +156,17 @@ class TestSentenceGenerator
 	@DisplayName("Test specific tense and number combinations")
 	void testSpecificCombinations()
 	{
-		for(Verb.Tense tense : Verb.Tense.values())
+		for(Tense tense : Tense.values())
 		{
-			for(Noun.Number number : Noun.Number.values())
+			for(Number number : Number.values())
 			{
 				Template result = sentenceGenerator.generateSentenceWithTenseAndNumber(tense, number);
 
-				if(number == Noun.Number.SINGULAR)
-					assertEquals(Template.TemplateType.SINGULAR, result.getType(), "Template type should be SINGULAR when number is SINGULAR");
+				if(number == Number.SINGULAR)
+					assertEquals(Number.SINGULAR, result.getNumber(), "Template type should be SINGULAR when number is SINGULAR");
 
 				else
-					assertEquals(Template.TemplateType.PLURAL, result.getType(), "Template type should be PLURAL when number is PLURAL");
+					assertEquals(Number.PLURAL, result.getNumber(), "Template type should be PLURAL when number is PLURAL");
 
 				String sentence = result.getPattern();
 
@@ -191,11 +196,11 @@ class TestSentenceGenerator
 	@DisplayName("Test custom words mixed with random words")
 	void testMixedCustomAndRandomWords() throws IOException
 	{
-		List<Noun> nouns = List.of(new Noun("satellite", Noun.Number.SINGULAR));
+		List<Noun> nouns = List.of(new Noun("satellite", Number.SINGULAR));
 		List<Adjective> adjectives = List.of(new Adjective("metallic"));
-		List<Verb> verbs = List.of(new Verb("orbits", Verb.Tense.PRESENT));
+		List<Verb> verbs = List.of(new Verb("orbits", Number.SINGULAR, Tense.PRESENT));
 
-		Template template = new Template("The [adjective] [noun] [verb] while the [adjective] [noun] [verb].", Template.TemplateType.SINGULAR);
+		Template template = new Template("The [adjective] [noun] [verb] while the [adjective] [noun] [verb].", Number.SINGULAR);
 
 		sentenceGenerator.generateSentenceFromTemplate(template);
 		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
@@ -214,7 +219,7 @@ class TestSentenceGenerator
 	@DisplayName("Test template with mixed placeholders and literals")
 	void testMixedPlaceholdersAndLiterals()
 	{
-		Template template = new Template("The [adjective] [noun] [verb] quickly.", Template.TemplateType.SINGULAR);
+		Template template = new Template("The [adjective] [noun] [verb] quickly.", Number.SINGULAR);
 		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
 		assertNotNull(result);
 		String sentence = result.getPattern();
@@ -229,9 +234,9 @@ class TestSentenceGenerator
 	@DisplayName("Test sentence generation with all custom words")
 	void testAllCustomWords() throws IOException
 	{
-		List<Noun> nouns = List.of(new Noun("dragon", Noun.Number.SINGULAR));
+		List<Noun> nouns = List.of(new Noun("dragon", Number.SINGULAR));
 		List<Adjective> adjectives = List.of(new Adjective("fiery"));
-		List<Verb> verbs = List.of(new Verb("breathes", Verb.Tense.PRESENT));
+		List<Verb> verbs = List.of(new Verb("breathes", Number.SINGULAR, Tense.PRESENT));
 
 		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
 		String sentence = result.getPattern();
@@ -256,9 +261,9 @@ class TestSentenceGenerator
 	@DisplayName("Test sentence generation with maximum word length")
 	void testMaxWordLength() throws IOException
 	{
-		List<Noun> nouns = List.of(new Noun("a".repeat(1000), Noun.Number.SINGULAR));
+		List<Noun> nouns = List.of(new Noun("a".repeat(1000), Number.SINGULAR));
 		List<Adjective> adjectives = List.of(new Adjective("b".repeat(1000)));
-		List<Verb> verbs = List.of(new Verb("c".repeat(1000), Verb.Tense.PRESENT));
+		List<Verb> verbs = List.of(new Verb("c".repeat(1000), Number.SINGULAR, Tense.PRESENT));
 
 		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
 		assertNotNull(result);
@@ -269,7 +274,7 @@ class TestSentenceGenerator
 	@DisplayName("Test template with only verb placeholders")
 	void testVerbOnlyTemplate()
 	{
-		Template template = new Template("[verb] [verb] [verb]", Template.TemplateType.SINGULAR);
+		Template template = new Template("[verb] [verb] [verb]", Number.SINGULAR);
 		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
 		String sentence = result.getPattern();
 
@@ -311,7 +316,7 @@ class TestSentenceGenerator
 	@DisplayName("Test template with unusual punctuation")
 	void testUnusualPunctuation()
 	{
-		Template template = new Template("Wait... the [noun] [verb]! Really?", Template.TemplateType.SINGULAR);
+		Template template = new Template("Wait... the [noun] [verb]! Really?", Number.SINGULAR);
 		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
 		String sentence = result.getPattern();
 

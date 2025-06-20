@@ -2,7 +2,7 @@ package unipd.nonsense.model;
 
 import org.junit.jupiter.api.*;
 import unipd.nonsense.model.Noun;
-import unipd.nonsense.model.Noun.Number;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -15,7 +15,7 @@ class TestNoun
 	@BeforeEach
 	void setup()
 	{
-		noun = new Noun("dog", Noun.Number.SINGULAR);
+		noun = new Noun("dog", Number.SINGULAR);
 	}
 
 	@Test
@@ -24,7 +24,7 @@ class TestNoun
 	{
 		assertNotNull(noun);
 		assertEquals("dog", noun.getNoun());
-		assertEquals(Noun.Number.SINGULAR, noun.getNumber());
+		assertEquals(Number.SINGULAR, noun.getNumber());
 	}
 
 	@Test
@@ -39,7 +39,7 @@ class TestNoun
 	void testNullNoun()
 	{
 		assertThrows(InvalidGrammaticalElementException.class,
-			() -> new Noun(null, Noun.Number.PLURAL));
+			() -> new Noun(null, Number.PLURAL));
 	}
 
 

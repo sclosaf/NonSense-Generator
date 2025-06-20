@@ -5,7 +5,9 @@ import unipd.nonsense.util.JsonUpdater;
 
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Verb;
-import unipd.nonsense.model.Verb.Tense;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Tense;
+import unipd.nonsense.model.Pair;
 
 import unipd.nonsense.util.LoggerManager;
 
@@ -24,13 +26,21 @@ import java.util.stream.Collectors;
 
 public class RandomVerbGenerator implements JsonUpdateObserver
 {
-	private Map<Tense, List<Verb>> verbs;
+	private Map<Pair<Tense, Number>, List<Verb>> verbs;
 	private static Random random;
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String verbsPath = "target" + File.separator + "resources" + File.separator + "verbs.json";
-	private final static List<String> keys = List.of("pastVerbs", "presentVerbs", "futureVerbs");
+	private final static Map<Pair<Tense, Number>, String> keys = Map.of(
+		new Pair<>(Tense.PAST, Number.SINGULAR), "pastSingularVerbs",
+		new Pair<>(Tense.PAST, Number.PLURAL), "pastPluralVerbs",
+		new Pair<>(Tense.PRESENT, Number.SINGULAR), "presentSingularVerbs",
+		new Pair<>(Tense.PRESENT, Number.PLURAL), "presentPluralVerbs",
+		new Pair<>(Tense.FUTURE, Number.SINGULAR), "futureSingularVerbs",
+		new Pair<>(Tense.FUTURE, Number.PLURAL), "futurePluralVerbs"
+	);
+
 	private LoggerManager logger = new LoggerManager(RandomVerbGenerator.class);
 
 	public RandomVerbGenerator() throws IOException
@@ -81,31 +91,24 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 	{
 		logger.logTrace("loadVerbs: Starting to load verbs");
 
-		for(String key : keys)
+		for (Map.Entry<Pair<Tense, Number>, String> entry : keys.entrySet())
 		{
-			logger.logDebug("loadVerbs: Processing key: " + key);
-			Tense tense;
+			Pair<Tense, Number> pair = entry.getKey();
+			String jsonKey = entry.getValue();
 
-			if(key.equals(keys.get(0)))
-				tense = Tense.PAST;
-			else if(key.equals(keys.get(1)))
-				tense = Tense.PRESENT;
-			else
-				tense = Tense.FUTURE;
+			logger.logDebug("loadVerbs: Processing key: " + jsonKey);
 
-			verbs.computeIfAbsent(tense, k -> new ArrayList<>());
+			verbs.computeIfAbsent(pair, k -> new ArrayList<>());
 
-			List<String> jsonList = jsonHandler.readListFromJson(verbsPath, key);
-
-			if(jsonList != null && !jsonList.isEmpty())
+			List<String> jsonList = jsonHandler.readListFromJson(verbsPath, jsonKey);
+			if (jsonList != null && !jsonList.isEmpty())
 			{
-				logger.logDebug("loadVerbs: Found " + jsonList.size() + " verbs for key: " + key);
-				List<Verb> verbList = jsonList.stream().map(verb -> new Verb(verb, tense)).collect(Collectors.toList());
-				verbs.put(tense, verbList);
-
+				logger.logDebug("loadVerbs: Found " + jsonList.size() + " verbs for key: " + jsonKey);
+				List<Verb> verbList = jsonList.stream().map(verb -> new Verb(verb, pair.getSecond(), pair.getFirst())).collect(Collectors.toList());
+				verbs.put(pair, verbList);
 			}
 			else
-				logger.logWarn("loadVerbs: No verbs found for key: " + key);
+				logger.logWarn("loadVerbs: No verbs found for key: " + jsonKey);
 		}
 
 		logger.logTrace("loadVerbs: Completed loading verbs");
@@ -120,7 +123,27 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 		logger.logDebug("getRandomVerb: Selected tense: " + randomTense);
 
-		Verb result = getRandomVerb(randomTense);
+		Number[] numbers = Number.values();
+		Number randomNumber = numbers[random.nextInt(numbers.length)];
+
+		logger.logDebug("getRandomVerb: Selected number: " + randomNumber);
+
+		Verb result = getRandomVerb(randomNumber, randomTense);
+
+		logger.logTrace("getRandomVerb: Completed getting random verb");
+		return result;
+	}
+
+	public Verb getRandomVerb(Number number)
+	{
+		logger.logTrace("getRandomVerb: Starting to get random verb for number " + number);
+
+		Tense[] tenses = Tense.values();
+		Tense randomTense = tenses[random.nextInt(tenses.length)];
+
+		logger.logDebug("getRandomVerb : Selected tense: " + randomTense);
+
+		Verb result = getRandomVerb(number, randomTense);
 
 		logger.logTrace("getRandomVerb: Completed getting random verb");
 		return result;
@@ -128,9 +151,26 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 	public Verb getRandomVerb(Tense tense)
 	{
-		logger.logTrace("getRandomVerb: Starting to get random verb for tense: " + tense);
+		logger.logTrace("getRandomVerb: Starting to get random verb for tense " + tense);
 
-		List<Verb> verbList = verbs.get(tense);
+		Number[] numbers = Number.values();
+		Number randomNumber = numbers[random.nextInt(numbers.length)];
+
+		logger.logDebug("getRandomVerb: Selected number: " + randomNumber);
+
+		Verb result = getRandomVerb(randomNumber, tense);
+
+		logger.logTrace("getRandomVerb: Completed getting random verb");
+		return result;
+	}
+
+	public Verb getRandomVerb(Number number, Tense tense)
+	{
+		logger.logTrace("getRandomVerb: Starting to get random verb for tense: " + tense + " and number: " + number);
+
+		Pair<Tense, Number> chosen = new Pair<>(tense, number);
+
+		List<Verb> verbList = verbs.get(chosen);
 
 		if(verbList == null || verbList.isEmpty())
 		{
@@ -146,7 +186,6 @@ public class RandomVerbGenerator implements JsonUpdateObserver
 
 		return selected;
 	}
-
 
 	public void cleanup()
 	{

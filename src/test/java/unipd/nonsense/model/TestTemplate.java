@@ -1,5 +1,9 @@
 package unipd.nonsense.model;
 
+import unipd.nonsense.model.Template;
+import unipd.nonsense.model.Number;
+import unipd.nonsense.model.Placeholder;
+
 import org.junit.jupiter.api.*;
 import unipd.nonsense.exceptions.InvalidTemplateException;
 
@@ -13,7 +17,7 @@ class TestTemplate
 	@BeforeEach
 	void setup()
 	{
-		template = new Template("[noun] is [adjective]", Template.TemplateType.SINGULAR);
+		template = new Template("[noun] is [adjective]", Number.SINGULAR);
 	}
 
 	@Test
@@ -22,7 +26,7 @@ class TestTemplate
 	{
 		assertNotNull(template);
 		assertEquals("[noun] is [adjective]", template.getPattern());
-		assertEquals(Template.TemplateType.SINGULAR, template.getType());
+		assertEquals(Number.SINGULAR, template.getNumber());
 	}
 
 	@Test
@@ -30,27 +34,27 @@ class TestTemplate
 	void testEmptyPattern()
 	{
 		assertThrows(InvalidTemplateException.class,
-			() -> new Template("", Template.TemplateType.PLURAL));
+			() -> new Template("", Number.PLURAL));
 	}
 
 	@Test
 	@DisplayName("Test containsPlaceholder")
 	void testContainsPlaceholder()
 	{
-		assertTrue(template.containsPlaceholder(Template.Placeholder.NOUN));
-		assertTrue(template.containsPlaceholder(Template.Placeholder.ADJECTIVE));
-		assertFalse(template.containsPlaceholder(Template.Placeholder.VERB));
+		assertTrue(template.containsPlaceholder(Placeholder.NOUN));
+		assertTrue(template.containsPlaceholder(Placeholder.ADJECTIVE));
+		assertFalse(template.containsPlaceholder(Placeholder.VERB));
 	}
 
 	@Test
 	@DisplayName("Test countPlaceholders")
 	void testCountPlaceholders()
 	{
-		Template multiTemplate = new Template("[noun] [noun] [verb]", Template.TemplateType.PLURAL);
+		Template multiTemplate = new Template("[noun] [noun] [verb]", Number.PLURAL);
 
-		assertEquals(1, template.countPlaceholders(Template.Placeholder.NOUN));
-		assertEquals(2, multiTemplate.countPlaceholders(Template.Placeholder.NOUN));
-		assertEquals(0, template.countPlaceholders(Template.Placeholder.VERB));
+		assertEquals(1, template.countPlaceholders(Placeholder.NOUN));
+		assertEquals(2, multiTemplate.countPlaceholders(Placeholder.NOUN));
+		assertEquals(0, template.countPlaceholders(Placeholder.VERB));
 	}
 
 	@Test
@@ -58,7 +62,7 @@ class TestTemplate
 	void testReplacePlaceholder()
 	{
 		String original = template.getPattern();
-		template.replacePlaceholder(Template.Placeholder.NOUN, "dog");
+		template.replacePlaceholder(Placeholder.NOUN, "dog");
 
 		assertNotEquals(original, template.getPattern());
 		assertTrue(template.getPattern().contains("dog"));
@@ -68,7 +72,7 @@ class TestTemplate
 	@DisplayName("Test withReplacement creates new instance")
 	void testWithReplacement()
 	{
-		Template newTemplate = template.withReplacement(Template.Placeholder.ADJECTIVE, "happy");
+		Template newTemplate = template.withReplacement(Placeholder.ADJECTIVE, "happy");
 		assertNotSame(template, newTemplate);
 		assertTrue(newTemplate.getPattern().contains("happy"));
 	}

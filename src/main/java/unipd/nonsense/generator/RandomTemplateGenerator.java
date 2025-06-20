@@ -4,7 +4,7 @@ import unipd.nonsense.util.JsonUpdateObserver;
 import unipd.nonsense.util.JsonUpdater;
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.model.Template;
-import unipd.nonsense.model.Template.TemplateType;
+import unipd.nonsense.model.Number;
 import unipd.nonsense.exceptions.InvalidListException;
 
 import unipd.nonsense.util.LoggerManager;
@@ -21,13 +21,17 @@ import java.util.stream.Collectors;
 
 public class RandomTemplateGenerator implements JsonUpdateObserver
 {
-	private Map<TemplateType, List<Template>> templates;
+	private Map<Number, List<Template>> templates;
 	private static Random random;
 
 	private final static JsonFileHandler jsonHandler = JsonFileHandler.getInstance();
 
 	private static String templatesPath;
-	private final static List<String> keys = List.of("singularTemplates", "pluralTemplates");
+	private final static Map<Number, String> keys = Map.of(
+		Number.SINGULAR, "singularTemplates",
+		Number.PLURAL, "pluralTemplates"
+	);
+
 	private LoggerManager logger = new LoggerManager(RandomTemplateGenerator.class);
 
 	public RandomTemplateGenerator() throws IOException
@@ -80,30 +84,26 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	{
 		logger.logTrace("loadTemplates: Starting to load templates");
 
-		for(String key : keys)
+		for (Map.Entry<Number, String> entry : keys.entrySet())
 		{
-			logger.logDebug("loadTemplates: Processing key: " + key);
+			Number number = entry.getKey();
+			String jsonKey = entry.getValue();
 
-			TemplateType type;
+			logger.logDebug("loadTemplates: Processing key: " + jsonKey);
+			templates.computeIfAbsent(number, k -> new ArrayList<>());
 
-			if(key.equals(keys.get(0)))
-				type = TemplateType.SINGULAR;
-			else
-				type = TemplateType.PLURAL;
-
-			templates.computeIfAbsent(type, k -> new ArrayList<>());
-
-			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, key);
+			List<String> jsonList = jsonHandler.readListFromJson(templatesPath, jsonKey);
 
 			if(jsonList != null && !jsonList.isEmpty())
 			{
-				logger.logDebug("loadTemplates: Found " + jsonList.size() + " templates for key: " + key);
-				List<Template> templateList = jsonList.stream().map(template -> new Template(template, type)).collect(Collectors.toList());
-
-				templates.put(type, templateList);
+				logger.logDebug("loadTemplates: Found " + jsonList.size() + " templates for key: " + jsonKey);
+				List<Template> templateList = jsonList.stream()
+					.map(template -> new Template(template, number))
+					.collect(Collectors.toList());
+				templates.put(number, templateList);
 			}
 			else
-				logger.logWarn("loadTemplates: No templates found for key: " + key);
+				logger.logWarn("loadTemplates: No templates found for key: " + jsonKey);
 		}
 
 		logger.logTrace("loadTemplates: Completed loading templates");
@@ -113,25 +113,25 @@ public class RandomTemplateGenerator implements JsonUpdateObserver
 	{
 		logger.logTrace("getRandomTemplate: Starting to get random template");
 
-		TemplateType[] types = TemplateType.values();
-		TemplateType randomType = types[random.nextInt(types.length)];
+		Number[] numbers = Number.values();
+		Number randomNumber = numbers[random.nextInt(numbers.length)];
 
-		logger.logDebug("getRandomTemplate: Selected template type: " + randomType);
+		logger.logDebug("getRandomTemplate: Selected template type: " + randomNumber);
 
-		Template result = getRandomTemplate(randomType);
+		Template result = getRandomTemplate(randomNumber);
 
 		logger.logTrace("getRandomTemplate: Completed getting random template");
 		return result;
 	}
 
-	public Template getRandomTemplate(TemplateType type)
+	public Template getRandomTemplate(Number number)
 	{
-		logger.logDebug("getRandomTemplate: Starting to get random template for type: " + type);
-		List<Template> templateList = templates.get(type);
+		logger.logDebug("getRandomTemplate: Starting to get random template for number: " + number);
+		List<Template> templateList = templates.get(number);
 
 		if(templateList == null || templateList.isEmpty())
 		{
-			logger.logError("getRandomTemplate: No templates available for type: " + type);
+			logger.logError("getRandomTemplate: No templates available for number: " + number);
 			throw new InvalidListException();
 		}
 
