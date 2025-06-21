@@ -36,10 +36,10 @@ object "Command Description" as CD
 U "1"--> "*"S : Writes
 
 U "1"--> "1"Sgen : Uses
-Sgen "1"--* "1"Tgen
-Sgen "1"--* "1"Ngen
-Sgen "1"--* "1"Vgen
-Sgen "1"--* "1"Agen
+Sgen "1"*-- "1"Tgen: contains
+Sgen "1"*-- "1"Ngen: contains
+Sgen "1"*-- "1"Vgen: contains
+Sgen "1"*-- "1"Agen: contains
 Sgen "1"--> "*"S: Generates
 
 U "1"--> "1"ToxA: Uses
@@ -71,3 +71,8 @@ CL"1" --> "11"CD: Displays
 
 @enduml
 ```
+
+# Notes
+* The given domain model is a showcase of the program's features and as such doesn't include commands as the "default" or "personalized" ones, as those are routines that implement a combination of the other represented commands. 
+* All generated sentences, analyses and syntax trees are displayed on screen and wiewable by the user once created, this is not represented in the domain model as it is considered implicit and grants a more clear and understandable graph.
+* The program also grants a log and a command to display log entries on console, this is not represented in the graph as this feature is aimed at developers and mainly used for debugging, which does not interest the average stakeholder.
