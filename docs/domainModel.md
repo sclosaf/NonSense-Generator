@@ -1,6 +1,7 @@
 # Domain Model
 
-![image](https://github.com/user-attachments/assets/42ba5c33-46f0-4e1f-82a6-34e0c45f84c9)
+![image](https://github.com/user-attachments/assets/02b1750f-4a49-45a9-8a68-33196f42c867)
+
 
 ```plantuml
 @startuml
