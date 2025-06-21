@@ -21,13 +21,13 @@ public class Template
 	{
 		logger.logTrace("Creating Template instance");
 
-		if(pattern == null || pattern.isEmpty())
+		if(pattern == null || pattern.trim().isEmpty() || number == null)
 		{
 			logger.logError("Invalid pattern provided");
 			throw new InvalidTemplateException();
 		}
 
-		this.pattern = pattern;
+		this.pattern = pattern.trim();
 		this.number = number;
 
 		logger.logDebug("Successfully created Template with pattern: " + pattern + " and number: " + number);

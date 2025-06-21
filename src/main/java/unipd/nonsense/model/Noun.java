@@ -16,13 +16,13 @@ public class Noun
 	{
 		logger.logTrace("Creating Noun instance");
 
-		if(noun == null || noun.isEmpty())
+		if(noun == null || noun.trim().isEmpty() || number == null)
 		{
 			logger.logError("Invalid noun provided");
 			throw new InvalidGrammaticalElementException();
 		}
 
-		this.noun = noun;
+		this.noun = noun.trim();
 		this.number = number;
 		logger.logDebug("Successfully created Noun with value: " + noun + " and number: " + number);
 	}

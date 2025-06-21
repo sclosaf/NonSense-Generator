@@ -13,13 +13,13 @@ public class Adjective
 	{
 		logger.logTrace("Creating Adjective instance");
 
-		if(adjective == null || adjective.isEmpty())
+		if(adjective == null || adjective.trim().isEmpty())
 		{
 			logger.logError("Invalid adjective provided");
 			throw new InvalidGrammaticalElementException();
 		}
 
-		this.adjective = adjective;
+		this.adjective = adjective.trim();
 		logger.logDebug("Successfully created Adjective with value: " + adjective);
 	}
 

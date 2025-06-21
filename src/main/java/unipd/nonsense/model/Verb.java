@@ -19,13 +19,13 @@ public class Verb
 	{
 		logger.logTrace("Creating Verb instance");
 
-		if(verb == null || verb.isEmpty())
+		if(verb == null || verb.trim().isEmpty() || number == null || tense == null)
 		{
 			logger.logError("Invalid verb provided");
 			throw new InvalidGrammaticalElementException();
 		}
 
-		this.verb = verb;
+		this.verb = verb.trim();
 		this.tense = tense;
 		this.number = number;
 
