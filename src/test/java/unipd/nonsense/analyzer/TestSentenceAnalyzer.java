@@ -32,6 +32,8 @@ import com.google.gson.JsonArray;
 
 import java.io.IOException;
 import java.io.File;
+import java.util.regex.Pattern;
+import java.util.regex.Matcher;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -152,8 +154,7 @@ class TestSentenceAnalyzer
 		String result = analyzer.analyzeSentimentAsync(sentimentText).get();
 
 		assertNotNull(result);
-		assertEquals("Sentiment Score: 0[\\.,]80 (Magnitude: 1[\\.,]20)", result,
-			"Should format sentiment results correctly");
+		assertTrue(Pattern.compile("Sentiment Score: 0[\\.,]80 \\(Magnitude: 1[\\.,]20\\)").matcher(result).matches(), "Should format sentiment results correctly");
 	}
 
 	@Test
@@ -178,7 +179,7 @@ class TestSentenceAnalyzer
 		assertNotNull(report);
 		assertTrue(report.contains("Entity 1: TestEntity"), "Should contain entity name");
 		assertTrue(report.contains("Type: PERSON"), "Should contain entity type");
-		assertTrue(report.contains("Salience: 0[\\.,]900"), "Should contain salience score");
+		assertTrue(Pattern.compile("Salience: 0[\\.,]900").matcher(report).find(), "Should contain salience score");
 	}
 
 	@Test
@@ -284,7 +285,7 @@ class TestSentenceAnalyzer
 
 		String result = analyzer.analyzeSentimentAsync("Test").get();
 
-		assertEquals("Sentiment Score: 0[\\.,]00 (Magnitude: 0[\\.,]00)", result);
+		assertTrue(Pattern.compile("Sentiment Score: 0[\\.,]00 \\(Magnitude: 0[\\.,]00\\)").matcher(result).matches());
 	}
 
 	@Test
@@ -553,7 +554,7 @@ class TestSentenceAnalyzer
 		assertNotNull(report);
 		assertTrue(report.contains("Entity 1: TestEntity"), "Should contain entity name");
 		assertTrue(report.contains("Type: PERSON"), "Should contain entity type");
-		assertTrue(report.contains("Salience: 0[\\.,]900"), "Should contain salience score");
+		assertTrue(Pattern.compile("Salience: 0[\\.,]900").matcher(report).find(), "Should contain salience score");
 		assertTrue(report.contains("- Test (Type: PROPER"), "Should contain mention");
 	}
 }

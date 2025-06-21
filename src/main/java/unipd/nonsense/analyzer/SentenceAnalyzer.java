@@ -65,7 +65,7 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 	}
 
-	public SentenceAnalyzer(GoogleApiClient apiClient, LanguageServiceClient languageClient) 
+	public SentenceAnalyzer(GoogleApiClient apiClient, LanguageServiceClient languageClient)
 	{
         this.apiClient = apiClient;
         this.languageClient = languageClient;
