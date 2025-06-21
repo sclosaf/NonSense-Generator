@@ -17,7 +17,6 @@ import unipd.nonsense.util.JsonUpdater;
 import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidNumberException;
-import unipd.nonsense.exceptions.InvalidTemplateTypeException;
 import unipd.nonsense.exceptions.InvalidTemplateException;
 
 import java.util.Random;

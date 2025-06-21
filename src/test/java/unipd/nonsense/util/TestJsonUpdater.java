@@ -97,8 +97,8 @@ class TestJsonUpdater
 	}
 
 	@Test
-	@DisplayName("Test template loading with valid type")
-	void testLoadTemplateWithValidType() throws IOException
+	@DisplayName("Test template loading with valid number")
+	void testLoadTemplateWithValidNumber() throws IOException
 	{
 		JsonUpdater.loadTemplate(TEST_TEMPLATE, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
@@ -109,10 +109,10 @@ class TestJsonUpdater
 	}
 
 	@Test
-	@DisplayName("Test template loading with invalid type")
-	void testLoadTemplateWithInvalidType()
+	@DisplayName("Test template loading with invalid number")
+	void testLoadTemplateWithInvalidNumber()
 	{
-		assertThrows(InvalidTemplateTypeException.class, () -> {
+		assertThrows(InvalidNumberException.class, () -> {
 			JsonUpdater.loadTemplate(TEST_TEMPLATE, null);
 		});
 	}

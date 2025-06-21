@@ -17,7 +17,6 @@ import unipd.nonsense.util.LoggerManager;
 
 import unipd.nonsense.exceptions.InvalidNumberException;
 import unipd.nonsense.exceptions.InvalidTenseException;
-import unipd.nonsense.exceptions.InvalidTemplateTypeException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -165,7 +164,7 @@ public class JsonUpdater
 	public static void loadTemplate(String template, Number number) throws IOException
 	{
 		if(number == null)
-			throw new InvalidTemplateTypeException();
+			throw new InvalidNumberException();
 
 		logger.logDebug("loadTemplate: Loading template: " + template + " with number: " + number);
 

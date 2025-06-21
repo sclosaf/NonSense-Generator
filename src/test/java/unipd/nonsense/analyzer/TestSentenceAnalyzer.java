@@ -346,14 +346,14 @@ class TestSentenceAnalyzer
 		when(mockLanguageClient.analyzeSentiment(any(Document.class))).thenReturn(minResponse);
 
 		String minResult = analyzer.analyzeSentimentAsync("Negative").get();
-		assertTrue(minResult.contains("-1.00"), "Should handle minimum sentiment score");
+		assertTrue(Pattern.compile("-1[\\.,]00").matcher(minResult).find(), "Should handle minimum sentiment score");
 
 		Sentiment maxSentiment = Sentiment.newBuilder().setScore(1.0f).setMagnitude(10.0f).build();
 		AnalyzeSentimentResponse maxResponse = AnalyzeSentimentResponse.newBuilder().setDocumentSentiment(maxSentiment).build();
 		when(mockLanguageClient.analyzeSentiment(any(Document.class))).thenReturn(maxResponse);
 
 		String maxResult = analyzer.analyzeSentimentAsync("Positive").get();
-		assertTrue(maxResult.contains("1.00"), "Should handle maximum sentiment score");
+		assertTrue(Pattern.compile("1[\\.,]00").matcher(maxResult).find(), "Should handle maximum sentiment score");
 	}
 
 	@Test

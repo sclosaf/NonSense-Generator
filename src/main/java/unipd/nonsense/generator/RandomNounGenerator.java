@@ -123,15 +123,15 @@ public class RandomNounGenerator implements JsonUpdateObserver
 		return result;
 	}
 
-	public Noun getRandomNoun(Number num)
+	public Noun getRandomNoun(Number number)
 	{
-		logger.logDebug("getRandomNoun: Starting to get random noun for number: " + num);
+		logger.logDebug("getRandomNoun: Starting to get random noun for number: " + number);
 
-		List<Noun> nounList = nouns.get(num);
+		List<Noun> nounList = nouns.get(number);
 
 		if(nounList == null || nounList.isEmpty())
 		{
-			logger.logError("getRandomNoun: No nouns available for number: " + num);
+			logger.logError("getRandomNoun: No nouns available for number: " + number);
 			throw new InvalidListException();
 		}
 
