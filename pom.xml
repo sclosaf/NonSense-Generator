@@ -279,13 +279,6 @@
 				</includes>
 			</resource>
 			<resource>
-				<directory>src/test/resources</directory>
-				<includes>
-					<include>**/*.json</include>
-				</includes>
-			</resource>
-
-			<resource>
 				<directory>config</directory>
 				<includes>
 					<include>**/*.json</include>
@@ -301,12 +294,6 @@
 		<testResources>
 			<testResource>
 				<directory>src/test/resources</directory>
-				<includes>
-					<include>**/*.json</include>
-				</includes>
-			</testResource>
-			<testResource>
-				<directory>src/main/resources</directory>
 				<includes>
 					<include>**/*.json</include>
 				</includes>
