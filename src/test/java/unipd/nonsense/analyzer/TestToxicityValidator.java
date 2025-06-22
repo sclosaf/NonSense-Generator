@@ -38,7 +38,7 @@ class TestToxicityValidator
 	private GoogleApiClient mockApiClient;
 	private LanguageServiceClient mockLanguageClient;
 
-	private static final String TEST_JSON_PATH = "target" + File.separator + "resources" + File.separator + "TestToxicity.json";
+	private static final String TEST_JSON_PATH = "target" + File.separator + "resources" + File.separator + "testToxicity.json";
 
 	private static Map<String, Float> cleanScores;
 	private static Map<String, Float> toxicScores;

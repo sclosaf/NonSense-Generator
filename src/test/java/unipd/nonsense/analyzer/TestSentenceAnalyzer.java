@@ -69,7 +69,7 @@ class TestSentenceAnalyzer
 	private GoogleApiClient mockApiClient;
 	private LanguageServiceClient mockLanguageClient;
 
-	private static final String TEST_JSON_PATH = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "TestSentence.json";
+	private static final String TEST_JSON_PATH = "target" + File.separator + "resources" + File.separator + "testSentence.json";
 
 	private static String syntaxText;
 	private static String sentimentText;
