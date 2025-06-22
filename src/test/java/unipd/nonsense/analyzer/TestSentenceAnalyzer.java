@@ -581,8 +581,8 @@ class TestSentenceAnalyzer
 		String posResult = analyzer.analyzeSentimentAsync("Slightly positive").get();
 		String negResult = analyzer.analyzeSentimentAsync("Slightly negative").get();
 
-		assertTrue(posResult.contains("0.10"));
-		assertTrue(negResult.contains("-0.10"));
+		assertTrue(Pattern.compile("0[\\,.]10").matcher(posResult).find());
+		assertTrue(Pattern.compile("-0[\\.,]10").matcher(negResult).find());
 	}
 
 	@Test

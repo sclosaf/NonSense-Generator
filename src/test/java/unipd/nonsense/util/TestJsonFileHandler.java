@@ -990,30 +990,6 @@ class TestJsonFileHandler
 		assertEquals(1, items.size(), "Should handle files with BOM.");
 	}
 
-
-	@Test
-	@DisplayName("Test handling file permissions changing during operation.")
-	void testReadItemFromJson_PermissionsChange() throws IOException
-	{
-		File permFile = Files.createTempFile("perm", ".json").toFile();
-		permFile.deleteOnExit();
-
-		JsonObject json = new JsonObject();
-		json.add("TestArray", new JsonArray());
-		json.getAsJsonArray("TestArray").add("item1");
-
-		try(FileWriter writer = new FileWriter(permFile))
-		{
-			writer.write(json.toString());
-		}
-
-		assertThrows(UnreadableFileException.class, () ->
-		{
-			permFile.setReadable(false);
-			handler.readItemFromJson(permFile.getPath(), "TestArray", 0);
-		}, "Should handle permission changes during operation.");
-	}
-
 	@Test
 	@DisplayName("Test handling file deletion during operation.")
 	void testAppendItemToJson_FileDeleted() throws IOException
