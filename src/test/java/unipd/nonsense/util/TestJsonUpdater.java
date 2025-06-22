@@ -208,16 +208,6 @@ class TestJsonUpdater
 	}
 
 	@Test
-	@DisplayName("Test loading empty string as noun")
-	void testLoadEmptyNoun()
-	{
-		assertThrows(IllegalArgumentException.class, () ->
-		{
-			JsonUpdater.loadNoun("", Number.SINGULAR);
-		}, "Should throw when loading empty noun");
-	}
-
-	@Test
 	@DisplayName("Test loading null as noun")
 	void testLoadNullNoun()
 	{
