@@ -57,4 +57,70 @@ class TestNoun
 		noun = new Noun("dogs", Number.PLURAL);
 		assertEquals(noun.getNumber(), Number.PLURAL);
 	}
+
+	@Test
+	@DisplayName("Test noun with whitespace only throws exception")
+	void testWhitespaceNoun()
+	{
+		assertThrows(InvalidGrammaticalElementException.class,
+			() -> new Noun("   ", Number.SINGULAR));
+	}
+
+	@Test
+	@DisplayName("Test noun with leading/trailing whitespace is trimmed")
+	void testTrimmedNoun()
+	{
+		Noun testNoun = new Noun("  cat  ", Number.SINGULAR);
+		assertEquals("cat", testNoun.getNoun());
+	}
+
+	@Test
+	@DisplayName("Test noun with special characters")
+	void testNounWithSpecialChars()
+	{
+		Noun testNoun = new Noun("dög", Number.SINGULAR);
+		assertEquals("dög", testNoun.getNoun());
+	}
+
+	@Test
+	@DisplayName("Test noun with numbers")
+	void testNounWithNumbers()
+	{
+		Noun testNoun = new Noun("robot123", Number.PLURAL);
+		assertEquals("robot123", testNoun.getNoun());
+	}
+
+	@Test
+	@DisplayName("Test very long noun")
+	void testVeryLongNoun()
+	{
+		String longNoun = "verylooooooooooooooooooooooooooooooooooooooooooooooooooooooongnoun";
+		Noun testNoun = new Noun(longNoun, Number.SINGULAR);
+		assertEquals(longNoun, testNoun.getNoun());
+	}
+
+	@Test
+	@DisplayName("Test noun with mixed case")
+	void testNounWithMixedCase()
+	{
+		Noun testNoun = new Noun("MixedCase", Number.SINGULAR);
+		assertEquals("MixedCase", testNoun.getNoun());
+	}
+
+	@Test
+	@DisplayName("Test null number throws NullPointerException")
+	void testNullNumber()
+	{
+		assertThrows(InvalidGrammaticalElementException.class,
+			() -> new Noun("book", null));
+	}
+
+	@Test
+	@DisplayName("Test getNoun returns same reference")
+	void testGetNounReturnsSameReference()
+	{
+		String nounString = "tree";
+		Noun testNoun = new Noun(nounString, Number.SINGULAR);
+		assertSame(nounString, testNoun.getNoun());
+	}
 }

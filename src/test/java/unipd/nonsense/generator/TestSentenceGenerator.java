@@ -343,4 +343,151 @@ class TestSentenceGenerator
 		assertFalse(result.getPattern().contains("[adjective]"));
 		assertFalse(result.getPattern().contains("[verb]"));
 	}
+
+	@Test
+	@DisplayName("Test sentence generation with mixed number requirements")
+	void testMixedNumberRequirements() throws IOException
+	{
+		List<Noun> nouns = Arrays.asList(new Noun("cat", Number.SINGULAR), new Noun("dogs", Number.PLURAL));
+		List<Adjective> adjectives = Arrays.asList(new Adjective("sleepy"));
+		List<Verb> verbs = Arrays.asList(new Verb("run", Number.PLURAL, Tense.PRESENT));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.contains("cat") || sentence.contains("dogs"), "Sentence should contain at least one of the provided nouns");
+		assertTrue(sentence.contains("sleepy"));
+		assertTrue(sentence.contains("run"));
+	}
+
+	@Test
+	@DisplayName("Test template with all placeholders at the beginning")
+	void testPlaceholdersAtBeginning()
+	{
+		Template template = new Template("[noun] [verb] [adjective] the end.", Number.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		assertFalse(sentence.startsWith("["));
+		assertTrue(sentence.endsWith("the end."));
+	}
+
+	@Test
+	@DisplayName("Test template with repeated same placeholders")
+	void testRepeatedSamePlaceholders()
+	{
+		Template template = new Template("The [noun] and [noun] [verb] together.", Number.PLURAL);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		long nounCount = Arrays.stream(sentence.split(" ")).filter(word -> word.equals(result.getPattern().split(" ")[1])).count();
+		assertFalse(nounCount >= 2, "Shouldn't contain repeated nouns");
+		assertFalse(sentence.contains("[noun]"));
+	}
+
+	@Test
+	@DisplayName("Test sentence generation with special characters in words")
+	void testSpecialCharactersInWords() throws IOException
+	{
+		List<Noun> nouns = List.of(new Noun("café", Number.SINGULAR));
+		List<Adjective> adjectives = List.of(new Adjective("naïve"));
+		List<Verb> verbs = List.of(new Verb("cliché", Number.SINGULAR, Tense.PRESENT));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.contains("café") || sentence.contains("naïve") || sentence.contains("cliché"));
+	}
+
+	@Test
+	@DisplayName("Test extremely long template")
+	void testExtremelyLongTemplate()
+	{
+		StringBuilder longTemplate = new StringBuilder("The ");
+		for(int i = 0; i < 50; i++)
+			longTemplate.append("[adjective] [noun] [verb], then ");
+
+		longTemplate.append("finally [verb].");
+
+		Template template = new Template(longTemplate.toString(), Number.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		assertFalse(sentence.contains("[") || sentence.contains("]"));
+	}
+
+	@Test
+	@DisplayName("Test template with only adjective placeholders")
+	void testAdjectiveOnlyTemplate()
+	{
+		Template template = new Template("[adjective] [adjective] [adjective]", Number.SINGULAR);
+		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
+		String sentence = result.getPattern();
+
+		assertFalse(sentence.contains("[adjective]"));
+		assertTrue(sentence.split(" ").length >= 3, "Should contain at least 3 adjectives");
+	}
+
+	@Test
+	@DisplayName("Test template with mixed numbers in custom words")
+	void testMixedNumbersInCustomWords() throws IOException
+	{
+		List<Noun> nouns = Arrays.asList(new Noun("child", Number.SINGULAR), new Noun("children", Number.PLURAL));
+		List<Verb> verbs = Arrays.asList(new Verb("plays", Number.SINGULAR, Tense.PRESENT), new Verb("play", Number.PLURAL, Tense.PRESENT));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, null, verbs);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.contains("child") || sentence.contains("children"));
+		assertTrue(sentence.contains("plays") || sentence.contains("play"));
+	}
+
+	@Test
+	@DisplayName("Test concurrent custom word generation")
+	void testConcurrentCustomWordGeneration() throws InterruptedException
+	{
+		int threadCount = 10;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+			{
+				try
+				{
+					List<Noun> nouns = List.of(new Noun("concurrent" + Thread.currentThread().getId(), Number.SINGULAR));
+					Template sentence = sentenceGenerator.generateSentenceWith(nouns, null, null);
+					assertNotNull(sentence);
+					assertTrue(sentence.getPattern().contains("concurrent"));
+				}
+				catch(IOException e)
+				{
+					fail("IOException occurred");
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await(3, TimeUnit.SECONDS);
+		executor.shutdown();
+		assertEquals(0, latch.getCount());
+	}
+
+	@Test
+	@DisplayName("Test template with numbers in words")
+	void testNumbersInWords() throws IOException
+	{
+		List<Noun> nouns = List.of(new Noun("007", Number.SINGULAR));
+		List<Adjective> adjectives = List.of(new Adjective("101"));
+		List<Verb> verbs = List.of(new Verb("404", Number.SINGULAR, Tense.PAST));
+
+		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
+		String sentence = result.getPattern();
+
+		assertTrue(sentence.contains("007") || sentence.contains("101") || sentence.contains("404"));
+	}
 }

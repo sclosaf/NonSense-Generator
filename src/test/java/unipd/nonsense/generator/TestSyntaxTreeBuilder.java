@@ -281,4 +281,180 @@ class TestSyntaxTreeBuilder
 		assertTrue(result.contains("│ └─GrandChild2 (ADJ)"));
 		assertTrue(result.contains("└─Child3 (NOUN)"));
 	}
+
+	@Test
+	@DisplayName("Test tokens with unconventional POS tags")
+	void testUnconventionalPosTags()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Root", -1, Label.ROOT, "X"));
+		tokens.add(new TestToken("Symbol", 0, Label.DEP, "SYM"));
+		tokens.add(new TestToken("Emoji", 0, Label.DEP, "EMOJI"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Root (X)"));
+		assertTrue(result.contains("├─Symbol (SYM)"));
+		assertTrue(result.contains("└─Emoji (EMOJI)"));
+	}
+
+	@Test
+	@DisplayName("Test very long token texts")
+	void testLongTokenTexts()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("ThisIsAnExtremelyLongTokenTextThatExceedsNormalLengths", -1, Label.ROOT, "NOUN"));
+		tokens.add(new TestToken("AnotherVeryLongTokenWithEvenMoreCharactersThanTheFirstOne", 0, Label.NSUBJ, "NOUN"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+
+		assertTrue(result.contains("ThisIsAnExtremelyLongTokenTextThatExceedsNormalLengths (NOUN)"));
+		assertTrue(result.contains("└─AnotherVeryLongTokenWithEvenMoreCharactersThanTheFirstOne (NOUN)"));
+	}
+
+	@Test
+	@DisplayName("Test complex sentence with multiple punctuation tokens")
+	void testMultiplePunctuationTokens()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Hello", -1, Label.ROOT, "INTJ"));
+		tokens.add(new TestToken(",", 0, Label.P, "PUNCT"));
+		tokens.add(new TestToken("how", 0, Label.ADVMOD, "ADV"));
+		tokens.add(new TestToken("are", 0, Label.COP, "VERB"));
+		tokens.add(new TestToken("you", 3, Label.NSUBJ, "PRON"));
+		tokens.add(new TestToken("?", 0, Label.P, "PUNCT"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Hello (INTJ)"));
+		assertTrue(result.contains("├─, (PUNCT)"));
+		assertTrue(result.contains("├─how (ADV)"));
+		assertTrue(result.contains("├─are (VERB)"));
+		assertTrue(result.contains("│ └─you (PRON)"));
+		assertTrue(result.contains("└─? (PUNCT)"));
+	}
+
+	@Test
+	@DisplayName("Test special characters in tokens")
+	void testSpecialCharacterTokens()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Root@", -1, Label.ROOT, "NOUN"));
+		tokens.add(new TestToken("Child%", 0, Label.NSUBJ, "NOUN"));
+		tokens.add(new TestToken("!", 1, Label.P, "PUNCT"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Root@ (NOUN)"));
+		assertTrue(result.contains("Child% (NOUN)"));
+		assertTrue(result.contains("! (PUNCT)"));
+	}
+
+	@Test
+	@DisplayName("Test tree with tokens having same text but different properties")
+	void testDuplicateTextTokens()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+
+		tokens.add(new TestToken("Word", -1, Label.ROOT, "NOUN"));
+		tokens.add(new TestToken("Word", 0, Label.NSUBJ, "VERB"));
+		tokens.add(new TestToken("Word", 1, Label.DOBJ, "ADJ"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Word (NOUN)"));
+		assertTrue(result.contains("Word (VERB)"));
+		assertTrue(result.contains("Word (ADJ)"));
+	}
+
+	@Test
+	@DisplayName("Test multiple disconnected punctuation tokens")
+	void testMultipleDisconnectedPunctuation()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Root", -1, Label.ROOT, "NOUN"));
+		tokens.add(new TestToken(".", -1, Label.P, "PUNCT"));
+		tokens.add(new TestToken(",", -1, Label.P, "PUNCT"));
+		tokens.add(new TestToken("!", -1, Label.P, "PUNCT"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Root (NOUN)"));
+		assertTrue(result.contains("├─. (PUNCT)"));
+		assertTrue(result.contains("├─, (PUNCT)"));
+		assertTrue(result.contains("└─! (PUNCT)"));
+	}
+
+	@Test
+	@DisplayName("Test tree with maximum depth and breadth")
+	void testMaxDepthAndBreadth()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Root", -1, Label.ROOT, "VERB"));
+
+		for(int i = 0; i < 10; i++)
+		{
+			tokens.add(new TestToken("Child" + i, 0, Label.values()[i % Label.values().length], "NOUN"));
+
+			for (int j = 0; j < 5; j++)
+				tokens.add(new TestToken("GrandChild" + i + "-" + j, i+1, Label.values()[j % Label.values().length], "ADJ"));
+		}
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Root (VERB)"));
+
+		for(int i = 0; i < 10; i++)
+		{
+			assertTrue(result.contains("Child" + i + " (NOUN)"));
+			for(int j = 0; j < 5; j++)
+					assertTrue(result.contains("GrandChild" + i + "-" + j + " (ADJ)"));
+		}
+	}
+
+	@Test
+	@DisplayName("Test tokens with empty text")
+	void testEmptyTextTokens()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("", -1, Label.ROOT, "NOUN"));
+		tokens.add(new TestToken("", 0, Label.NSUBJ, "NOUN"));
+		tokens.add(new TestToken("", 1, Label.P, "PUNCT"));
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains(" (NOUN)"));
+		assertTrue(result.contains(" (PUNCT)"));
+	}
+
+	@Test
+	@DisplayName("Test tree with all possible dependency labels")
+	void testAllDependencyLabels()
+	{
+		List<TestToken> tokens = new ArrayList<>();
+		tokens.add(new TestToken("Root", -1, Label.ROOT, "VERB"));
+
+		for(Label label : Label.values())
+			if(label != Label.ROOT && label != Label.UNRECOGNIZED)
+				tokens.add(new TestToken(label.toString(), 0, label, "NOUN"));
+
+
+		String result = SyntaxTreeBuilder.getSyntaxTree(tokens);
+
+		assertNotNull(result);
+		assertTrue(result.contains("Root (VERB)"));
+
+		for(Label label : Label.values())
+			if(label != Label.ROOT && label != Label.UNRECOGNIZED)
+					assertTrue(result.contains(label.toString() + " (NOUN)"));
+	}
 }

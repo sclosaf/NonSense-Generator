@@ -351,7 +351,7 @@ public class SyntaxTreeBuilder
 				continue;
 			}
 
-			String nodeLabel = String.format("%s (%s)", token.getText(), token.getPosTag());
+			String nodeLabel = String.format("%s (%s)", token.getText().isEmpty() ? " " : token.getText(), token.getPosTag());
 
 			logger.logDebug("buildTreeString: Processing token: " + nodeLabel);
 

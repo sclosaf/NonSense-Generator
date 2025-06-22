@@ -39,9 +39,11 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Collections;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
@@ -123,7 +125,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyze syntax input returns expected report with valid tokens")
-	void testAnalyzeSyntax_Success() throws Exception {
+	void testAnalyzeSyntax_Success() throws Exception
+	{
 		AnalyzeSyntaxResponse mockResponse = mockAnalyzeSyntaxResponse();
 		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class))).thenReturn(mockResponse);
 
@@ -141,7 +144,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyze sentiment input returns complete sentiment analysis")
-	void testAnalyzeSentiment_Success() throws Exception {
+	void testAnalyzeSentiment_Success() throws Exception
+	{
 		Sentiment sentiment = Sentiment.newBuilder()
 			.setScore(0.8f)
 			.setMagnitude(1.2f)
@@ -159,7 +163,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyze entities input returns complete entity analysis")
-	void testAnalyzeEntities_Success() throws Exception {
+	void testAnalyzeEntities_Success() throws Exception
+	{
 		Entity entity = Entity.newBuilder()
 			.setName("TestEntity")
 			.setType(Entity.Type.PERSON)
@@ -184,7 +189,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Get syntax tokens returns complete token information")
-	void testGetSyntaxTokens_Success() throws Exception {
+	void testGetSyntaxTokens_Success() throws Exception
+	{
 		AnalyzeSyntaxResponse mockResponse = mockAnalyzeSyntaxResponse();
 		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class))).thenReturn(mockResponse);
 
@@ -203,7 +209,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyze syntax with null input throws InvalidTextException")
-	void testAnalyzeSyntax_NullInput() {
+	void testAnalyzeSyntax_NullInput()
+	{
 		ExecutionException ex = assertThrows(ExecutionException.class,
 			() -> analyzer.analyzeSyntaxAsync(null).get());
 
@@ -213,7 +220,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyze syntax with empty input throws InvalidTextException")
-	void testAnalyzeSyntax_EmptyInput() {
+	void testAnalyzeSyntax_EmptyInput()
+	{
 		ExecutionException ex = assertThrows(ExecutionException.class,
 			() -> analyzer.analyzeSyntaxAsync("   ").get());
 
@@ -223,7 +231,8 @@ class TestSentenceAnalyzer
 
 	@Test
 	@DisplayName("Analyzer close completes successfully")
-	void testAnalyzerClose() {
+	void testAnalyzerClose()
+	{
 		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
 		LanguageServiceClient tempLanguageClient = mock(LanguageServiceClient.class);
 		SentenceAnalyzer tempAnalyzer = new SentenceAnalyzer(tempMockClient, tempLanguageClient);
@@ -521,12 +530,12 @@ class TestSentenceAnalyzer
 
 		assertNotNull(report);
 		String[] lines = report.split("\n");
-		for (String line : lines) {
-			if (line.startsWith("Token")) {
+		for (String line : lines)
+		{
+			if (line.startsWith("Token"))
 				assertTrue(line.matches("Token \\d+: .+"), "Token line format incorrect");
-			} else if (line.trim().startsWith("Lemma:")) {
+			else if(line.trim().startsWith("Lemma:"))
 				assertTrue(line.contains(": "), "Lemma line should contain ': '");
-			}
 		}
 	}
 
@@ -556,5 +565,205 @@ class TestSentenceAnalyzer
 		assertTrue(report.contains("Type: PERSON"), "Should contain entity type");
 		assertTrue(Pattern.compile("Salience: 0[\\.,]900").matcher(report).find(), "Should contain salience score");
 		assertTrue(report.contains("- Test (Type: PROPER"), "Should contain mention");
+	}
+
+	@Test
+	@DisplayName("Analyze sentiment with neutral score boundary values")
+	void testAnalyzeSentiment_NeutralBoundaries() throws Exception
+	{
+		Sentiment neutralPositive = Sentiment.newBuilder().setScore(0.1f).setMagnitude(0.5f).build();
+		Sentiment neutralNegative = Sentiment.newBuilder().setScore(-0.1f).setMagnitude(0.5f).build();
+
+		when(mockLanguageClient.analyzeSentiment(any(Document.class)))
+			.thenReturn(AnalyzeSentimentResponse.newBuilder().setDocumentSentiment(neutralPositive).build())
+			.thenReturn(AnalyzeSentimentResponse.newBuilder().setDocumentSentiment(neutralNegative).build());
+
+		String posResult = analyzer.analyzeSentimentAsync("Slightly positive").get();
+		String negResult = analyzer.analyzeSentimentAsync("Slightly negative").get();
+
+		assertTrue(posResult.contains("0.10"));
+		assertTrue(negResult.contains("-0.10"));
+	}
+
+	@Test
+	@DisplayName("Analyze entities with all entity types")
+	void testAnalyzeEntities_AllTypes() throws Exception
+	{
+		Entity person = Entity.newBuilder().setName("Person").setType(Entity.Type.PERSON).setSalience(0.5f).build();
+		Entity location = Entity.newBuilder().setName("Location").setType(Entity.Type.LOCATION).setSalience(0.3f).build();
+		Entity org = Entity.newBuilder().setName("Org").setType(Entity.Type.ORGANIZATION).setSalience(0.2f).build();
+
+		AnalyzeEntitiesResponse mockResponse = AnalyzeEntitiesResponse.newBuilder()
+			.addEntities(person)
+			.addEntities(location)
+			.addEntities(org)
+			.build();
+
+		when(mockLanguageClient.analyzeEntities(any(AnalyzeEntitiesRequest.class))).thenReturn(mockResponse);
+
+		String report = analyzer.analyzeEntitiesAsync("Test").get();
+
+		assertNotNull(report);
+		assertTrue(report.contains("Type: PERSON"));
+		assertTrue(report.contains("Type: LOCATION"));
+		assertTrue(report.contains("Type: ORGANIZATION"));
+	}
+
+	@Test
+	@DisplayName("Get syntax tokens with edge case dependency labels")
+	void testGetSyntaxTokens_EdgeCaseDependencies() throws Exception
+	{
+		Token rootToken = Token.newBuilder()
+			.setText(TextSpan.newBuilder().setContent("Root").setBeginOffset(0))
+			.setLemma("root")
+			.setPartOfSpeech(PartOfSpeech.newBuilder().setTag(PartOfSpeech.Tag.VERB))
+			.setDependencyEdge(DependencyEdge.newBuilder()
+				.setHeadTokenIndex(0)
+				.setLabel(DependencyEdge.Label.ROOT))
+			.build();
+
+		Token unknownDepToken = Token.newBuilder()
+			.setText(TextSpan.newBuilder().setContent("Unknown").setBeginOffset(5))
+			.setLemma("unknown")
+			.setPartOfSpeech(PartOfSpeech.newBuilder().setTag(PartOfSpeech.Tag.NOUN))
+			.setDependencyEdge(DependencyEdge.newBuilder()
+				.setHeadTokenIndex(0)
+				.setLabel(DependencyEdge.Label.UNKNOWN))
+			.build();
+
+		AnalyzeSyntaxResponse mockResponse = AnalyzeSyntaxResponse.newBuilder()
+			.addTokens(rootToken)
+			.addTokens(unknownDepToken)
+			.build();
+
+		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class))).thenReturn(mockResponse);
+
+		List<SyntaxToken> tokens = analyzer.getSyntaxTokensAsync("Test").get();
+
+		assertEquals(2, tokens.size());
+		assertEquals(DependencyEdge.Label.ROOT, tokens.get(0).getDependencyLabel());
+		assertEquals(DependencyEdge.Label.UNKNOWN, tokens.get(1).getDependencyLabel());
+	}
+
+	@Test
+	@DisplayName("Test analyzer with multiple sequential requests")
+	void testMultipleSequentialRequests() throws Exception
+	{
+		AnalyzeSyntaxResponse firstSyntaxResponse = mockAnalyzeSyntaxResponse();
+		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class)))
+			.thenReturn(firstSyntaxResponse);
+
+		String firstReport = analyzer.analyzeSyntaxAsync("First").get();
+		assertNotNull(firstReport);
+
+		Token differentToken = Token.newBuilder()
+			.setText(TextSpan.newBuilder().setContent("Different").setBeginOffset(0))
+			.setLemma("different")
+			.setPartOfSpeech(PartOfSpeech.newBuilder().setTag(PartOfSpeech.Tag.ADJ))
+			.setDependencyEdge(DependencyEdge.newBuilder()
+				.setHeadTokenIndex(0)
+				.setLabel(DependencyEdge.Label.ROOT))
+			.build();
+
+		AnalyzeSyntaxResponse secondSyntaxResponse = AnalyzeSyntaxResponse.newBuilder()
+			.addTokens(differentToken)
+			.build();
+
+		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class)))
+			.thenReturn(secondSyntaxResponse);
+
+		String secondReport = analyzer.analyzeSyntaxAsync("Second").get();
+		assertNotNull(secondReport);
+		assertTrue(secondReport.contains("Different"));
+	}
+
+	@Test
+	@DisplayName("Test executor shutdown behavior")
+	void testExecutorShutdown()
+	{
+		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
+		LanguageServiceClient tempLanguageClient = mock(LanguageServiceClient.class);
+		SentenceAnalyzer tempAnalyzer = new SentenceAnalyzer(tempMockClient, tempLanguageClient);
+
+		tempAnalyzer.close();
+
+		verify(tempLanguageClient, times(1)).close();
+
+		assertThrows(RejectedExecutionException.class, () ->
+		{
+			tempAnalyzer.analyzeSyntaxAsync("test");
+		}, "Should reject new tasks after shutdown");
+	}
+
+	@Test
+	@DisplayName("Test resource cleanup after analysis failure")
+	void testResourceCleanupAfterFailure()
+	{
+		when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class)))
+			.thenThrow(new RuntimeException("Simulated failure"));
+
+		assertThrows(CompletionException.class, () -> analyzer.analyzeSyntaxAsync("fail").join());
+
+		assertDoesNotThrow(() ->
+		{
+			when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class)))
+				.thenReturn(mockAnalyzeSyntaxResponse());
+
+			analyzer.analyzeSyntaxAsync("recovery").join();
+		});
+	}
+
+	@Test
+	@DisplayName("Test metadata handling in entity analysis")
+	void testAnalyzeEntities_MetadataHandling() throws Exception
+	{
+		Entity entity = Entity.newBuilder()
+			.setName("Test")
+			.setType(Entity.Type.PERSON)
+			.setSalience(0.5f)
+			.putMetadata("key1", "value1")
+			.putMetadata("key2", "value2")
+			.build();
+
+		AnalyzeEntitiesResponse mockResponse = AnalyzeEntitiesResponse.newBuilder()
+			.addEntities(entity)
+			.build();
+		when(mockLanguageClient.analyzeEntities(any(AnalyzeEntitiesRequest.class))).thenReturn(mockResponse);
+
+		String report = analyzer.analyzeEntitiesAsync("Test").get();
+
+		assertNotNull(report);
+		assertTrue(report.contains("key1: value1"));
+		assertTrue(report.contains("key2: value2"));
+	}
+
+	@Test
+	@DisplayName("Test all PartOfSpeech tags in syntax analysis")
+	void testAllPartOfSpeechTags() throws Exception
+	{
+		for(PartOfSpeech.Tag tag : PartOfSpeech.Tag.values())
+		{
+			if(tag != PartOfSpeech.Tag.UNKNOWN && tag != PartOfSpeech.Tag.UNRECOGNIZED)
+			{
+				Token token = Token.newBuilder()
+					.setText(TextSpan.newBuilder().setContent(tag.name()).setBeginOffset(0))
+					.setLemma(tag.name().toLowerCase())
+					.setPartOfSpeech(PartOfSpeech.newBuilder().setTag(tag))
+					.setDependencyEdge(DependencyEdge.newBuilder()
+						.setHeadTokenIndex(0)
+						.setLabel(DependencyEdge.Label.ROOT))
+					.build();
+
+				AnalyzeSyntaxResponse mockResponse = AnalyzeSyntaxResponse.newBuilder()
+					.addTokens(token)
+					.build();
+
+				when(mockLanguageClient.analyzeSyntax(any(AnalyzeSyntaxRequest.class))).thenReturn(mockResponse);
+
+				List<SyntaxToken> tokens = analyzer.getSyntaxTokensAsync("Test").get();
+				assertEquals(1, tokens.size());
+				assertEquals(tag, tokens.get(0).getPartOfSpeech().getTag());
+			}
+		}
 	}
 }

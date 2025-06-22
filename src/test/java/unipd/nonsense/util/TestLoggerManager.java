@@ -261,4 +261,183 @@ class TestLoggerManager
 		assertEquals(3, consoleEvents);
 		assertEquals(3, fileEvents);
 	}
+
+	@Test
+	@DisplayName("Test log class name in messages")
+	void testLogClassNameInMessages()
+	{
+		loggerManager.switchVerboseMode();
+		String testMessage = "Class name test";
+
+		loggerManager.logInfo(testMessage);
+		List<LogEvent> events = testAppender.getEvents();
+
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains("[TestLoggerManager] " + testMessage)));
+	}
+
+	@Test
+	@DisplayName("Test very long message handling")
+	void testVeryLongMessage()
+	{
+		String longMessage = new String(new char[10000]).replace('\0', 'X');
+		assertDoesNotThrow(() ->
+		{
+			loggerManager.logInfo(longMessage);
+			loggerManager.logError(longMessage, new RuntimeException());
+		});
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.get(0).getMessage().getFormattedMessage().contains(longMessage.substring(0, 100)));
+	}
+
+	@Test
+	@DisplayName("Test special characters in messages")
+	void testSpecialCharactersInMessages()
+	{
+		String message = "Special chars: \n\t\r\b\f\\\"'";
+		loggerManager.logInfo(message);
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains(message)));
+	}
+
+	@Test
+	@DisplayName("Test empty message handling")
+	void testEmptyMessage()
+	{
+		assertDoesNotThrow(() ->
+		{
+			loggerManager.logInfo("");
+			loggerManager.logWarn("");
+			loggerManager.logError("", new RuntimeException());
+		});
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().endsWith("] ")));
+	}
+
+	@Test
+	@DisplayName("Test multiple verbose mode switches under load")
+	void testMultipleVerboseSwitches()
+	{
+		for (int i = 0; i < 100; i++)
+			loggerManager.switchVerboseMode();
+
+		assertFalse(loggerManager.getVerbose());
+
+		loggerManager.logInfo("Test after switches");
+		assertFalse(testAppender.getEvents().isEmpty());
+	}
+
+	@Test
+	@DisplayName("Test log message formatting")
+	void testMessageFormatting()
+	{
+		String format = "Formatted %s %d";
+		loggerManager.logInfo(String.format(format, "test", 123));
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains("Formatted test 123")));
+	}
+
+	@Test
+	@DisplayName("Test extreme concurrent logging")
+	void testExtremeConcurrentLogging() throws InterruptedException
+	{
+		loggerManager.switchVerboseMode();
+		int threadCount = 10;
+		int iterations = 1000;
+
+		Runnable task = () ->
+		{
+				for(int i = 0; i < iterations; i++)
+					loggerManager.logInfo(Thread.currentThread().getName() + " - " + i);
+		};
+
+		Thread[] threads = new Thread[threadCount];
+		for(int i = 0; i < threadCount; i++)
+		{
+			threads[i] = new Thread(task, "Thread-" + i);
+			threads[i].start();
+		}
+
+		for(Thread t : threads)
+			t.join();
+
+		assertEquals(threadCount * iterations * 2, testAppender.getEvents().size());
+	}
+
+	@Test
+	@DisplayName("Test log level threshold")
+	void testLogLevelThreshold()
+	{
+		LoggerContext context = (LoggerContext) LogManager.getContext(false);
+		LoggerConfig consoleConfig = context.getConfiguration().getLoggerConfig("ConsoleLogger");
+		consoleConfig.setLevel(Level.ERROR);
+		context.updateLoggers();
+
+		loggerManager.switchVerboseMode();
+		loggerManager.logDebug("Should not appear");
+		loggerManager.logError("Should appear");
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getLoggerName().equals("ConsoleLogger") && e.getLevel() == Level.DEBUG));
+		assertTrue(events.stream().anyMatch(e -> e.getLoggerName().equals("ConsoleLogger") && e.getLevel() == Level.ERROR));
+
+		consoleConfig.setLevel(Level.ALL);
+		context.updateLoggers();
+	}
+
+	@Test
+	@DisplayName("Test logger with different class names")
+	void testDifferentClassNames()
+	{
+		LoggerManager stringLogger = new LoggerManager(String.class);
+		LoggerManager integerLogger = new LoggerManager(Integer.class);
+
+		stringLogger.logInfo("String class log");
+		integerLogger.logInfo("Integer class log");
+
+		List<LogEvent> events = testAppender.getEvents();
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains("[String] String class log")));
+		assertTrue(events.stream().anyMatch(e -> e.getMessage().getFormattedMessage().contains("[Integer] Integer class log")));
+	}
+
+	@Test
+	@DisplayName("Test log message with markers")
+	void testLogWithMarkers()
+	{
+		assertDoesNotThrow(() -> loggerManager.logInfo("Message with potential marker"));
+	}
+
+	@Test
+	@DisplayName("Test repeated identical messages")
+	void testRepeatedMessages()
+	{
+		String message = "Repeated message";
+		for(int i = 0; i < 100; i++)
+			loggerManager.logInfo(message);
+
+		List<LogEvent> events = testAppender.getEvents();
+
+		assertEquals(100, events.stream()
+			.filter(e -> e.getMessage().getFormattedMessage().contains(message))
+			.count());
+	}
+
+	@Test
+	@DisplayName("Test memory usage under heavy logging")
+	void testMemoryUsage()
+	{
+		Runtime runtime = Runtime.getRuntime();
+		long initialMemory = runtime.totalMemory() - runtime.freeMemory();
+
+		for(int i = 0; i < 100000; i++)
+			loggerManager.logInfo("Memory test message " + i);
+
+		long finalMemory = runtime.totalMemory() - runtime.freeMemory();
+		long memoryIncrease = finalMemory - initialMemory;
+
+		assertTrue(memoryIncrease < 1000 * 1024 * 1024, "Memory increase should be reasonable, was: " + memoryIncrease);
+	}
 }

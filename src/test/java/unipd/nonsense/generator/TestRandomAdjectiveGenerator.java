@@ -20,6 +20,10 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.Mockito.*;
 
+import java.util.HashSet;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
+import java.util.Random;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.CountDownLatch;
@@ -354,5 +358,194 @@ class TestRandomAdjectiveGenerator
 
 		assertEquals(longAdjective, adjective.getAdjective());
 		longAdjectiveGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test initialization with null file path")
+	void testInitialization_NullFilePath()
+	{
+		assertThrows(IllegalArgumentException.class, () -> new RandomAdjectiveGenerator(null), "Should throw IllegalArgumentException when file path is null");
+	}
+
+	@Test
+	@DisplayName("Test initialization with non-existent file path")
+	void testInitialization_NonExistentFilePath()
+	{
+		String nonExistentPath = "nonexistent" + File.separator + "path.json";
+
+		assertThrows(IOException.class, () -> new RandomAdjectiveGenerator(nonExistentPath),
+			"Should throw IOException when file does not exist");
+	}
+
+	@Test
+	@DisplayName("Test initialization with empty file path")
+	void testInitialization_EmptyFilePath()
+	{
+		assertThrows(IllegalArgumentException.class, () -> new RandomAdjectiveGenerator(""), "Should throw IllegalArgumentException when file path is empty");
+	}
+
+	@Test
+	@DisplayName("Test behavior when JSON file is deleted after initialization")
+	void testJsonFileDeletedAfterInitialization() throws Exception
+	{
+		Files.deleteIfExists(Path.of(testFilePath));
+
+		assertThrows(IOException.class, () -> generator.onJsonUpdate(), "Should throw IOException when JSON file is deleted and update is attempted");
+	}
+
+	@Test
+	@DisplayName("Test behavior when JSON file is corrupted after initialization")
+	void testJsonFileCorruptedAfterInitialization() throws Exception
+	{
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write("corrupted json content");
+		}
+
+		assertThrows(InvalidJsonStateException.class, () -> generator.onJsonUpdate(),
+			"Should throw IOException when JSON file is corrupted and update is attempted");
+	}
+
+	@Test
+	@DisplayName("Test behavior with duplicate adjectives in JSON")
+	void testDuplicateAdjectives() throws Exception
+	{
+		JsonObject duplicateJson = new JsonObject();
+		JsonArray duplicateAdjectives = new JsonArray();
+
+		duplicateAdjectives.add("duplicate");
+		duplicateAdjectives.add("duplicate");
+		duplicateAdjectives.add("duplicate");
+
+		duplicateJson.add("adjectives", duplicateAdjectives);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(duplicateJson.toString());
+		}
+
+		RandomAdjectiveGenerator duplicateGenerator = new RandomAdjectiveGenerator(testFilePath);
+
+		for(int i = 0; i < 10; i++)
+		{
+			Adjective adj = duplicateGenerator.getRandomAdjective();
+			assertEquals("duplicate", adj.getAdjective());
+		}
+
+		duplicateGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test thread safety of adjective list during updates")
+	void testThreadSafetyDuringUpdates() throws Exception
+	{
+		int threadCount = 50;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(10);
+		Random random = new Random();
+
+		Runnable updater = () ->
+		{
+			try
+			{
+				JsonObject updatedJson = new JsonObject();
+				JsonArray updatedAdjectives = new JsonArray();
+				updatedAdjectives.add("new_adjective_" + System.currentTimeMillis());
+				updatedJson.add("adjectives", updatedAdjectives);
+
+				try(FileWriter writer = new FileWriter(testFile))
+				{
+						writer.write(updatedJson.toString());
+				}
+
+				generator.onJsonUpdate();
+			}
+			catch(Exception e)
+			{
+				fail("Unexpected exception during update: " + e.getMessage());
+			}
+		};
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+			{
+				try
+				{
+					if(random.nextBoolean())
+					{
+						Adjective adj = generator.getRandomAdjective();
+						assertNotNull(adj);
+					}
+					else
+						updater.run();
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await(10, java.util.concurrent.TimeUnit.SECONDS);
+		executor.shutdown();
+		assertEquals(0, latch.getCount(), "All threads should have completed");
+	}
+
+	@Test
+	@DisplayName("Test behavior with extremely large JSON file")
+	void testExtremelyLargeJsonFile() throws Exception
+	{
+		JsonObject largeJson = new JsonObject();
+		JsonArray largeAdjectives = new JsonArray();
+
+		for(int i = 0; i < 10000; i++)
+			largeAdjectives.add("adjective_" + i);
+
+		largeJson.add("adjectives", largeAdjectives);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(largeJson.toString());
+		}
+
+		RandomAdjectiveGenerator largeGenerator = new RandomAdjectiveGenerator(testFilePath);
+
+		Field adjectivesField = RandomAdjectiveGenerator.class.getDeclaredField("adjectives");
+		adjectivesField.setAccessible(true);
+
+		@SuppressWarnings("unchecked")
+		List<Adjective> adjectivesList = (List<Adjective>) adjectivesField.get(largeGenerator);
+
+		assertEquals(10000, adjectivesList.size(), "Should handle large JSON files correctly");
+		largeGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test memory usage with repeated updates")
+	void testMemoryUsageWithRepeatedUpdates() throws Exception
+	{
+		for(int i = 0; i < 1000; i++)
+		{
+			JsonObject updatedJson = new JsonObject();
+			JsonArray updatedAdjectives = new JsonArray();
+			updatedAdjectives.add("adjective_" + i);
+			updatedJson.add("adjectives", updatedAdjectives);
+
+			try(FileWriter writer = new FileWriter(testFile))
+			{
+				writer.write(updatedJson.toString());
+			}
+
+			generator.onJsonUpdate();
+
+			Field adjectivesField = RandomAdjectiveGenerator.class.getDeclaredField("adjectives");
+			adjectivesField.setAccessible(true);
+
+			@SuppressWarnings("unchecked")
+			List<Adjective> adjectivesList = (List<Adjective>) adjectivesField.get(generator);
+
+			assertEquals(1, adjectivesList.size(), "Should have exactly one adjective after update");
+		}
 	}
 }

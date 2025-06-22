@@ -11,15 +11,11 @@ import org.junit.jupiter.api.*;
 import static org.junit.jupiter.api.Assertions.*;
 import java.io.IOException;
 import java.util.List;
+import java.util.ArrayList;
 
 @DisplayName("Testing JsonUpdater")
 class TestJsonUpdater
 {
-	private static final String TEST_NOUN = "testNoun";
-	private static final String TEST_VERB = "testVerb";
-	private static final String TEST_ADJECTIVE = "testAdjective";
-	private static final String TEST_TEMPLATE = "The [adjective] [noun] [verb]";
-
 	private JsonUpdateObserver testObserver;
 	private boolean observerNotified;
 
@@ -46,11 +42,11 @@ class TestJsonUpdater
 	@DisplayName("Test noun loading with valid number")
 	void testLoadNounWithValidNumber() throws IOException
 	{
-		JsonUpdater.loadNoun(TEST_NOUN, Number.SINGULAR);
+		JsonUpdater.loadNoun("noun", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
 
 		observerNotified = false;
-		JsonUpdater.loadNoun(TEST_NOUN, Number.PLURAL);
+		JsonUpdater.loadNoun("noun", Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
 	}
 
@@ -59,7 +55,7 @@ class TestJsonUpdater
 	void testLoadNounWithInvalidNumber()
 	{
 		assertThrows(InvalidNumberException.class, () -> {
-			JsonUpdater.loadNoun(TEST_NOUN, null);
+			JsonUpdater.loadNoun("noun", null);
 		});
 	}
 
@@ -67,15 +63,15 @@ class TestJsonUpdater
 	@DisplayName("Test verb loading with valid tense")
 	void testLoadVerbWithValidTense() throws IOException
 	{
-		JsonUpdater.loadVerb(TEST_VERB, Tense.PAST, Number.SINGULAR);
+		JsonUpdater.loadVerb("verb", Tense.PAST, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb(TEST_VERB, Tense.PRESENT, Number.SINGULAR);
+		JsonUpdater.loadVerb("verb", Tense.PRESENT, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb(TEST_VERB, Tense.FUTURE, Number.SINGULAR);
+		JsonUpdater.loadVerb("verb", Tense.FUTURE, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 	}
 
@@ -84,7 +80,7 @@ class TestJsonUpdater
 	void testLoadVerbWithInvalidTense()
 	{
 		assertThrows(InvalidTenseException.class, () -> {
-			JsonUpdater.loadVerb(TEST_VERB, null, null);
+			JsonUpdater.loadVerb("verb", null, null);
 		});
 	}
 
@@ -92,7 +88,7 @@ class TestJsonUpdater
 	@DisplayName("Test adjective loading")
 	void testLoadAdjective() throws IOException
 	{
-		JsonUpdater.loadAdjective(TEST_ADJECTIVE);
+		JsonUpdater.loadAdjective("adjective");
 		assertTrue(observerNotified, "Observer should be notified after adjective loading");
 	}
 
@@ -100,11 +96,11 @@ class TestJsonUpdater
 	@DisplayName("Test template loading with valid number")
 	void testLoadTemplateWithValidNumber() throws IOException
 	{
-		JsonUpdater.loadTemplate(TEST_TEMPLATE, Number.SINGULAR);
+		JsonUpdater.loadTemplate("template", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 
 		observerNotified = false;
-		JsonUpdater.loadTemplate(TEST_TEMPLATE, Number.PLURAL);
+		JsonUpdater.loadTemplate("template", Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 	}
 
@@ -113,7 +109,7 @@ class TestJsonUpdater
 	void testLoadTemplateWithInvalidNumber()
 	{
 		assertThrows(InvalidNumberException.class, () -> {
-			JsonUpdater.loadTemplate(TEST_TEMPLATE, null);
+			JsonUpdater.loadTemplate("template", null);
 		});
 	}
 
@@ -121,10 +117,10 @@ class TestJsonUpdater
 	@DisplayName("Test object-based loading methods")
 	void testObjectBasedLoading() throws IOException
 	{
-		Noun noun = new Noun(TEST_NOUN, Number.SINGULAR);
-		Verb verb = new Verb(TEST_VERB, Number.SINGULAR, Tense.PRESENT);
-		Adjective adjective = new Adjective(TEST_ADJECTIVE);
-		Template template = new Template(TEST_TEMPLATE, Number.SINGULAR);
+		Noun noun = new Noun("template", Number.SINGULAR);
+		Verb verb = new Verb("template", Number.SINGULAR, Tense.PRESENT);
+		Adjective adjective = new Adjective("adjective");
+		Template template = new Template("template", Number.SINGULAR);
 
 		JsonUpdater.loadNoun(noun);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
@@ -140,23 +136,6 @@ class TestJsonUpdater
 		observerNotified = false;
 		JsonUpdater.loadTemplate(template);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
-	}
-
-	@Test
-	@DisplayName("Test observer management")
-	void testObserverManagement()
-	{
-		JsonUpdateObserver tempObserver = new JsonUpdateObserver() {
-			@Override
-			public void onJsonUpdate() throws IOException {}
-		};
-
-		JsonUpdater.addObserver(tempObserver);
-		JsonUpdater.removeObserver(tempObserver);
-
-		assertDoesNotThrow(() -> {
-			JsonUpdater.loadAdjective(TEST_ADJECTIVE);
-		}, "Should not throw after removing observer");
 	}
 
 	@Test
@@ -183,7 +162,7 @@ class TestJsonUpdater
 		JsonUpdater.addObserver(observer1);
 		JsonUpdater.addObserver(observer2);
 
-		JsonUpdater.loadAdjective(TEST_ADJECTIVE);
+		JsonUpdater.loadAdjective("adjective");
 
 		assertTrue(observer1Notified[0], "First observer should be notified");
 		assertTrue(observer2Notified[0], "Second observer should be notified");
@@ -206,9 +185,197 @@ class TestJsonUpdater
 		JsonUpdater.addObserver(failingObserver);
 
 		assertThrows(IOException.class, () -> {
-			JsonUpdater.loadAdjective(TEST_ADJECTIVE);
+			JsonUpdater.loadAdjective("adjective");
 		}, "Should propagate IOException from observer");
 
 		JsonUpdater.removeObserver(failingObserver);
+	}
+
+	@Test
+	@DisplayName("Test loading multiple nouns consecutively")
+	void testLoadMultipleNouns() throws IOException
+	{
+		JsonUpdater.loadNoun("noun1", Number.SINGULAR);
+		assertTrue(observerNotified, "Observer should be notified after first noun loading");
+
+		observerNotified = false;
+		JsonUpdater.loadNoun("noun2", Number.PLURAL);
+		assertTrue(observerNotified, "Observer should be notified after second noun loading");
+
+		observerNotified = false;
+		JsonUpdater.loadNoun("noun3", Number.SINGULAR);
+		assertTrue(observerNotified, "Observer should be notified after third noun loading");
+	}
+
+	@Test
+	@DisplayName("Test loading empty string as noun")
+	void testLoadEmptyNoun()
+	{
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadNoun("", Number.SINGULAR);
+		}, "Should throw when loading empty noun");
+	}
+
+	@Test
+	@DisplayName("Test loading null as noun")
+	void testLoadNullNoun()
+	{
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadNoun(null, Number.SINGULAR);
+		}, "Should throw when loading null noun");
+	}
+
+	@Test
+	@DisplayName("Test loading verb with all possible number-tense combinations")
+	void testLoadVerbAllCombinations() throws IOException
+	{
+		for(Number number : Number.values())
+		{
+			for(Tense tense : Tense.values())
+			{
+				observerNotified = false;
+				JsonUpdater.loadVerb("comboVerb", tense, number);
+				assertTrue(observerNotified, "Observer should be notified for " + number + "-" + tense + " combination");
+			}
+		}
+	}
+
+	@Test
+	@DisplayName("Test loading very long adjective")
+	void testLoadLongAdjective() throws IOException
+	{
+		String longAdjective = "looooooooooooooooooooooooooooooooooooooooooooooong".repeat(10);
+		JsonUpdater.loadAdjective(longAdjective);
+		assertTrue(observerNotified, "Observer should be notified after loading long adjective");
+	}
+
+
+	@Test
+	@DisplayName("Test concurrent observer addition and removal")
+	void testConcurrentObserverManagement()
+	{
+		JsonUpdateObserver tempObserver1 = new JsonUpdateObserver()
+		{
+			@Override public void onJsonUpdate() throws IOException {}
+		};
+
+		JsonUpdateObserver tempObserver2 = new JsonUpdateObserver()
+		{
+			@Override public void onJsonUpdate() throws IOException {}
+		};
+
+		JsonUpdater.addObserver(tempObserver1);
+		JsonUpdater.removeObserver(tempObserver1);
+		JsonUpdater.addObserver(tempObserver2);
+
+
+		assertDoesNotThrow(() ->
+		{
+			JsonUpdater.loadAdjective("concurrentTest");
+		}, "Should handle concurrent observer changes gracefully");
+	}
+
+	@Test
+	@DisplayName("Test loading duplicate items")
+	void testLoadDuplicateItems() throws IOException
+	{
+		JsonUpdater.loadAdjective("duplicate");
+		observerNotified = false;
+		JsonUpdater.loadAdjective("duplicate");
+		assertTrue(observerNotified, "Observer should be notified even for duplicate items");
+	}
+
+	@Test
+	@DisplayName("Test loading items with whitespace")
+	void testLoadItemsWithWhitespace() throws IOException
+	{
+		JsonUpdater.loadNoun("  spacedNoun  ", Number.SINGULAR);
+		assertTrue(observerNotified, "Observer should be notified for noun with whitespace");
+
+		observerNotified = false;
+		JsonUpdater.loadAdjective("\tadjective\t");
+		assertTrue(observerNotified, "Observer should be notified for adjective with tabs");
+	}
+
+	@Test
+	@DisplayName("Test loading null object parameters")
+	void testLoadNullObjects()
+	{
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadNoun((Noun) null);
+		}, "Should throw when loading null Noun object");
+
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadVerb((Verb) null);
+		}, "Should throw when loading null Verb object");
+
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadAdjective((Adjective) null);
+		}, "Should throw when loading null Adjective object");
+
+		assertThrows(IllegalArgumentException.class, () ->
+		{
+			JsonUpdater.loadTemplate((Template) null);
+		}, "Should throw when loading null Template object");
+	}
+
+	@Test
+	@DisplayName("Test loading items after observer removal")
+	void testLoadingAfterObserverRemoval() throws IOException
+	{
+		JsonUpdateObserver tempObserver = new JsonUpdateObserver()
+		{
+			@Override public void onJsonUpdate() throws IOException
+			{
+				fail("Removed observer should not be notified");
+			}
+		};
+
+		JsonUpdater.addObserver(tempObserver);
+		JsonUpdater.removeObserver(tempObserver);
+
+		assertDoesNotThrow(() ->
+		{
+			JsonUpdater.loadAdjective("postRemovalTest");
+		}, "Should not notify removed observer");
+	}
+
+	@Test
+	@DisplayName("Test notification order with multiple observers")
+	void testObserverNotificationOrder() throws IOException
+	{
+		final List<String> notificationOrder = new ArrayList<>();
+
+		JsonUpdateObserver firstObserver = new JsonUpdateObserver()
+		{
+			@Override public void onJsonUpdate() throws IOException
+			{
+				notificationOrder.add("first");
+			}
+		};
+
+		JsonUpdateObserver secondObserver = new JsonUpdateObserver()
+		{
+			@Override public void onJsonUpdate() throws IOException
+			{
+				notificationOrder.add("second");
+			}
+		};
+
+		JsonUpdater.addObserver(firstObserver);
+		JsonUpdater.addObserver(secondObserver);
+
+		JsonUpdater.loadAdjective("orderTest");
+
+		assertEquals(List.of("first", "second"), notificationOrder,
+			"Observers should be notified in addition order");
+
+		JsonUpdater.removeObserver(firstObserver);
+		JsonUpdater.removeObserver(secondObserver);
 	}
 }

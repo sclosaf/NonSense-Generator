@@ -5,6 +5,7 @@ import unipd.nonsense.model.Number;
 import unipd.nonsense.exceptions.InvalidListException;
 import unipd.nonsense.exceptions.InvalidJsonStateException;
 import unipd.nonsense.exceptions.InvalidTemplateException;
+import unipd.nonsense.exceptions.JsonElementIsNotArrayException;
 import unipd.nonsense.util.JsonFileHandler;
 import unipd.nonsense.util.JsonUpdater;
 import unipd.nonsense.util.LoggerManager;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.*;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -727,5 +729,255 @@ class TestRandomTemplateGenerator
 		long duration = endTime - startTime;
 
 		assertTrue(duration < 2000, "Should be able to generate 10000 templates in less than 2 seconds (took " + duration + "ms)");
+	}
+
+	@Test
+	@DisplayName("Test behavior with templates containing multiple [noun] placeholders")
+	void testTemplatesWithMultiplePlaceholders() throws Exception
+	{
+		JsonObject multiPlaceholderJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		singularTemplates.add("This [noun] has [noun] multiple [noun] placeholders");
+		singularTemplates.add("[noun] starts and [noun] ends with placeholders [noun]");
+
+		JsonArray pluralTemplates = new JsonArray();
+		pluralTemplates.add("These [noun] have [noun] multiple [noun] placeholders");
+
+		multiPlaceholderJson.add("singularTemplates", singularTemplates);
+		multiPlaceholderJson.add("pluralTemplates", pluralTemplates);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(multiPlaceholderJson.toString());
+		}
+
+		RandomTemplateGenerator multiGenerator = new RandomTemplateGenerator(testFilePath);
+
+		Template singular = multiGenerator.getRandomTemplate(Number.SINGULAR);
+		Template plural = multiGenerator.getRandomTemplate(Number.PLURAL);
+
+		assertTrue(countOccurrences(singular.getPattern(), "[noun]") >= 2);
+		assertTrue(countOccurrences(plural.getPattern(), "[noun]") >= 2);
+		multiGenerator.cleanup();
+	}
+
+	private int countOccurrences(String str, String subStr)
+	{
+		return str.split(subStr, -1).length - 1;
+	}
+
+	@Test
+	@DisplayName("Test behavior with invalid short templates")
+	void testInvalidShortTemplates() throws Exception
+	{
+		JsonObject invalidTemplatesJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		singularTemplates.add("");
+		singularTemplates.add("No placeholder");
+
+		JsonArray pluralTemplates = new JsonArray();
+		pluralTemplates.add("   ");
+
+		invalidTemplatesJson.add("singularTemplates", singularTemplates);
+		invalidTemplatesJson.add("pluralTemplates", pluralTemplates);
+
+		try (FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(invalidTemplatesJson.toString());
+		}
+
+		assertThrows(InvalidTemplateException.class, () -> new RandomTemplateGenerator(testFilePath),
+			"Should throw InvalidTemplateException for invalid templates");
+	}
+
+	@Test
+	@DisplayName("Test behavior with whitespace-only templates")
+	void testWhitespaceOnlyTemplates() throws Exception
+	{
+		JsonObject whitespaceJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		singularTemplates.add(" noun  ");
+		singularTemplates.add("\tnoun\n");
+		singularTemplates.add(" [noun] ");
+
+		JsonArray pluralTemplates = new JsonArray();
+		pluralTemplates.add("  [noun]  ");
+
+		whitespaceJson.add("singularTemplates", singularTemplates);
+		whitespaceJson.add("pluralTemplates", pluralTemplates);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(whitespaceJson.toString());
+		}
+
+		RandomTemplateGenerator whitespaceGenerator = new RandomTemplateGenerator(testFilePath);
+
+		Template template = whitespaceGenerator.getRandomTemplate(Number.SINGULAR);
+		assertNotNull(template);
+		whitespaceGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test behavior with special placeholder formats")
+	void testSpecialPlaceholderFormats() throws Exception
+	{
+		JsonObject specialPlaceholdersJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		singularTemplates.add("Template with [NOUN] different case");
+		singularTemplates.add("Template with [noun");
+		singularTemplates.add("Template with noun]");
+
+		JsonArray pluralTemplates = new JsonArray();
+		pluralTemplates.add("Normal template [noun]");
+
+		specialPlaceholdersJson.add("singularTemplates", singularTemplates);
+		specialPlaceholdersJson.add("pluralTemplates", pluralTemplates);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(specialPlaceholdersJson.toString());
+		}
+
+		RandomTemplateGenerator specialGenerator = new RandomTemplateGenerator(testFilePath);
+
+		Template template = specialGenerator.getRandomTemplate(Number.SINGULAR);
+		assertNotNull(template);
+
+		specialGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test behavior with extremely large template files")
+	void testExtremelyLargeTemplateFiles() throws Exception
+	{
+		JsonObject largeJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		JsonArray pluralTemplates = new JsonArray();
+
+		StringBuilder largeTemplate = new StringBuilder();
+		while(largeTemplate.length() < 10_000_000)
+			largeTemplate.append("Very large template [noun] with repeated content ");
+
+		singularTemplates.add(largeTemplate.toString());
+		pluralTemplates.add(largeTemplate.toString());
+
+		largeJson.add("singularTemplates", singularTemplates);
+		largeJson.add("pluralTemplates", pluralTemplates);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(largeJson.toString());
+		}
+
+		long startTime = System.currentTimeMillis();
+		RandomTemplateGenerator largeGenerator = new RandomTemplateGenerator(testFilePath);
+		long loadTime = System.currentTimeMillis() - startTime;
+
+		assertTrue(loadTime < 5000, "Should load large files in reasonable time (<5s), took " + loadTime + "ms");
+
+		Template template = largeGenerator.getRandomTemplate();
+		assertNotNull(template);
+		assertTrue(template.getPattern().length() > 1_000_000);
+		largeGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test behavior with concurrent file updates")
+	void testConcurrentFileUpdates() throws Exception
+	{
+		int threadCount = 10;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+			{
+				try
+				{
+					for(int j = 0; j < 10; j++)
+					{
+						JsonObject updatedJson = createDefaultTestTemplates();
+						updatedJson.getAsJsonArray("singularTemplates").add("Unique template " + j + " [noun]");
+
+						try(FileWriter writer = new FileWriter(testFile))
+						{
+							writer.write(updatedJson.toString());
+						}
+
+						generator.onJsonUpdate();
+
+						Template template = generator.getRandomTemplate();
+						assertNotNull(template);
+					}
+				}
+				catch(IOException e)
+				{
+					throw new RuntimeException("IO error during test", e);
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await(10, TimeUnit.SECONDS);
+		executor.shutdown();
+
+		Field templatesField = RandomTemplateGenerator.class.getDeclaredField("templates");
+		templatesField.setAccessible(true);
+
+		@SuppressWarnings("unchecked")
+		Map<Number, List<Template>> templatesMap = (Map<Number, List<Template>>) templatesField.get(generator);
+
+		assertTrue(templatesMap.get(Number.SINGULAR).size() >= 3,
+			"Should have at least original templates after concurrent updates");
+	}
+
+	@Test
+	@DisplayName("Test behavior with malformed JSON arrays")
+	void testMalformedJsonArrays() throws Exception
+	{
+		JsonObject malformedJson = new JsonObject();
+		malformedJson.add("singularTemplates", new JsonObject());
+		malformedJson.add("pluralTemplates", new JsonArray());
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(malformedJson.toString());
+		}
+
+		assertThrows(JsonElementIsNotArrayException.class, () -> new RandomTemplateGenerator(testFilePath),
+			"Should throw when JSON structure is malformed");
+	}
+
+	@Test
+	@DisplayName("Test behavior with extremely long individual templates")
+	void testExtremelyLongTemplates() throws Exception
+	{
+		JsonObject longTemplateJson = new JsonObject();
+		JsonArray singularTemplates = new JsonArray();
+		String longTemplate = "Start " + "[noun] ".repeat(100_000) + "End";
+		singularTemplates.add(longTemplate);
+
+		JsonArray pluralTemplates = new JsonArray();
+		pluralTemplates.add("Normal [noun]");
+
+		longTemplateJson.add("singularTemplates", singularTemplates);
+		longTemplateJson.add("pluralTemplates", pluralTemplates);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(longTemplateJson.toString());
+		}
+
+		RandomTemplateGenerator longTemplateGenerator = new RandomTemplateGenerator(testFilePath);
+
+		Template template = longTemplateGenerator.getRandomTemplate(Number.SINGULAR);
+		assertNotNull(template);
+		assertTrue(template.getPattern().contains("[noun]"));
+		longTemplateGenerator.cleanup();
 	}
 }

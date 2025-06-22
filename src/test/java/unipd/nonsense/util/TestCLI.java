@@ -341,16 +341,6 @@ class TestCLI
 	}
 
 	@Test
-	@DisplayName("Test invalid command")
-	void testInvalidCommand()
-	{
-		when(mockCommandReader.readLine(anyString())).thenReturn("invalid");
-
-		assertTrue(cli.inputCatcher());
-		verify(mockPrintWriter).println(contains("Invalid command"));
-	}
-
-	@Test
 	@DisplayName("Test user interrupt")
 	void testUserInterrupt()
 	{
@@ -372,7 +362,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test analyze combined handler with multiple options")
-	void testAnalyzeCombinedHandler() throws IOException {
+	void testAnalyzeCombinedHandler() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("combined")
@@ -394,7 +385,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test generate handler - tense option")
-	void testGenerateHandler_Tense() throws IOException {
+	void testGenerateHandler_Tense() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("tense")
@@ -410,7 +402,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test generate handler - both option")
-	void testGenerateHandler_Both() throws IOException {
+	void testGenerateHandler_Both() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("both")
@@ -427,7 +420,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test analyze handler with cached sentence")
-	void testAnalyzeHandler_Cached() throws IOException {
+	void testAnalyzeHandler_Cached() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("syntax")
@@ -444,7 +438,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test analyze handler with template choice")
-	void testAnalyzeHandler_TemplateChoice() throws IOException {
+	void testAnalyzeHandler_TemplateChoice() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("syntax")
@@ -466,7 +461,8 @@ class TestCLI
 
 	@Test
 	@DisplayName("Test tree handler with cached sentence")
-	void testTreeHandler_Cached() throws IOException {
+	void testTreeHandler_Cached() throws IOException
+	{
 		when(mockCommandReader.readLine(anyString())).thenReturn("tree");
 		when(mockPlainReader.readLine(anyString()))
 			.thenReturn("cached");
@@ -630,5 +626,310 @@ class TestCLI
 
 		verify(mockPrintWriter).println(contains("Maximum attempts reached. Operation cancelled."));
 		verify(mockProcessor, never()).generateRandom();
+	}
+
+	@Test
+	@DisplayName("Test generate handler with invalid option")
+	void testGenerateHandler_InvalidOption() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("invalid_option")
+			.thenReturn("random");
+
+		when(mockProcessor.generateRandom()).thenReturn("Random sentence");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Invalid input"));
+		verify(mockProcessor).generateRandom();
+	}
+
+	@Test
+	@DisplayName("Test analyze handler with empty input after max attempts")
+	void testAnalyzeHandler_EmptyInputMaxAttempts() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("syntax")
+			.thenReturn("input")
+			.thenReturn("")
+			.thenReturn("")
+			.thenReturn("")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Maximum attempts reached"));
+		verify(mockProcessor, never()).analyzeSyntax(anyString());
+	}
+
+	@Test
+	@DisplayName("Test tree handler with template choice invalid input")
+	void testTreeHandler_InvalidTemplateChoice() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("tree");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("choose")
+			.thenReturn("6")
+			.thenReturn("0")
+			.thenReturn("3");
+
+		Template mockTemplate = mock(Template.class);
+		List<Template> templates = List.of(mockTemplate, mockTemplate, mockTemplate, mockTemplate, mockTemplate);
+		when(mockProcessor.getRandomTemplates()).thenReturn(templates);
+		when(mockProcessor.generateWithTemplate(any())).thenReturn("Template sentence");
+		when(mockProcessor.generateSyntaxTree(anyString())).thenReturn("Syntax tree");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter, atLeastOnce()).println(contains("Please enter a valid value"));
+		verify(mockProcessor).generateSyntaxTree("Template sentence");
+	}
+
+	@Test
+	@DisplayName("Test extend handler with invalid noun input")
+	void testExtendHandler_InvalidNounInput() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+				.thenReturn("noun")
+				.thenReturn("singular")
+				.thenReturn("123")
+				.thenReturn("noun!")
+				.thenReturn("validnoun");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter, atLeast(2)).println(contains("Please enter a valid value"));
+		verify(mockProcessor).append(argThat(list -> list.size() == 1), anyList(), anyList());
+	}
+
+	@Test
+	@DisplayName("Test extend handler with multiple invalid inputs")
+	void testExtendHandler_MultipleInvalidInputs() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("invalid_part")
+			.thenReturn("noun")
+			.thenReturn("invalid_number")
+			.thenReturn("singular")
+			.thenReturn("")
+			.thenReturn("validnoun");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter, atLeast(2)).println(contains("Invalid input"));
+		verify(mockProcessor).append(argThat(list -> list.size() == 1), anyList(), anyList());
+	}
+
+	@Test
+	@DisplayName("Test set tolerance handler with out of range values")
+	void testSetToleranceHandler_OutOfRange() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("set tolerance");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("-0.5")
+			.thenReturn("1.5")
+			.thenReturn("0.75");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter, atLeastOnce()).println(contains("Please enter a valid value"));
+		verify(mockProcessor).setTolerance(0.75f);
+	}
+
+	@Test
+	@DisplayName("Test analyze combined handler with no options selected")
+	void testAnalyzeCombinedHandler_NoOptions() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("combined")
+			.thenReturn("input")
+			.thenReturn("Test sentence")
+			.thenReturn("");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("No options specified"));
+		verify(mockProcessor, never()).analyzeSyntax(anyString());
+	}
+
+	@Test
+	@DisplayName("Test analyze handler with all options and cached sentence")
+	void testAnalyzeHandler_AllWithCached() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("all")
+			.thenReturn("cached");
+
+		String cachedSentence = "Cached sentence for analysis";
+		when(mockProcessor.isSentenceCached()).thenReturn(true);
+		when(mockProcessor.getCachedSentence()).thenReturn(cachedSentence);
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Syntax result");
+		when(mockProcessor.analyzeSentiment(anyString())).thenReturn("Sentiment result");
+		when(mockProcessor.analyzeToxicity(anyString())).thenReturn("Toxicity result");
+		when(mockProcessor.analyzeEntity(anyString())).thenReturn("Entity result");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).analyzeSyntax(cachedSentence);
+		verify(mockProcessor).analyzeSentiment(cachedSentence);
+		verify(mockProcessor).analyzeToxicity(cachedSentence);
+		verify(mockProcessor).analyzeEntity(cachedSentence);
+	}
+
+	@Test
+	@DisplayName("Test generate handler with both options and invalid tense")
+	void testGenerateHandler_BothInvalidTense() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("both")
+			.thenReturn("singular")
+			.thenReturn("invalid_tense")
+			.thenReturn("past");
+
+		String generatedSentence = "Generated sentence";
+		when(mockProcessor.generateWithBoth(any(), any())).thenReturn(generatedSentence);
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Invalid input"));
+		verify(mockProcessor).generateWithBoth(Number.SINGULAR, Tense.PAST);
+	}
+
+	@Test
+	@DisplayName("Test default handler with very long input")
+	void testDefaultHandler_LongInput() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("default");
+
+		String longInput = "This is an extremely long sentence that tests the CLI's ability to handle " +
+			"large inputs without issues. It should process this correctly even though it's very long. " +
+			"The sentence continues to test boundary conditions and input handling capabilities.";
+
+		when(mockPlainReader.readLine(anyString())).thenReturn(longInput);
+		when(mockProcessor.generateFrom(anyString())).thenReturn("Generated from long input");
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Analysis result");
+		when(mockProcessor.analyzeToxicity(anyString())).thenReturn("Toxicity result");
+		when(mockProcessor.generateSyntaxTree(anyString())).thenReturn("Syntax tree");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockProcessor).analyzeSyntax(longInput);
+		verify(mockProcessor).generateFrom(longInput);
+	}
+
+	@Test
+	@DisplayName("Test input validation with special characters")
+	void testInputValidation_SpecialCharacters() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("n@umber")
+			.thenReturn("number")
+			.thenReturn("singular");
+
+		when(mockProcessor.generateWithNumber(any())).thenReturn("Valid sentence");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Invalid input"));
+		verify(mockProcessor).generateWithNumber(Number.SINGULAR);
+	}
+
+	@Test
+	@DisplayName("Test analyze handler with cached sentence when none exists")
+	void testAnalyzeHandler_CachedWhenNoneExists() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("syntax")
+			.thenReturn("cached");
+
+		when(mockProcessor.isSentenceCached()).thenReturn(false);
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("No sentence is cached"));
+		verify(mockProcessor, never()).analyzeSyntax(anyString());
+	}
+
+	@Test
+	@DisplayName("Test tree handler with empty input")
+	void testTreeHandler_EmptyInput() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("tree");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("input")
+			.thenReturn("")
+			.thenReturn("Valid sentence");
+
+		when(mockProcessor.generateSyntaxTree(anyString())).thenReturn("Syntax tree");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Please enter a valid sentence"));
+		verify(mockProcessor).generateSyntaxTree("Valid sentence");
+	}
+
+	@Test
+	@DisplayName("Test extend handler with maximum attempts for verb input")
+	void testExtendHandler_MaxAttemptsForVerb() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString()))
+			.thenReturn("extend")
+			.thenReturn("quit");
+
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("verb")
+			.thenReturn("past")
+			.thenReturn("plural")
+			.thenReturn("")
+			.thenReturn("123")
+			.thenReturn("run!");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Maximum attempts reached"));
+		verify(mockProcessor, never()).append(anyList(), anyList(), anyList());
+	}
+
+	@Test
+	@DisplayName("Test analyze combined handler with duplicate options")
+	void testAnalyzeCombinedHandler_DuplicateOptions() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("analyze");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("combined")
+			.thenReturn("input")
+			.thenReturn("Test sentence")
+			.thenReturn("syntax")
+			.thenReturn("syntax")
+			.thenReturn("sentiment")
+			.thenReturn("");
+
+		when(mockProcessor.analyzeSyntax(anyString())).thenReturn("Syntax result");
+		when(mockProcessor.analyzeSentiment(anyString())).thenReturn("Sentiment result");
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Option already chosen"));
+		verify(mockProcessor).analyzeSyntax("Test sentence");
+		verify(mockProcessor).analyzeSentiment("Test sentence");
+	}
+
+	@Test
+	@DisplayName("Test generate handler with tense option and invalid input")
+	void testGenerateHandler_TenseInvalidInput() throws IOException
+	{
+		when(mockCommandReader.readLine(anyString())).thenReturn("generate");
+		when(mockPlainReader.readLine(anyString()))
+			.thenReturn("tense")
+			.thenReturn("invalid_tense")
+			.thenReturn("future");
+
+		String generatedSentence = "Future generated sentence";
+		when(mockProcessor.generateWithTense(any())).thenReturn(generatedSentence);
+
+		assertTrue(cli.inputCatcher());
+		verify(mockPrintWriter).println(contains("Invalid input"));
+
+		verify(mockProcessor).generateWithTense(Tense.FUTURE);
 	}
 }

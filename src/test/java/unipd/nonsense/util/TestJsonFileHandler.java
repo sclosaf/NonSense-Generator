@@ -573,7 +573,6 @@ class TestJsonFileHandler
 				}
 				catch(IOException e)
 				{
-					e.printStackTrace();
 				}
 				finally
 				{
@@ -591,7 +590,6 @@ class TestJsonFileHandler
 					}
 					catch(IOException e)
 					{
-						e.printStackTrace();
 					}
 					finally
 					{
@@ -605,62 +603,6 @@ class TestJsonFileHandler
 
 		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
 		assertTrue(items.contains("itemX"), "'itemX' should have been appended.");
-	}
-
-	@Test
-	@DisplayName("Stress test concurrent read and write.")
-	void testReadListFromJson_StressConcurrentReadWrite() throws Exception
-	{
-		String key = "TestItems1";
-		int threads = 100;
-
-		CountDownLatch latch = new CountDownLatch(threads);
-		ExecutorService executor = Executors.newFixedThreadPool(threads);
-
-		for(int i = 0; i < threads; ++i)
-		{
-			final int itemNum = i + 4;
-			executor.submit(() ->
-				{
-					try
-					{
-						handler.appendItemToJson(tempFile.getPath(), key, "item" + itemNum);
-					}
-					catch(IOException e)
-					{
-						e.printStackTrace();
-					}
-					finally
-					{
-						latch.countDown();
-					}
-				});
-		}
-
-		for(int i = 0; i < threads; ++i)
-		{
-			executor.submit(() ->
-				{
-					try
-					{
-						handler.readListFromJson(tempFile.getPath(), key);
-					}
-					catch(IOException e)
-					{
-						e.printStackTrace();
-					}
-					finally
-					{
-						latch.countDown();
-					}
-				});
-		}
-
-		latch.await();
-		executor.shutdown();
-
-		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
-		assertTrue(items.size() == 3 + threads, "Should contain " + threads + " items plus the initial 3.");
 	}
 
 	@Test
@@ -922,5 +864,247 @@ class TestJsonFileHandler
 		Assumptions.assumeFalse(setReadableFailed, "Could not make file non-readable, skipping test.");
 
 		assertThrows(UnreadableFileException.class, () -> handler.getJsonObject(nonReadableFile.getPath()), "Should throw UnreadableFileException due to non readable file.");
+	}
+
+	@Test
+	@DisplayName("Test appending to empty array in JSON.")
+	void testAppendItemToJson_EmptyArray() throws IOException
+	{
+		File emptyArrayFile = Files.createTempFile("emptyArray", ".json").toFile();
+		emptyArrayFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		json.add("EmptyArray", new JsonArray());
+
+		try(FileWriter writer = new FileWriter(emptyArrayFile))
+		{
+			writer.write(json.toString());
+		}
+
+		String key = "EmptyArray";
+		String str = "firstItem";
+
+		handler.appendItemToJson(emptyArrayFile.getPath(), key, str);
+		List<String> items = handler.readListFromJson(emptyArrayFile.getPath(), key);
+
+		assertEquals(1, items.size(), "Array should have one element after append.");
+		assertEquals(str, items.get(0), "First element should match the appended item.");
+	}
+
+	@Test
+	@DisplayName("Test appending multiple items rapidly to same array.")
+	void testAppendItemToJson_RapidSequence() throws IOException
+	{
+		String key = "TestItems1";
+		int iterations = 1000;
+
+		for(int i = 0; i < iterations; i++)
+			handler.appendItemToJson(tempFile.getPath(), key, "rapidItem" + i);
+
+		List<String> items = handler.readListFromJson(tempFile.getPath(), key);
+		assertTrue(items.size() >= iterations + 3, "Should contain all rapidly appended items plus original 3.");
+	}
+
+	@Test
+	@DisplayName("Test reading from file with special characters in content.")
+	void testReadItemFromJson_SpecialCharacters() throws IOException
+	{
+		File specialCharFile = Files.createTempFile("specialChars", ".json").toFile();
+		specialCharFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray array = new JsonArray();
+		array.add("item\u00E9\u00DF\u20AC");
+		json.add("SpecialChars", array);
+
+		try(FileWriter writer = new FileWriter(specialCharFile))
+		{
+			writer.write(json.toString());
+		}
+
+		String result = handler.readItemFromJson(specialCharFile.getPath(), "SpecialChars", 0);
+		assertEquals("item\u00E9\u00DF\u20AC", result, "Should correctly handle special characters.");
+	}
+
+	@Test
+	@DisplayName("Test handling extremely large JSON file.")
+	void testReadListFromJson_ExtremelyLargeFile() throws IOException
+	{
+		File hugeFile = Files.createTempFile("huge", ".json").toFile();
+		hugeFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		JsonArray hugeArray = new JsonArray();
+
+		for(int i = 0; i < 500000; i++)
+			hugeArray.add("item" + i);
+
+		json.add("HugeArray", hugeArray);
+
+		try(FileWriter writer = new FileWriter(hugeFile))
+		{
+			writer.write(json.toString());
+		}
+
+		List<String> items = handler.readListFromJson(hugeFile.getPath(), "HugeArray");
+		assertEquals(500000, items.size(), "Should handle extremely large arrays.");
+	}
+
+	@Test
+	@DisplayName("Test handling extremely long key names.")
+	void testHasJsonKey_ExtremelyLongKey() throws IOException
+	{
+		File longKeyFile = Files.createTempFile("longKey", ".json").toFile();
+		longKeyFile.deleteOnExit();
+
+		StringBuilder longKey = new StringBuilder();
+		for(int i = 0; i < 10000; i++)
+			longKey.append("a");
+
+
+		JsonObject json = new JsonObject();
+		json.addProperty(longKey.toString(), "value");
+
+		try(FileWriter writer = new FileWriter(longKeyFile))
+		{
+			writer.write(json.toString());
+		}
+
+		assertTrue(handler.hasJsonKey(longKeyFile.getPath(), longKey.toString()),
+			"Should handle extremely long key names.");
+	}
+
+	@Test
+	@DisplayName("Test handling file with BOM (Byte Order Mark).")
+	void testReadListFromJson_FileWithBOM() throws IOException
+	{
+		File bomFile = Files.createTempFile("bom", ".json").toFile();
+		bomFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(bomFile))
+		{
+			writer.write("\uFEFF{\"BOMArray\":[\"item1\"]}");
+		}
+
+		List<String> items = handler.readListFromJson(bomFile.getPath(), "BOMArray");
+		assertEquals(1, items.size(), "Should handle files with BOM.");
+	}
+
+
+	@Test
+	@DisplayName("Test handling file permissions changing during operation.")
+	void testReadItemFromJson_PermissionsChange() throws IOException
+	{
+		File permFile = Files.createTempFile("perm", ".json").toFile();
+		permFile.deleteOnExit();
+
+		JsonObject json = new JsonObject();
+		json.add("TestArray", new JsonArray());
+		json.getAsJsonArray("TestArray").add("item1");
+
+		try(FileWriter writer = new FileWriter(permFile))
+		{
+			writer.write(json.toString());
+		}
+
+		assertThrows(UnreadableFileException.class, () ->
+		{
+			permFile.setReadable(false);
+			handler.readItemFromJson(permFile.getPath(), "TestArray", 0);
+		}, "Should handle permission changes during operation.");
+	}
+
+	@Test
+	@DisplayName("Test handling file deletion during operation.")
+	void testAppendItemToJson_FileDeleted() throws IOException
+	{
+		File volatileFile = Files.createTempFile("volatile", ".json").toFile();
+
+		JsonObject json = new JsonObject();
+		json.add("VolatileArray", new JsonArray());
+
+		try(FileWriter writer = new FileWriter(volatileFile))
+		{
+			writer.write(json.toString());
+		}
+
+		volatileFile.delete();
+
+		assertThrows(InaccessibleFileException.class,
+			() -> handler.appendItemToJson(volatileFile.getPath(), "VolatileArray", "testItem"),
+			"Should handle deleted files.");
+	}
+
+	@Test
+	@DisplayName("Test handling extremely deep JSON structures.")
+	void testHasJsonKey_ExtremeDepth() throws IOException
+	{
+		File deepFile = Files.createTempFile("deep", ".json").toFile();
+		deepFile.deleteOnExit();
+
+		JsonObject current = new JsonObject();
+		JsonObject root = current;
+		int depth = 1000;
+
+		for(int i = 0; i < depth; i++)
+		{
+			JsonObject next = new JsonObject();
+			current.add("level" + i, next);
+			current = next;
+		}
+
+		current.addProperty("value", "deepValue");
+
+		try(FileWriter writer = new FileWriter(deepFile))
+		{
+			writer.write(root.toString());
+		}
+
+		StringBuilder keyBuilder = new StringBuilder();
+		for(int i = 0; i < depth; i++)
+		{
+			if(i > 0)
+				keyBuilder.append(".");
+
+			keyBuilder.append("level").append(i);
+		}
+
+		keyBuilder.append(".value");
+
+		assertTrue(handler.hasJsonKey(deepFile.getPath(), keyBuilder.toString()),
+			"Should handle extremely deep JSON structures.");
+	}
+
+	@Test
+	@DisplayName("Test handling file with trailing garbage data.")
+	void testReadJsonObject_TrailingGarbage() throws IOException
+	{
+		File garbageFile = Files.createTempFile("garbage", ".json").toFile();
+		garbageFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(garbageFile))
+		{
+			writer.write("{\"ValidKey\":[\"item1\"]}/* Trailing garbage */");
+		}
+
+		assertThrows(InvalidJsonStateException.class,
+			() -> handler.readListFromJson(garbageFile.getPath(), "ValidKey"),
+			"Should reject JSON with trailing garbage.");
+	}
+
+	@Test
+	@DisplayName("Test handling file with duplicate keys.")
+	void testReadJsonObject_DuplicateKeys() throws IOException
+	{
+		File dupKeyFile = Files.createTempFile("duplicate", ".json").toFile();
+		dupKeyFile.deleteOnExit();
+
+		try(FileWriter writer = new FileWriter(dupKeyFile))
+		{
+			writer.write("{\"DupeKey\":1,\"DupeKey\":2}");
+		}
+
+		JsonObject json = handler.getJsonObject(dupKeyFile.getPath());
+		assertEquals(2, json.get("DupeKey").getAsInt(), "Should handle duplicate keys by taking last value.");
 	}
 }

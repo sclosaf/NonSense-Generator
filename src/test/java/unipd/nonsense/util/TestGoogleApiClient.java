@@ -21,9 +21,13 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
+
 import org.mockito.Mock;
 import org.mockito.MockedStatic;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.mockito.Mockito;
 import static org.mockito.Mockito.*;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -78,7 +82,8 @@ class TestGoogleApiClient
 		when(LanguageServiceSettings.newBuilder()).thenReturn(mockSettingsBuilder);
 		when(mockSettingsBuilder.setCredentialsProvider(mockCredentialsProvider)).thenReturn(mockSettingsBuilder);
 		when(mockSettingsBuilder.build()).thenReturn(mockSettings);
-		when(LanguageServiceClient.create(any(LanguageServiceSettings.class))).thenReturn(mockClient);
+
+		when(LanguageServiceClient.create(Mockito.<LanguageServiceSettings>any())).thenReturn(mockClient);
 
 		googleClient = new GoogleApiClient(filePath);
 	}
@@ -351,5 +356,206 @@ class TestGoogleApiClient
 		{
 			assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient("wrongConfig.json"), "Should throw FailedOpeningInputStreamException when stream can't be opened.");
 		}
+	}
+
+	@Test
+	@DisplayName("Test constructor with whitespace-only file path")
+	void testConstructor_WhitespaceFilePath()
+	{
+		assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient("   "),
+			"Should throw InvalidFilePathException for whitespace-only file path");
+	}
+
+	@Test
+	@DisplayName("Test constructor with relative parent path traversal")
+	void testConstructor_ParentPathTraversal()
+	{
+		assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient("../../file.json"),
+			"Should prevent parent directory traversal in file path");
+	}
+
+	@Test
+	@DisplayName("Test constructor with special characters in path")
+	void testConstructor_SpecialCharactersPath()
+	{
+		String specialPath = "/test!@#$%^&()_+-={}[]|;',.`~.json";
+		assertThrows(FailedOpeningInputStreamException.class, () -> new GoogleApiClient(specialPath),
+			"Should handle special characters in file path");
+	}
+
+	@Test
+	@DisplayName("Test getClient from multiple threads after closure")
+	void testGetClient_ConcurrentAfterClosure() throws InterruptedException
+	{
+		googleClient.close();
+		int threadCount = 5;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		AtomicInteger exceptionCount = new AtomicInteger(0);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.execute(() ->
+			{
+				try
+				{
+					googleClient.getClient();
+				}
+				catch(ClientAlreadyClosedException e)
+				{
+					exceptionCount.incrementAndGet();
+				}
+			});
+		}
+
+		executor.shutdown();
+		assertTrue(executor.awaitTermination(1, TimeUnit.SECONDS));
+		assertEquals(threadCount, exceptionCount.get());
+	}
+
+	@Test
+	@DisplayName("Test extremely rapid sequential open/close operations")
+	void testRapidOpenCloseOperations() throws IOException
+	{
+		int operations = 1000;
+		for(int i = 0; i < operations; i++)
+		{
+			GoogleApiClient client = new GoogleApiClient(filePath);
+			client.close();
+		}
+
+		assertEquals(1, GoogleApiClient.getClientCount(filePath));
+	}
+
+	@Test
+	@DisplayName("Test mixed operations under high concurrency")
+	void testMixedOperationsHighConcurrency() throws InterruptedException
+	{
+		int threadCount = 50;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		AtomicReference<Exception> error = new AtomicReference<>();
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.execute(() ->
+			{
+				try
+				{
+					for(int j = 0; j < 10; j++)
+					{
+						GoogleApiClient client = new GoogleApiClient(filePath);
+
+						try
+						{
+							assertNotNull(client.getClient());
+							Thread.sleep(1);
+						}
+						finally
+						{
+							client.close();
+						}
+					}
+				}
+				catch(Exception e)
+				{
+					error.set(e);
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		assertTrue(latch.await(10, TimeUnit.SECONDS));
+		assertNull(error.get());
+		executor.shutdown();
+	}
+
+	@Test
+	@DisplayName("Test closeAllClients during active operations")
+	void testCloseAllClients_DuringActiveOperations() throws InterruptedException
+	{
+		int threadCount = 10;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch startLatch = new CountDownLatch(1);
+		CountDownLatch endLatch = new CountDownLatch(threadCount);
+		AtomicInteger successCount = new AtomicInteger(0);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.execute(() ->
+			{
+				try
+				{
+					startLatch.await();
+					GoogleApiClient client = new GoogleApiClient(filePath);
+
+					try
+					{
+						assertNotNull(client.getClient());
+						successCount.incrementAndGet();
+					}
+					finally
+					{
+						client.close();
+					}
+				}
+				catch(Exception e)
+				{
+					fail("Operation should complete successfully");
+				}
+				finally
+				{
+					endLatch.countDown();
+				}
+			});
+		}
+
+		startLatch.countDown();
+		Thread.sleep(10);
+		GoogleApiClient.closeAllClients();
+		assertTrue(endLatch.await(1, TimeUnit.SECONDS));
+		assertEquals(threadCount, successCount.get());
+		executor.shutdown();
+	}
+
+	@Test
+	@DisplayName("Test getClientCount during concurrent modifications")
+	void testGetClientCount_ConcurrentModifications() throws InterruptedException
+	{
+		int threadCount = 10;
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		AtomicInteger successCount = new AtomicInteger(0);
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.execute(() ->
+			{
+				try
+				{
+					for(int j = 0; j < 10; j++)
+					{
+						int count = GoogleApiClient.getClientCount(filePath);
+						assertTrue(count >= 0 && count <= threadCount);
+						successCount.incrementAndGet();
+						Thread.sleep(1);
+					}
+				}
+				catch(Exception e)
+				{
+					fail("Should not throw exceptions");
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		assertTrue(latch.await(5, TimeUnit.SECONDS));
+		assertEquals(threadCount * 10, successCount.get());
+		executor.shutdown();
 	}
 }

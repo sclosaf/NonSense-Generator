@@ -15,6 +15,7 @@ import unipd.nonsense.model.Pair;
 
 import unipd.nonsense.util.LoggerManager;
 
+import unipd.nonsense.exceptions.InvalidGrammaticalElementException;
 import unipd.nonsense.exceptions.InvalidNumberException;
 import unipd.nonsense.exceptions.InvalidTenseException;
 
@@ -91,6 +92,9 @@ public class JsonUpdater
 
 	public static void loadNoun(Noun noun) throws IOException
 	{
+		if(noun == null)
+			throw new InvalidGrammaticalElementException();
+
 		logger.logDebug("loadNoun: Loading noun: " + noun.getNoun() + " with number: " + noun.getNumber());
 		loadNoun(noun.getNoun(), noun.getNumber());
 		logger.logTrace("loadNoun: Noun loaded successfully");
@@ -98,6 +102,9 @@ public class JsonUpdater
 
 	public static void loadNoun(String noun, Number number) throws IOException
 	{
+		if(noun == null)
+			throw new InvalidGrammaticalElementException();
+
 		if(number == null)
 			throw new InvalidNumberException();
 
@@ -112,6 +119,9 @@ public class JsonUpdater
 
 	public static void loadVerb(Verb verb) throws IOException
 	{
+		if(verb == null)
+			throw new InvalidGrammaticalElementException();
+
 		logger.logDebug("loadVerb: Loading verb: " + verb.getVerb() + " with tense: " + verb.getTense() + " and number: " + verb.getNumber());
 
 		loadVerb(verb.getVerb(), verb.getTense(), verb.getNumber());
@@ -121,6 +131,9 @@ public class JsonUpdater
 
 	public static void loadVerb(String verb, Tense tense, Number number) throws IOException
 	{
+		if(verb == null)
+			throw new InvalidGrammaticalElementException();
+
 		if(tense == null)
 			throw new InvalidTenseException();
 
@@ -138,6 +151,9 @@ public class JsonUpdater
 
 	public static void loadAdjective(Adjective adjective) throws IOException
 	{
+		if(adjective == null)
+			throw new InvalidGrammaticalElementException();
+
 		logger.logDebug("loadAdjective: Loading adjective: " + adjective.getAdjective());
 		loadAdjective(adjective.getAdjective());
 		logger.logTrace("loadAdjective: Adjective loaded successfully");
@@ -145,6 +161,9 @@ public class JsonUpdater
 
 	public static void loadAdjective(String adjective) throws IOException
 	{
+		if(adjective == null)
+			throw new InvalidGrammaticalElementException();
+
 		logger.logDebug("loadAdjective: Loading adjective: " + adjective);
 		String key = "adjectives";
 
@@ -156,6 +175,9 @@ public class JsonUpdater
 
 	public static void loadTemplate(Template template) throws IOException
 	{
+		if(template == null)
+			throw new InvalidGrammaticalElementException();
+
 		logger.logDebug("loadTemplate: Loading template: " + template.getPattern() + " with number: " + template.getNumber());
 		loadTemplate(template.getPattern(), template.getNumber());
 		logger.logTrace("loadTemplate: Template loaded successfully");
@@ -163,6 +185,9 @@ public class JsonUpdater
 
 	public static void loadTemplate(String template, Number number) throws IOException
 	{
+		if(template == null)
+			throw new InvalidGrammaticalElementException();
+
 		if(number == null)
 			throw new InvalidNumberException();
 

@@ -208,6 +208,45 @@ class TestRandomVerbGenerator
 	}
 
 	@Test
+	@DisplayName("Test getRandomVerb with specific Number only returns verbs with that Number")
+	void testGetRandomVerb_WithNumberOnly()
+	{
+			Verb singularVerb = generator.getRandomVerb(Number.SINGULAR);
+			Verb pluralVerb = generator.getRandomVerb(Number.PLURAL);
+
+			assertEquals(Number.SINGULAR, singularVerb.getNumber(), "Verb should be SINGULAR");
+			assertEquals(Number.PLURAL, pluralVerb.getNumber(), "Verb should be PLURAL");
+	}
+
+	@Test
+	@DisplayName("Test getRandomVerb with specific Tense only returns verbs with that Tense")
+	void testGetRandomVerb_WithTenseOnly()
+	{
+		Verb pastVerb = generator.getRandomVerb(Tense.PAST);
+		Verb presentVerb = generator.getRandomVerb(Tense.PRESENT);
+		Verb futureVerb = generator.getRandomVerb(Tense.FUTURE);
+
+		assertEquals(Tense.PAST, pastVerb.getTense(), "Verb should be PAST");
+		assertEquals(Tense.PRESENT, presentVerb.getTense(), "Verb should be PRESENT");
+		assertEquals(Tense.FUTURE, futureVerb.getTense(), "Verb should be FUTURE");
+	}
+
+	@Test
+	@DisplayName("Test all possible Tense and Number combinations")
+	void testAllTenseNumberCombinations()
+	{
+		for (Tense tense : Tense.values())
+		{
+			for (Number number : Number.values())
+			{
+				Verb verb = generator.getRandomVerb(number, tense);
+				assertEquals(number, verb.getNumber(), "Verb number should match requested number");
+				assertEquals(tense, verb.getTense(), "Verb tense should match requested tense");
+			}
+		}
+	}
+
+	@Test
 	@DisplayName("Test attempt to get verb from empty list")
 	void testGetRandomVerb_EmptyList() throws Exception
 	{
@@ -525,5 +564,127 @@ class TestRandomVerbGenerator
 
 		assertEquals(longVerb, verb.getVerb());
 		longVerbGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test initialization with non-existent file path")
+	void testInitialization_NonExistentFile()
+	{
+		String nonExistentPath = "non/existent/path/verbs.json";
+		assertThrows(IOException.class, () -> new RandomVerbGenerator(nonExistentPath),
+			"Should throw IOException when file path does not exist");
+	}
+
+	@Test
+	@DisplayName("Test thread safety during initialization")
+	void testThreadSafeInitialization() throws Exception
+	{
+		int threadCount = 10;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(threadCount);
+		List<RandomVerbGenerator> generators = new ArrayList<>();
+
+		for (int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+			{
+				try
+				{
+					RandomVerbGenerator localGenerator = new RandomVerbGenerator(testFilePath);
+					synchronized (generators)
+					{
+						generators.add(localGenerator);
+					}
+				}
+				catch(IOException e)
+				{
+					fail("Initialization should not fail");
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await();
+		executor.shutdown();
+
+		assertEquals(threadCount, generators.size(), "All generators should be created successfully");
+		for(RandomVerbGenerator gen : generators)
+		{
+			assertNotNull(gen.getRandomVerb(), "Each generator should work correctly");
+			gen.cleanup();
+		}
+	}
+
+	@Test
+	@DisplayName("Test constructor with null file path")
+	void testConstructor_NullFilePath()
+	{
+		assertThrows(unipd.nonsense.exceptions.NullFilePathException.class, () -> new RandomVerbGenerator(null),
+			"Should throw NullPointerException for null file path");
+	}
+
+	@Test
+	@DisplayName("Test repeated JSON updates")
+	void testRepeatedJsonUpdates() throws Exception
+	{
+		int updateCount = 10;
+		for(int i = 0; i < updateCount; i++)
+		{
+			JsonObject updatedJson = createDefaultTestVerbs();
+
+			try(FileWriter writer = new FileWriter(testFile))
+			{
+				writer.write(updatedJson.toString());
+			}
+			generator.onJsonUpdate();
+		}
+
+		assertNotNull(generator.getRandomVerb(), "Generator should work after multiple JSON updates");
+	}
+
+	@Test
+	@DisplayName("Test verb distribution across tenses and numbers")
+	void testVerbTenseNumberDistribution()
+	{
+		int sampleSize = 1000;
+		Map<Tense, Integer> tenseCounts = new HashMap<>();
+
+		Map<Number, Integer> numberCounts = new HashMap<>();
+		Map<Pair<Tense, Number>, Integer> combinationCounts = new HashMap<>();
+
+		for(int i = 0; i < sampleSize; i++)
+		{
+			Verb verb = generator.getRandomVerb();
+
+			tenseCounts.merge(verb.getTense(), 1, Integer::sum);
+
+			numberCounts.merge(verb.getNumber(), 1, Integer::sum);
+
+			Pair<Tense, Number> combination = new Pair<>(verb.getTense(), verb.getNumber());
+			combinationCounts.merge(combination, 1, Integer::sum);
+		}
+
+		for(Tense tense : Tense.values())
+		{
+			assertTrue(tenseCounts.getOrDefault(tense, 0) > 0,
+				"Tense " + tense + " should appear in random distribution");
+		}
+
+		for(Number number : Number.values())
+		{
+			assertTrue(numberCounts.getOrDefault(number, 0) > 0,
+				"Number " + number + " should appear in random distribution");
+		}
+
+		double expectedCombinationCount = sampleSize / (Tense.values().length * Number.values().length);
+		double tolerance = expectedCombinationCount * 0.3;
+
+		combinationCounts.forEach((combination, count) ->
+		{
+			assertTrue(Math.abs(count - expectedCombinationCount) < tolerance, "Combination " + combination + " appears " + count + " times (expected ~" + expectedCombinationCount + ")");
+		});
 	}
 }

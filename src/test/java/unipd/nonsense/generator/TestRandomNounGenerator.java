@@ -403,4 +403,259 @@ class TestRandomNounGenerator
 		assertEquals(longNoun, noun.getNoun());
 		longNounGenerator.cleanup();
 	}
+
+	@Test
+	@DisplayName("Test initialization with null file path")
+	void testInitialization_NullFilePath()
+	{
+		assertThrows(IllegalArgumentException.class, () -> new RandomNounGenerator(null),
+			"Should throw IllegalArgumentException when file path is null");
+	}
+
+	@Test
+	@DisplayName("Test initialization with non-existent file path")
+	void testInitialization_NonExistentFilePath()
+	{
+		String nonExistentPath = "nonexistent" + File.separator + "path.json";
+		assertThrows(IOException.class, () -> new RandomNounGenerator(nonExistentPath), "Should throw IOException when file does not exist");
+	}
+
+	@Test
+	@DisplayName("Test behavior when JSON file is deleted after initialization")
+	void testJsonFileDeletedAfterInitialization() throws Exception
+	{
+		Files.deleteIfExists(Path.of(testFilePath));
+		assertThrows(IOException.class, () -> generator.onJsonUpdate(), "Should throw IOException when JSON file is deleted and update is attempted");
+	}
+
+	@Test
+	@DisplayName("Test thread safety during concurrent updates and accesses")
+	void testConcurrentUpdatesAndAccesses() throws Exception
+	{
+		int threadCount = 50;
+		CountDownLatch latch = new CountDownLatch(threadCount);
+		ExecutorService executor = Executors.newFixedThreadPool(10);
+		Random random = new Random();
+
+		Runnable updater = () ->
+		{
+
+			try
+			{
+				JsonObject updatedJson = new JsonObject();
+				JsonArray updatedSingular = new JsonArray();
+				updatedSingular.add("new_singular_" + System.currentTimeMillis());
+				JsonArray updatedPlural = new JsonArray();
+				updatedPlural.add("new_plural_" + System.currentTimeMillis());
+
+				updatedJson.add("singularNouns", updatedSingular);
+				updatedJson.add("pluralNouns", updatedPlural);
+
+				try(FileWriter writer = new FileWriter(testFile))
+				{
+					writer.write(updatedJson.toString());
+				}
+
+				generator.onJsonUpdate();
+			}
+			catch(Exception e)
+			{
+				fail("Update failed: " + e.getMessage());
+			}
+		};
+
+		for(int i = 0; i < threadCount; i++)
+		{
+			executor.submit(() ->
+			{
+				try
+				{
+					if(random.nextBoolean())
+					{
+						Noun noun = generator.getRandomNoun();
+						assertNotNull(noun);
+					}
+					else if(random.nextBoolean())
+					{
+						Noun noun = generator.getRandomNoun(Number.SINGULAR);
+						assertNotNull(noun);
+					}
+					else
+						updater.run();
+				}
+				finally
+				{
+					latch.countDown();
+				}
+			});
+		}
+
+		latch.await(10, java.util.concurrent.TimeUnit.SECONDS);
+		executor.shutdown();
+		assertEquals(0, latch.getCount(), "All threads should complete");
+	}
+
+	@Test
+	@DisplayName("Test behavior with empty singular nouns but valid plural nouns")
+	void testEmptySingularButValidPlural() throws Exception
+	{
+		JsonObject testJson = new JsonObject();
+		testJson.add("singularNouns", new JsonArray());
+
+		JsonArray pluralNouns = new JsonArray();
+		pluralNouns.add("tests");
+		pluralNouns.add("nouns");
+		testJson.add("pluralNouns", pluralNouns);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(testJson.toString());
+		}
+
+		RandomNounGenerator testGenerator = new RandomNounGenerator(testFilePath);
+
+		Noun pluralNoun = testGenerator.getRandomNoun(Number.PLURAL);
+		assertNotNull(pluralNoun);
+
+		assertThrows(InvalidListException.class, () -> testGenerator.getRandomNoun(Number.SINGULAR));
+
+		boolean gotNoun = false;
+
+		for (int i = 0; i < 10; i++)
+		{
+			try
+			{
+				Noun noun = testGenerator.getRandomNoun();
+				assertNotNull(noun);
+				gotNoun = true;
+				break;
+			}
+			catch(InvalidListException e)
+			{}
+		}
+
+		assertTrue(gotNoun, "Should eventually get a plural noun");
+
+		testGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test memory usage with repeated updates")
+	void testMemoryUsageWithRepeatedUpdates() throws Exception
+	{
+		Field nounsField = RandomNounGenerator.class.getDeclaredField("nouns");
+		nounsField.setAccessible(true);
+
+		for(int i = 0; i < 1000; i++)
+		{
+			JsonObject updatedJson = new JsonObject();
+			JsonArray singularNouns = new JsonArray();
+			singularNouns.add("noun_" + i);
+			JsonArray pluralNouns = new JsonArray();
+			pluralNouns.add("nouns_" + i);
+
+			updatedJson.add("singularNouns", singularNouns);
+			updatedJson.add("pluralNouns", pluralNouns);
+
+			try(FileWriter writer = new FileWriter(testFile))
+			{
+				writer.write(updatedJson.toString());
+			}
+
+			generator.onJsonUpdate();
+
+			@SuppressWarnings("unchecked")
+			Map<Number, List<Noun>> nounsMap = (Map<Number, List<Noun>>) nounsField.get(generator);
+
+			assertEquals(1, nounsMap.get(Number.SINGULAR).size());
+			assertEquals(1, nounsMap.get(Number.PLURAL).size());
+		}
+	}
+
+	@Test
+	@DisplayName("Test behavior with extremely large JSON file")
+	void testExtremelyLargeJsonFile() throws Exception
+	{
+		JsonObject largeJson = new JsonObject();
+		JsonArray singularNouns = new JsonArray();
+		JsonArray pluralNouns = new JsonArray();
+
+		for(int i = 0; i < 10000; i++)
+		{
+			singularNouns.add("singular_" + i);
+			pluralNouns.add("plural_" + i);
+		}
+
+		largeJson.add("singularNouns", singularNouns);
+		largeJson.add("pluralNouns", pluralNouns);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(largeJson.toString());
+		}
+
+		RandomNounGenerator largeGenerator = new RandomNounGenerator(testFilePath);
+
+		Noun singular = largeGenerator.getRandomNoun(Number.SINGULAR);
+		Noun plural = largeGenerator.getRandomNoun(Number.PLURAL);
+
+		assertNotNull(singular);
+		assertNotNull(plural);
+		largeGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test behavior with duplicate nouns in JSON")
+	void testDuplicateNouns() throws Exception
+	{
+		JsonObject duplicateJson = new JsonObject();
+		JsonArray singularNouns = new JsonArray();
+		singularNouns.add("test");
+		singularNouns.add("test");
+		singularNouns.add("test");
+
+		JsonArray pluralNouns = new JsonArray();
+		pluralNouns.add("tests");
+		pluralNouns.add("tests");
+
+		duplicateJson.add("singularNouns", singularNouns);
+		duplicateJson.add("pluralNouns", pluralNouns);
+
+		try(FileWriter writer = new FileWriter(testFile))
+		{
+			writer.write(duplicateJson.toString());
+		}
+
+		RandomNounGenerator duplicateGenerator = new RandomNounGenerator(testFilePath);
+
+		Noun singular = duplicateGenerator.getRandomNoun(Number.SINGULAR);
+		Noun plural = duplicateGenerator.getRandomNoun(Number.PLURAL);
+
+		assertEquals("test", singular.getNoun());
+		assertEquals("tests", plural.getNoun());
+		duplicateGenerator.cleanup();
+	}
+
+	@Test
+	@DisplayName("Test number type distribution in getRandomNoun()")
+	void testNumberTypeDistribution()
+	{
+		int iterations = 1000;
+		int singularCount = 0;
+		int pluralCount = 0;
+
+		for(int i = 0; i < iterations; i++)
+		{
+			Noun noun = generator.getRandomNoun();
+
+			if(noun.getNumber() == Number.SINGULAR)
+				singularCount++;
+			else
+				pluralCount++;
+
+		}
+
+		double ratio = (double) singularCount / pluralCount;
+		assertTrue(ratio > 0.8 && ratio < 1.2, "Number types should be roughly evenly distributed");
+	}
 }

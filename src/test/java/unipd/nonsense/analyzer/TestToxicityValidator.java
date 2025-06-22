@@ -1,6 +1,9 @@
 package unipd.nonsense.analyzer;
 
 import com.google.cloud.language.v1.*;
+import com.google.cloud.language.v1.Document;
+import com.google.cloud.language.v1.Document.Type;
+import com.google.cloud.language.v1.ModerateTextRequest;
 import org.junit.jupiter.api.*;
 import unipd.nonsense.exceptions.InvalidTextException;
 import unipd.nonsense.exceptions.InvalidThresholdException;
@@ -35,7 +38,7 @@ class TestToxicityValidator
 	private GoogleApiClient mockApiClient;
 	private LanguageServiceClient mockLanguageClient;
 
-	private static final String TEST_JSON_PATH = "src" + File.separator + "test" + File.separator + "resources" + File.separator + "TestToxicity.json";
+	private static final String TEST_JSON_PATH = "target" + File.separator + "resources" + File.separator + "TestToxicity.json";
 
 	private static Map<String, Float> cleanScores;
 	private static Map<String, Float> toxicScores;
@@ -73,11 +76,13 @@ class TestToxicityValidator
 	private static Map<String, Float> parseScoreMap(List<String> scoreList)
 	{
 		Map<String, Float> map = new HashMap<>();
+
 		for(String entry : scoreList)
 		{
 			String[] parts = entry.split(":");
 			map.put(parts[0], Float.parseFloat(parts[1]));
 		}
+
 		return map;
 	}
 
@@ -96,15 +101,18 @@ class TestToxicityValidator
 	private ModerateTextResponse mockResponse(Map<String, Float> scores)
 	{
 		ModerateTextResponse.Builder responseBuilder = ModerateTextResponse.newBuilder();
+
 		for(Map.Entry<String, Float> entry : scores.entrySet())
 		{
+			String categoryName = entry.getKey() != null ? entry.getKey() : "null";
 			responseBuilder.addModerationCategories(
 				ClassificationCategory.newBuilder()
-					.setName(entry.getKey())
-					.setConfidence(entry.getValue())
-					.build()
+				.setName(categoryName)
+				.setConfidence(entry.getValue())
+				.build()
 			);
 		}
+
 		return responseBuilder.build();
 	}
 
@@ -165,9 +173,7 @@ class TestToxicityValidator
 	@DisplayName("Invalid threshold should throw exception")
 	void testIsTextToxic_InvalidThreshold()
 	{
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.isTextToxicAsync("text", 1.5f).join()
-			);
+		CompletionException ex = assertThrows(CompletionException.class, () -> validator.isTextToxicAsync("text", 1.5f).join());
 
 		assertTrue(ex.getCause() instanceof InvalidThresholdException);
 	}
@@ -176,9 +182,7 @@ class TestToxicityValidator
 	@DisplayName("Null input to moderateText should throw exception")
 	void testModerateText_NullInput()
 	{
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.moderateTextAsync(null).join()
-			);
+		CompletionException ex = assertThrows(CompletionException.class, () -> validator.moderateTextAsync(null).join());
 
 		assertTrue(ex.getCause() instanceof InvalidTextException);
 	}
@@ -187,9 +191,7 @@ class TestToxicityValidator
 	@DisplayName("Empty input to moderateText should throw exception")
 	void testModerateText_EmptyInput()
 	{
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.moderateTextAsync("   ").join()
-			);
+		CompletionException ex = assertThrows(CompletionException.class, () -> validator.moderateTextAsync("   ").join());
 
 		assertTrue(ex.getCause() instanceof InvalidTextException);
 	}
@@ -199,16 +201,15 @@ class TestToxicityValidator
 	void testTextExceedsMaxLength()
 	{
 		String longText = String.join("", Collections.nCopies(1001, "a"));
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.getToxicityScoresAsync(longText).join()
-			);
+		CompletionException ex = assertThrows(CompletionException.class,() -> validator.getToxicityScoresAsync(longText).join());
 
 		assertTrue(ex.getCause() instanceof InvalidTextException);
 	}
 
 	@Test
 	@DisplayName("Test getToxicityReport with clean text")
-	void testGetToxicityReport_Clean() {
+	void testGetToxicityReport_Clean()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(cleanScores));
 
@@ -217,14 +218,14 @@ class TestToxicityValidator
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
 
-		for (String category : cleanScores.keySet()) {
+		for(String category : cleanScores.keySet())
 			assertTrue(report.contains(category), "Report should contain category: " + category);
-		}
 	}
 
 	@Test
 	@DisplayName("Test getToxicityReport with toxic text")
-	void testGetToxicityReport_Toxic() {
+	void testGetToxicityReport_Toxic()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -233,7 +234,8 @@ class TestToxicityValidator
 		assertNotNull(report, "Report should not be null");
 		assertFalse(report.isEmpty(), "Report should not be empty");
 
-		for (String category : toxicScores.keySet()) {
+		for(String category : toxicScores.keySet())
+		{
 			assertTrue(report.contains(category), "Report should contain category: " + category);
 			String expectedPercentage = String.format("%.1f%%", toxicScores.get(category) * 100);
 			assertTrue(report.contains(expectedPercentage),
@@ -243,7 +245,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test getToxicityReport with empty response")
-	void testGetToxicityReport_EmptyResponse() {
+	void testGetToxicityReport_EmptyResponse()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(new HashMap<>()));
 
@@ -257,7 +260,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test isTextToxic with default threshold - toxic")
-	void testIsTextToxic_DefaultThreshold_Toxic() {
+	void testIsTextToxic_DefaultThreshold_Toxic()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -268,7 +272,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test isTextToxic with default threshold - clean")
-	void testIsTextToxic_DefaultThreshold_Clean() {
+	void testIsTextToxic_DefaultThreshold_Clean()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(cleanScores));
 
@@ -279,7 +284,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test isTextToxic with custom threshold exactly at score value")
-	void testIsTextToxic_ExactThreshold() {
+	void testIsTextToxic_ExactThreshold()
+	{
 		Map<String, Float> testScores = new HashMap<>();
 		testScores.put("TEST_CATEGORY", 0.5f);
 
@@ -295,7 +301,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test lower boundary threshold value")
-	void testIsTextToxic_LowerBoundaryThreshold() {
+	void testIsTextToxic_LowerBoundaryThreshold()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -304,7 +311,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test upper boundary threshold value")
-	void testIsTextToxic_UpperBoundaryThreshold() {
+	void testIsTextToxic_UpperBoundaryThreshold()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -313,39 +321,40 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test negative threshold value")
-	void testIsTextToxic_NegativeThreshold() {
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.isTextToxicAsync(toxicText, -0.1f).join()
-		);
+	void testIsTextToxic_NegativeThreshold()
+	{
+		CompletionException ex = assertThrows(CompletionException.class, () -> validator.isTextToxicAsync(toxicText, -0.1f).join());
 
 		assertTrue(ex.getCause() instanceof InvalidThresholdException);
 	}
 
 	@Test
 	@DisplayName("Test service exception handling")
-	void testServiceExceptionHandling() {
+	void testServiceExceptionHandling()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenThrow(new RuntimeException("API Service error"));
 
-		assertThrows(CompletionException.class,
-			() -> validator.getToxicityScoresAsync("test text").join());
+		assertThrows(CompletionException.class, () -> validator.getToxicityScoresAsync("test text").join());
 	}
 
 	@Test
 	@DisplayName("Test API client with null credentials throws NullPointerException")
-	void testApiClientWithNullCredentials() {
+	void testApiClientWithNullCredentials()
+	{
 		when(mockApiClient.getClient()).thenThrow(new NullPointerException("Null credentials"));
 
-		CompletionException ex = assertThrows(CompletionException.class,
-			() -> validator.getToxicityScoresAsync("test").join());
-		assertTrue(ex.getCause() instanceof NullPointerException,
-			"Expected NullPointerException to be wrapped in CompletionException");
+		CompletionException ex = assertThrows(CompletionException.class, () -> validator.getToxicityScoresAsync("test").join());
+
+		assertTrue(ex.getCause() instanceof NullPointerException,"Expected NullPointerException to be wrapped in CompletionException");
 	}
 
 	@Test
 	@DisplayName("Test getToxicityScoresAsync result structure")
-	void testGetToxicityScoresAsyncStructure() {
+	void testGetToxicityScoresAsyncStructure()
+	{
 		Map<String, Float> testScores = new HashMap<>();
+
 		testScores.put("TOXICITY", 0.7f);
 		testScores.put("PROFANITY", 0.5f);
 
@@ -358,6 +367,7 @@ class TestToxicityValidator
 		assertDoesNotThrow(() -> future.get(1, TimeUnit.SECONDS), "Future should complete within timeout");
 
 		Map<String, Float> result = future.join();
+
 		assertEquals(2, result.size(), "Result should contain all scores");
 		assertEquals(0.7f, result.get("TOXICITY"), "TOXICITY score should match");
 		assertEquals(0.5f, result.get("PROFANITY"), "PROFANITY score should match");
@@ -365,7 +375,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test moderateTextAsync function")
-	void testModerateTextAsync() {
+	void testModerateTextAsync()
+	{
 		ModerateTextResponse expectedResponse = mockResponse(toxicScores);
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(expectedResponse);
@@ -379,7 +390,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test client is correctly used in moderateText")
-	void testClientUsage() {
+	void testClientUsage()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(new HashMap<>()));
 
@@ -391,7 +403,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test text with boundary length")
-	void testBoundaryTextLength() {
+	void testBoundaryTextLength()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(new HashMap<>()));
 
@@ -399,13 +412,13 @@ class TestToxicityValidator
 		assertDoesNotThrow(() -> validator.getToxicityScoresAsync(maxLengthText).join());
 
 		String tooLongText = maxLengthText + "a";
-		assertThrows(CompletionException.class,
-			() -> validator.getToxicityScoresAsync(tooLongText).join());
+		assertThrows(CompletionException.class, () -> validator.getToxicityScoresAsync(tooLongText).join());
 	}
 
 	@Test
 	@DisplayName("Test validator close method")
-	void testClose() {
+	void testClose()
+	{
 		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
 		ToxicityValidator tempValidator = new ToxicityValidator(tempMockClient);
 
@@ -416,7 +429,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test exception during close")
-	void testExceptionDuringClose() {
+	void testExceptionDuringClose()
+	{
 		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
 		doThrow(new RuntimeException("Close error")).when(tempMockClient).close();
 
@@ -427,8 +441,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test concurrent toxicity checks with multiple texts")
-	void testConcurrentToxicityChecks() {
-
+	void testConcurrentToxicityChecks()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -440,13 +454,12 @@ class TestToxicityValidator
 			.map(validator::isTextToxicAsync)
 			.collect(Collectors.toList());
 
-		CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-			futures.toArray(new CompletableFuture[0])
-		);
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
 
 		allFutures.join();
 
-		for (CompletableFuture<Boolean> future : futures) {
+		for(CompletableFuture<Boolean> future : futures)
+		{
 			assertTrue(future.isDone(), "Future should be completed");
 			assertDoesNotThrow(() -> future.get(), "Future should complete without exception");
 		}
@@ -454,8 +467,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test multiple concurrent requests with different methods")
-	void testMultipleConcurrentRequests() {
-
+	void testMultipleConcurrentRequests()
+	{
 		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
 			.thenReturn(mockResponse(toxicScores));
 
@@ -464,9 +477,7 @@ class TestToxicityValidator
 		CompletableFuture<String> reportFuture = validator.getToxicityReportAsync("Report text");
 		CompletableFuture<ModerateTextResponse> moderateFuture = validator.moderateTextAsync("Moderate text");
 
-		CompletableFuture<Void> allFutures = CompletableFuture.allOf(
-			toxicFuture, scoresFuture, reportFuture, moderateFuture
-		);
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(toxicFuture, scoresFuture, reportFuture, moderateFuture);
 
 		allFutures.join();
 
@@ -478,8 +489,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test toxicity report formatting with multiple categories")
-	void testToxicityReportFormatting() {
-
+	void testToxicityReportFormatting()
+	{
 		Map<String, Float> formattedScores = new HashMap<>();
 		formattedScores.put("TOXICITY", 0.7532f);
 		formattedScores.put("PROFANITY", 0.4267f);
@@ -501,8 +512,10 @@ class TestToxicityValidator
 			"Report should format SEXUALLY_EXPLICIT score correctly");
 
 		String[] lines = report.split("\n");
-		for (String line : lines) {
-			if (!line.isEmpty()) {
+		for(String line : lines)
+		{
+			if(!line.isEmpty())
+			{
 				assertTrue(line.contains(": "), "Each line should contain ': ' separator");
 				String[] parts = line.split(":");
 				assertEquals(25, parts[0].length(), "Category column should be 25 characters wide");
@@ -512,8 +525,8 @@ class TestToxicityValidator
 
 	@Test
 	@DisplayName("Test toxicity report formatting with extreme values")
-	void testToxicityReportFormatting_ExtremeValues() {
-
+	void testToxicityReportFormatting_ExtremeValues()
+	{
 		Map<String, Float> extremeScores = new HashMap<>();
 		extremeScores.put("ZERO_SCORE", 0.0f);
 		extremeScores.put("FULL_SCORE", 1.0f);
@@ -533,5 +546,187 @@ class TestToxicityValidator
 			"Report should format tiny score correctly (0.1%)");
 		assertTrue(Pattern.compile("HIGH_SCORE\\s+:\\s*99[\\.,]9%").matcher(report).find(),
 			"Report should format high score correctly (99.9%)");
+	}
+
+	@Test
+	@DisplayName("Test validateInput with exactly 1000 characters")
+	void testValidateInput_ExactMaxLength()
+	{
+		String exactLengthText = String.join("", Collections.nCopies(1000, "a"));
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(new HashMap<>()));
+
+		assertDoesNotThrow(() -> validator.getToxicityScoresAsync(exactLengthText).join());
+	}
+
+	@Test
+	@DisplayName("Test getToxicityScores with null response from API")
+	void testGetToxicityScores_NullResponse()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(null);
+
+		CompletionException ex = assertThrows(CompletionException.class,
+			() -> validator.getToxicityScoresAsync("test").join());
+
+		assertTrue(ex.getCause() instanceof NullPointerException);
+	}
+
+	@Test
+	@DisplayName("Test isTextToxic with empty categories list")
+	void testIsTextToxic_EmptyCategories()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(new HashMap<>()));
+
+		assertFalse(validator.isTextToxicAsync("test").join(), "Empty categories should return non-toxic");
+	}
+
+	@Test
+	@DisplayName("Test document building through public API")
+	void testDocumentBuilding()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(new HashMap<>()));
+
+		String specialCharsText = "Text with special chars: \n\t\\\"'!@#$%^&*()_+-=[]{}|;:,.<>/?";
+
+		assertDoesNotThrow(() -> validator.getToxicityScoresAsync(specialCharsText).join());
+
+		verify(mockLanguageClient).moderateText(argThat((ModerateTextRequest request) ->
+		{
+			Document doc = request.getDocument();
+			return doc.getContent().equals(specialCharsText) && doc.getType() == Document.Type.PLAIN_TEXT;
+		}));
+	}
+
+	@Test
+	@DisplayName("Test document type is always PLAIN_TEXT")
+	void testDocumentType()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(new HashMap<>()));
+
+		validator.getToxicityScoresAsync("test").join();
+
+		verify(mockLanguageClient).moderateText(argThat((ModerateTextRequest request) -> request.getDocument().getType() == Document.Type.PLAIN_TEXT));
+	}
+
+	@Test
+	@DisplayName("Test multiple sequential operations with same validator instance")
+	void testMultipleSequentialOperations()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(cleanScores))
+			.thenReturn(mockResponse(toxicScores))
+			.thenReturn(mockResponse(cleanScores));
+
+		assertFalse(validator.isTextToxicAsync(cleanText).join());
+		assertTrue(validator.isTextToxicAsync(toxicText).join());
+		assertFalse(validator.isTextToxicAsync(cleanText).join());
+	}
+
+	@Test
+	@DisplayName("Test getToxicityScores with duplicate categories")
+	void testGetToxicityScores_DuplicateCategories()
+	{
+		Map<String, Float> duplicateScores = new HashMap<>();
+		duplicateScores.put("DUPLICATE", 0.5f);
+		duplicateScores.put("DUPLICATE", 0.7f);
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(duplicateScores));
+
+		Map<String, Float> result = validator.getToxicityScoresAsync("test").join();
+		assertEquals(1, result.size(), "Should handle duplicate categories by overwriting");
+		assertEquals(0.7f, result.get("DUPLICATE"), "Should keep last value for duplicate key");
+	}
+
+	@Test
+	@DisplayName("Test isTextToxic with threshold at 0.0")
+	void testIsTextToxic_ZeroThreshold()
+	{
+		Map<String, Float> minimalScores = new HashMap<>();
+		minimalScores.put("MINIMAL", 0.0001f);
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(minimalScores));
+
+		assertTrue(validator.isTextToxicAsync("test", 0.0f).join(), "Any score should be toxic when threshold is 0.0");
+	}
+
+	@Test
+	@DisplayName("Test isTextToxic with threshold at 1.0")
+	void testIsTextToxic_MaxThreshold()
+	{
+		Map<String, Float> maxScores = new HashMap<>();
+		maxScores.put("MAX", 1.0f);
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(maxScores));
+
+		assertFalse(validator.isTextToxicAsync("test", 1.0f).join(), "Only scores > 1.0 would be toxic at threshold 1.0 (impossible)");
+	}
+
+	@Test
+	@DisplayName("Test getToxicityReport with null category name")
+	void testGetToxicityReport_NullCategoryName()
+	{
+		Map<String, Float> nullNameScores = new HashMap<>();
+		nullNameScores.put(null, 0.5f);
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(nullNameScores));
+
+		String report = validator.getToxicityReportAsync("test").join();
+		assertTrue(report.contains("null"), "Report should handle null category names");
+	}
+
+	@Test
+	@DisplayName("Test getToxicityReport with very long category names")
+	void testGetToxicityReport_LongCategoryNames()
+	{
+		Map<String, Float> longNameScores = new HashMap<>();
+		String longName = "VERY_LONG_CATEGORY_NAME_THAT_EXCEEDS_TYPICAL_LENGTH_BY_A_SIGNIFICANT_MARGIN";
+		longNameScores.put(longName, 0.5f);
+
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(longNameScores));
+
+		String report = validator.getToxicityReportAsync("test").join();
+		assertTrue(report.contains(longName), "Report should handle very long category names");
+	}
+
+	@Test
+	@DisplayName("Test stress test with many concurrent requests")
+	void testStressTest_ManyConcurrentRequests()
+	{
+		when(mockLanguageClient.moderateText(any(ModerateTextRequest.class)))
+			.thenReturn(mockResponse(toxicScores));
+
+		int requestCount = 100;
+		List<CompletableFuture<Boolean>> futures = new ArrayList<>();
+
+		for(int i = 0; i < requestCount; i++)
+			futures.add(validator.isTextToxicAsync("stress test " + i));
+
+		CompletableFuture<Void> allFutures = CompletableFuture.allOf(futures.toArray(new CompletableFuture[0]));
+
+		assertDoesNotThrow(() -> allFutures.get(10, TimeUnit.SECONDS), "Should handle many concurrent requests without timeout");
+	}
+
+	@Test
+	@DisplayName("Test resource cleanup after validation failure")
+	void testResourceCleanupAfterValidationFailure()
+	{
+		GoogleApiClient tempMockClient = mock(GoogleApiClient.class);
+		ToxicityValidator tempValidator = new ToxicityValidator(tempMockClient);
+
+		assertThrows(CompletionException.class,() -> tempValidator.getToxicityScoresAsync("").join());
+
+		verify(tempMockClient, times(0)).close();
+		tempValidator.close();
+		verify(tempMockClient, times(1)).close();
 	}
 }

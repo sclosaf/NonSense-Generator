@@ -40,10 +40,10 @@ import static com.google.cloud.language.v1.PartOfSpeech.Tense.FUTURE;
 
 public class CommandProcessor implements AutoCloseable
 {
-	private static SyntaxTreeBuilder treeBuilder;
-	private static SentenceAnalyzer analyzer;
-	private static ToxicityValidator validator;
-	private static SentenceGenerator generator;
+	private SyntaxTreeBuilder treeBuilder;
+	private SentenceAnalyzer analyzer;
+	private ToxicityValidator validator;
+	private SentenceGenerator generator;
 	private LoggerManager logger = new LoggerManager(CommandProcessor.class);
 
 	private String cachedString;
@@ -79,7 +79,7 @@ public class CommandProcessor implements AutoCloseable
 	{
 		logger.logTrace("generateFrom: Generating sentence from input");
 
-		if(str == null)
+		if(str == null || str.isEmpty())
 		{
 			logger.logError("generateFrom: Invalid text input - null");
 			throw new InvalidTextException();
@@ -121,9 +121,11 @@ public class CommandProcessor implements AutoCloseable
 		return result;
 	}
 
-
 	public String generateWithNumber(Number number)
 	{
+		if(number == null)
+			throw new InvalidNumberException();
+
 		logger.logTrace("generateWithNumber: Generating sentence with number");
 		String result = generator.generateSentenceWithNumber(number).getPattern();
 		cachedString = result;
@@ -134,6 +136,9 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateWithTense(Tense tense)
 	{
+		if(tense == null)
+			throw new InvalidTenseException();
+
 		logger.logTrace("generateWithTense: Generating sentence with tense");
 		String result = generator.generateSentenceWithTense(tense).getPattern();
 		cachedString = result;
@@ -144,6 +149,12 @@ public class CommandProcessor implements AutoCloseable
 
 	public String generateWithBoth(Number number, Tense tense)
 	{
+		if(number == null)
+			throw new InvalidNumberException();
+
+		if(tense == null)
+			throw new InvalidTenseException();
+
 		logger.logTrace("generateWithBoth: Generating sentence with number and tense");
 		String result = generator.generateSentenceWithTenseAndNumber(tense, number).getPattern();
 		cachedString = result;
