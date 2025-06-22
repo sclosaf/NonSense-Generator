@@ -35,13 +35,92 @@ import java.util.concurrent.locks.ReentrantReadWriteLock;
 import java.lang.IllegalStateException;
 import com.google.gson.JsonSyntaxException;
 
+/**
+ * A singleton handler for JSON file operations with thread-safe access control.
+ * <p>
+ * This class provides:
+ * <ul>
+ *	<li>Thread-safe read/write operations using {@code ReentrantReadWriteLock}</li>
+ *	<li>Validation of JSON file paths and accessibility</li>
+ *	<li>CRUD operations for JSON elements with proper error handling</li>
+ *	<li>Support for nested key access using dot notation</li>
+ *	<li>Pretty-printed JSON output</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Implements singleton pattern to ensure single point of access.</p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * JsonFileHandler handler = JsonFileHandler.getInstance();
+ * handler.appendItemToJson("data.json", "items", "newValue");
+ * List<String> items = handler.readListFromJson("data.json", "items");
+ * }</pre>
+ * </p>
+ *
+ * @see ReentrantReadWriteLock
+ * @see Gson
+ * @see JsonObject
+ */
 public class JsonFileHandler
 {
+	/**
+	 * Singleton instance of the handler.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Volatile for thread-safe initialization</li>
+	 *	<li>Final after initialization</li>
+	 *	<li>Instantiated during class loading</li>
+	 * </ul>
+	 * </p>
+	 */
 	private static volatile JsonFileHandler instance = new JsonFileHandler();
+
+	/**
+	 * Read-write lock for thread-safe operations.
+	 * <p>
+	 * Lock behavior:
+	 * <ul>
+	 *	<li>Fair ordering policy</li>
+	 *	<li>Shared for reads</li>
+	 *	<li>Exclusive for writes</li>
+	 * </ul>
+	 * </p>
+	 */
 	private static final ReentrantReadWriteLock lock = new ReentrantReadWriteLock(true);
+
+	/**
+	 * Logger instance for tracking operations.
+	 * <p>
+	 * Configured to log messages from {@code JsonFileHandler} class.
+	 * </p>
+	 */
 	private LoggerManager logger = new LoggerManager(JsonFileHandler.class);
+
+	/**
+	 * Gson instance for JSON processing.
+	 * <p>
+	 * Configuration:
+	 * <ul>
+	 *	<li>Pretty printing enabled</li>
+	 *	<li>Thread-safe</li>
+	 *	<li>Used for all serialization/deserialization</li>
+	 * </ul>
+	 * </p>
+	 */
 	private final Gson gson;
 
+	/**
+	 * Private constructor for singleton pattern.
+	 * <p>
+	 * Initializes:
+	 * <ul>
+	 *	<li>Logger instance</li>
+	 *	<li>Gson with pretty printing</li>
+	 * </ul>
+	 * </p>
+	 */
 	private JsonFileHandler()
 	{
 		logger.logTrace("Initializing JsonFileHandler");
@@ -49,11 +128,46 @@ public class JsonFileHandler
 		logger.logTrace("JsonFileHandler created successfully");
 	}
 
+	/**
+	 * Retrieves the singleton instance.
+	 * <p>
+	 * Guarantees:
+	 * <ul>
+	 *	<li>Thread-safe access</li>
+	 *	<li>Always returns same instance</li>
+	 *	<li>Non-blocking</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @return	The singleton {@code JsonFileHandler} instance
+	 */
 	public static JsonFileHandler getInstance()
 	{
 		return instance;
 	}
 
+	/**
+	 * Appends an item to a JSON array if not already present.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Acquires write lock</li>
+	 *	<li>Validates file path and permissions</li>
+	 *	<li>Checks for duplicate values</li>
+	 *	<li>Maintains JSON structure</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @param key		Dot-notation path to target array
+	 * @param str		Value to append
+	 * @throws IOException						if file operations fail
+	 * @throws NullJsonKeyException			if {@code key} is {@code null}
+	 * @throws InvalidJsonKeyException		if key doesn't exist
+	 * @throws JsonElementIsNotArrayException	if target is not an array
+	 * @throws InvalidFilePathException		if path is invalid
+	 * @throws UnwritableFileException		if file isn't writable
+	 */
 	public void appendItemToJson(String filePath, String key, String str) throws IOException, IllegalArgumentException
 	{
 		logger.logTrace("appendItemToJson: Attempting to append item to JSON");
@@ -110,6 +224,29 @@ public class JsonFileHandler
 		}
 	}
 
+	/**
+	 * Reads an item from a JSON array by index.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Acquires read lock</li>
+	 *	<li>Validates file existence</li>
+	 *	<li>Checks index bounds</li>
+	 *	<li>Verifies element type</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @param key		Dot-notation path to target array
+	 * @param index		Array index to read
+	 * @return			The string value at specified index
+	 * @throws IOException						if file operations fail
+	 * @throws NullJsonKeyException			if {@code key} is {@code null}
+	 * @throws InvalidJsonKeyException		if key doesn't exist
+	 * @throws JsonElementIsNotArrayException	if target is not an array
+	 * @throws InvalidJsonIndexException		if index is out of bounds
+	 * @throws JsonElementIsNotPrimitiveException	if element isn't primitive
+	 */
 	public String readItemFromJson(String filePath, String key, int index) throws IOException, IllegalArgumentException, IndexOutOfBoundsException
 	{
 		logger.logTrace("readItemFromJson: Attempting to read item from JSON");
@@ -177,6 +314,26 @@ public class JsonFileHandler
 		}
 	}
 
+	/**
+	 * Reads entire array from JSON as {@code List<String>}.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Acquires read lock</li>
+	 *	<li>Skips non-primitive elements</li>
+	 *	<li>Preserves order</li>
+	 *	<li>Returns empty list for empty array</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @param key		Dot-notation path to target array
+	 * @return			List of string values
+	 * @throws IOException						if file operations fail
+	 * @throws NullJsonKeyException			if {@code key} is {@code null}
+	 * @throws InvalidJsonKeyException		if key doesn't exist
+	 * @throws JsonElementIsNotArrayException	if target is not an array
+	 */
 	public List<String> readListFromJson(String filePath, String key) throws IOException, IllegalArgumentException
 	{
 		logger.logTrace("readListFromJson: Attempting to read list from JSON");
@@ -228,6 +385,23 @@ public class JsonFileHandler
 		}
 	}
 
+	/**
+	 * Checks if nested key exists in JSON structure.
+	 * <p>
+	 * Key features:
+	 * <ul>
+	 *	<li>Supports dot notation for nested keys</li>
+	 *	<li>Returns {@code false} for non-object intermediate nodes</li>
+	 *	<li>Read-locked operation</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @param key		Dot-notation path to check
+	 * @return			{@code true} if all path components exist
+	 * @throws IOException						if file operations fail
+	 * @throws NullJsonKeyException			if {@code key} is {@code null}
+	 */
 	public boolean hasJsonKey(String filePath, String key) throws IOException, IllegalArgumentException
 	{
 		logger.logTrace("hasJsonKey: Checking if JSON has key");
@@ -282,6 +456,22 @@ public class JsonFileHandler
 		}
 	}
 
+	/**
+	 * Retrieves entire JSON file as {@code JsonObject}.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Acquires read lock</li>
+	 *	<li>Validates JSON structure</li>
+	 *	<li>Returns deep copy</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @return			Root JSON object
+	 * @throws IOException					if file operations fail
+	 * @throws InvalidJsonStateException	if JSON is malformed
+	 */
 	public JsonObject getJsonObject(String filePath) throws IOException
 	{
 		logger.logTrace("getJsonObject: Retrieving JSON object from file");
@@ -305,6 +495,27 @@ public class JsonFileHandler
 		}
 	}
 
+	/**
+	 * Validates and normalizes JSON file path.
+	 * <p>
+	 * Validation includes:
+	 * <ul>
+	 *	<li>Null and empty checks</li>
+	 *	<li>File existence verification</li>
+	 *	<li>.json extension handling</li>
+	 *	<li>Read/write permission checks</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath		Raw file path
+	 * @param requiresWrite	Whether write permission is needed
+	 * @return				Normalized path with .json extension
+	 * @throws NullFilePathException		if path is {@code null}
+	 * @throws InvalidFilePathException	if path is empty
+	 * @throws InaccessibleFileException	if file doesn't exist
+	 * @throws UnreadableFileException	if file isn't readable
+	 * @throws UnwritableFileException	if write required but not permitted
+	 */
 	private String validateFile(String filePath, boolean requiresWrite) throws IOException, IllegalArgumentException
 	{
 		logger.logTrace("validateFile: Validating file");
@@ -351,6 +562,22 @@ public class JsonFileHandler
 		return filePath;
 	}
 
+	/**
+	 * Reads and parses JSON file into {@code JsonObject}.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Uses UTF-8 encoding</li>
+	 *	<li>Validates JSON syntax</li>
+	 *	<li>Ensures root is object</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @return			Parsed JSON object
+	 * @throws IOException					if file operations fail
+	 * @throws InvalidJsonStateException	if JSON is malformed
+	 */
 	private JsonObject readJsonObject(String filePath) throws IOException
 	{
 		logger.logTrace("readJsonObject: Reading JSON object from file");
@@ -368,6 +595,23 @@ public class JsonFileHandler
 			throw new InvalidJsonStateException();
 		}
 	}
+
+	/**
+	 * Writes {@code JsonObject} to file with pretty printing.
+	 * <p>
+	 * Operation details:
+	 * <ul>
+	 *	<li>Overwrites existing content</li>
+	 *	<li>Uses UTF-8 encoding</li>
+	 *	<li>Maintains pretty formatting</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param filePath	Path to JSON file
+	 * @param json		Object to write
+	 * @throws IOException					if file operations fail
+	 * @throws InvalidJsonStateException	if JSON is malformed
+	 */
 
 	private void writeJsonObject(String filePath, JsonObject json) throws IOException
 	{

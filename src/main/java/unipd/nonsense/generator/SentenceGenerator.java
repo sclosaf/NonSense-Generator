@@ -25,15 +25,109 @@ import java.util.ArrayList;
 
 import java.io.IOException;
 
+/**
+ * A generator for creating random sentences based on templates and word categories.
+ * <p>
+ * This class combines nouns, verbs, adjectives and templates to generate grammatically correct sentences.
+ * It implements {@code AutoCloseable} for proper resource cleanup of its component generators.
+ * </p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * try(SentenceGenerator generator = new SentenceGenerator())
+ * {
+ *     Template sentence = generator.generateRandomSentence();
+ *     System.out.println(sentence.getPattern());
+ *
+ *     Template futureSentence = generator.generateSentenceWithTense(Tense.FUTURE);
+ * }
+ * catch(IOException e)
+ * {
+ *     // Handle exception
+ * }
+ * }</pre>
+ * </p>
+ *
+ * @see RandomNounGenerator
+ * @see RandomVerbGenerator
+ * @see RandomAdjectiveGenerator
+ * @see RandomTemplateGenerator
+ * @see Template
+ */
 public class SentenceGenerator implements AutoCloseable
 {
+	/**
+	 * Generator for random nouns.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Initialized during construction</li>
+	 *	<li>Used for noun placeholder replacement</li>
+	 *	<li>Must be cleaned up when no longer needed</li>
+	 * </ul>
+	 */
 	private final RandomNounGenerator nounGenerator;
+
+	/**
+	 * Generator for random adjectives.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Initialized during construction</li>
+	 *	<li>Used for adjective placeholder replacement</li>
+	 *	<li>Must be cleaned up when no longer needed</li>
+	 * </ul>
+	 */
 	private final RandomAdjectiveGenerator adjectiveGenerator;
+
+	/**
+	 * Generator for random verbs.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Initialized during construction</li>
+	 *	<li>Used for verb placeholder replacement</li>
+	 *	<li>Must be cleaned up when no longer needed</li>
+	 * </ul>
+	 */
 	private final RandomVerbGenerator verbGenerator;
+
+	/**
+	 * Generator for random sentence templates.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Initialized during construction</li>
+	 *	<li>Provides the sentence structure</li>
+	 *	<li>Must be cleaned up when no longer needed</li>
+	 * </ul>
+	 */
 	private final RandomTemplateGenerator templateGenerator;
+
+	/**
+	 * Logger instance for operation tracking.
+	 * <p>
+	 * Configured to log messages from {@code SentenceGenerator} class.
+	 */
 	private final LoggerManager logger = new LoggerManager(SentenceGenerator.class);
+
+	/**
+	 * Random number generator instance.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Static for consistent randomness across instances</li>
+	 *	<li>Thread-safe for concurrent access</li>
+	 *	<li>Used for random selections throughout the class</li>
+	 * </ul>
+	 */
 	private static final Random random = new Random();
 
+	/**
+	 * Constructs a sentence generator with default component generators.
+	 *
+	 * @throws IOException	if any of the component generators fail to initialize
+	 */
 	public SentenceGenerator() throws IOException
 	{
 		logger.logTrace("Starting initialization");
@@ -56,6 +150,19 @@ public class SentenceGenerator implements AutoCloseable
 		}
 	}
 
+	/**
+	 * Generates a completely random sentence with random tense and number.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Selects random grammatical number</li>
+	 *	<li>Selects random tense</li>
+	 *	<li>Generates sentence matching these parameters</li>
+	 *	<li>Capitalizes the first letter of the result</li>
+	 * </ul>
+	 *
+	 * @return			A {@code Template} containing the generated sentence
+	 */
 	public Template generateRandomSentence()
 	{
 		logger.logTrace("generateRandomSentence: Starting sentence generation");
@@ -70,6 +177,19 @@ public class SentenceGenerator implements AutoCloseable
 		return new Template(capitalizeFirstLetter(result.getPattern()),result.getNumber());
 	}
 
+	/**
+	 * Capitalizes the first letter of a string.
+	 * <p>
+	 * Handles edge cases:
+	 * <ul>
+	 *	<li>Null input returns null</li>
+	 *	<li>Empty string returns empty string</li>
+	 *	<li>Single character strings are capitalized</li>
+	 * </ul>
+	 *
+	 * @param sentence	The string to capitalize
+	 * @return			The capitalized string or original if null/empty
+	 */
 	private String capitalizeFirstLetter(String sentence)
 	{
 		if(sentence == null || sentence.isEmpty())
@@ -78,6 +198,23 @@ public class SentenceGenerator implements AutoCloseable
 		return sentence.substring(0, 1).toUpperCase() + sentence.substring(1);
 	}
 
+	/**
+	 * Generates a sentence using custom lists of words.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Uses provided words before falling back to random generation</li>
+	 *	<li>Determines template based on first noun's number if available</li>
+	 *	<li>Updates JSON data with provided words</li>
+	 *	<li>Replaces placeholders in template</li>
+	 * </ul>
+	 *
+	 * @param nounList			List of nouns to use (can be null)
+	 * @param adjectiveList		List of adjectives to use (can be null)
+	 * @param verbList			List of verbs to use (can be null)
+	 * @return					A {@code Template} containing the generated sentence
+	 * @throws IOException		if updating JSON data fails
+	 */
 	public Template generateSentenceWith(List<Noun> nounList, List<Adjective> adjectiveList, List<Verb> verbList) throws IOException
 	{
 		logger.logTrace("generateSentenceWith: Starting custom sentence generation");
@@ -111,6 +248,22 @@ public class SentenceGenerator implements AutoCloseable
 		return template;
 	}
 
+	/**
+	 * Loads custom words into the JSON updater system.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Adds nouns to noun dictionary</li>
+	 *	<li>Adds adjectives to adjective dictionary</li>
+	 *	<li>Adds verbs to verb dictionary</li>
+	 *	<li>Preserves existing words</li>
+	 * </ul>
+	 *
+	 * @param nouns			List of nouns to add
+	 * @param adjectives	List of adjectives to add
+	 * @param verbs			List of verbs to add
+	 * @throws IOException	if JSON update fails
+	 */
 	private void loadWordsIntoJsonUpdater(List<Noun> nouns, List<Adjective> adjectives, List<Verb> verbs) throws IOException
 	{
 		logger.logTrace("loadWordsIntoJsonUpdater: Starting to load words");
@@ -136,6 +289,22 @@ public class SentenceGenerator implements AutoCloseable
 		logger.logTrace("loadWordsIntoJsonUpdater: Completed loading words");
 	}
 
+	/**
+	 * Replaces all placeholders in a template with words.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Handles noun placeholders first</li>
+	 *	<li>Then handles adjective placeholders</li>
+	 *	<li>Finally handles verb placeholders</li>
+	 *	<li>Uses custom words when available</li>
+	 * </ul>
+	 *
+	 * @param template		The template to modify
+	 * @param nouns			List of nouns for replacement
+	 * @param adjectives	List of adjectives for replacement
+	 * @param verbs			List of verbs for replacement
+	 */
 	private void replacePlaceholders(Template template, List<Noun> nouns, List<Adjective> adjectives, List<Verb> verbs)
 	{
 		logger.logTrace("replacePlaceholders: Starting placeholder replacement");
@@ -147,6 +316,20 @@ public class SentenceGenerator implements AutoCloseable
 		logger.logTrace("replacePlaceholders: Completed placeholder replacement");
 	}
 
+	/**
+	 * Replaces noun placeholders in a template.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Uses custom nouns first</li>
+	 *	<li>Falls back to random generation</li>
+	 *	<li>Maintains template's grammatical number</li>
+	 *	<li>Processes all noun placeholders</li>
+	 * </ul>
+	 *
+	 * @param template	The template to modify
+	 * @param nouns		List of nouns for replacement
+	 */
 	private void replaceNounPlaceholders(Template template, List<Noun> nouns)
 	{
 		logger.logTrace("replaceNounPlaceholders: Starting noun replacement");
@@ -161,6 +344,19 @@ public class SentenceGenerator implements AutoCloseable
 		logger.logTrace("replaceNounPlaceholders: Completed noun replacement");
 	}
 
+	/**
+	 * Replaces adjective placeholders in a template.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Uses custom adjectives first</li>
+	 *	<li>Falls back to random generation</li>
+	 *	<li>Processes all adjective placeholders</li>
+	 * </ul>
+	 *
+	 * @param template		The template to modify
+	 * @param adjectives	List of adjectives for replacement
+	 */
 	private void replaceAdjectivePlaceholders(Template template, List<Adjective> adjectives)
 	{
 		logger.logTrace("replaceAdjectivePlaceholders: Starting adjective replacement");
@@ -174,6 +370,21 @@ public class SentenceGenerator implements AutoCloseable
 		logger.logTrace("replaceAdjectivePlaceholders: Completed adjective replacement");
 	}
 
+	/**
+	 * Replaces verb placeholders in a template.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Uses custom verbs first</li>
+	 *	<li>Falls back to random generation</li>
+	 *	<li>Uses random tense for all verbs</li>
+	 *	<li>Maintains template's grammatical number</li>
+	 *	<li>Processes all verb placeholders</li>
+	 * </ul>
+	 *
+	 * @param template	The template to modify
+	 * @param verbs		List of verbs for replacement
+	 */
 	private void replaceVerbPlaceholders(Template template, List<Verb> verbs)
 	{
 		logger.logTrace("replaceVerbPlaceholders: Starting verb replacement");
@@ -189,6 +400,19 @@ public class SentenceGenerator implements AutoCloseable
 		logger.logTrace("replaceVerbPlaceholders: Completed verb replacement");
 	}
 
+	/**
+	 * Generates a sentence with specified tense and random number.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Selects random grammatical number</li>
+	 *	<li>Uses specified tense for all verbs</li>
+	 *	<li>Generates matching sentence structure</li>
+	 * </ul>
+	 *
+	 * @param tense		The tense to use for verbs
+	 * @return			A {@code Template} containing the generated sentence
+	 */
 	public Template generateSentenceWithTense(Tense tense)
 	{
 		logger.logDebug("generateSentenceWithTense: Starting generation with tense: " + tense);
@@ -197,6 +421,19 @@ public class SentenceGenerator implements AutoCloseable
 		return result;
 	}
 
+	/**
+	 * Generates a sentence with specified number and random tense.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Uses specified grammatical number</li>
+	 *	<li>Selects random tense for verbs</li>
+	 *	<li>Generates matching sentence structure</li>
+	 * </ul>
+	 *
+	 * @param number	The grammatical number to use
+	 * @return			A {@code Template} containing the generated sentence
+	 */
 	public Template generateSentenceWithNumber(Number number)
 	{
 		logger.logDebug("generateSentenceWithNumber: Starting generation with number: " + number);
@@ -205,6 +442,21 @@ public class SentenceGenerator implements AutoCloseable
 		return result;
 	}
 
+	/**
+	 * Generates a sentence with specified tense and number.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Gets template matching specified number</li>
+	 *	<li>Replaces all placeholders with matching words</li>
+	 *	<li>Uses specified tense for verbs</li>
+	 *	<li>Maintains grammatical consistency</li>
+	 * </ul>
+	 *
+	 * @param tense		The tense to use for verbs
+	 * @param number	The grammatical number to use
+	 * @return			A {@code Template} containing the generated sentence
+	 */
 	public Template generateSentenceWithTenseAndNumber(Tense tense, Number number)
 	{
 		logger.logDebug("generateSentenceWithTenseAndNumber: Starting generation with tense: " + tense + ", number: " + number);
@@ -235,11 +487,26 @@ public class SentenceGenerator implements AutoCloseable
 		return template;
 	}
 
+	/**
+	 * Generates a sentence from an existing template.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Validates template structure</li>
+	 *	<li>Replaces all placeholders with random words</li>
+	 *	<li>Maintains template's grammatical number</li>
+	 *	<li>Uses random tenses for verbs</li>
+	 * </ul>
+	 *
+	 * @param template	The template to populate
+	 * @return			The populated template
+	 * @throws InvalidTemplateException	if template is null or empty
+	 */
 	public Template generateSentenceFromTemplate(Template template)
 	{
 		logger.logTrace("generateSentenceFromTemplate: Starting generation from template");
 
-		if(template == null || template.getPattern() == null || template.getPattern().isEmpty())
+		if(template == null || template.getPattern().isEmpty())
 		{
 			logger.logError("generateSentenceFromTemplate: Invalid template provided");
 			throw new InvalidTemplateException();
@@ -270,6 +537,18 @@ public class SentenceGenerator implements AutoCloseable
 		return template;
 	}
 
+	/**
+	 * Gets a list of 5 random templates.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Selects templates randomly</li>
+	 *	<li>Returns unpopulated templates</li>
+	 *	<li>Maintains original template structure</li>
+	 * </ul>
+	 *
+	 * @return	List of 5 random {@code Template} objects
+	 */
 	public List<Template> getRandomTemplates()
 	{
 		logger.logTrace("getRandomTemplates: Starting to get random templates");
@@ -287,6 +566,17 @@ public class SentenceGenerator implements AutoCloseable
 		return templateList;
 	}
 
+	/**
+	 * Gets a random grammatical number.
+	 * <p>
+	 * Selection:
+	 * <ul>
+	 *	<li>Uniform distribution between options</li>
+	 *	<li>Logs the selection</li>
+	 * </ul>
+	 *
+	 * @return	A randomly selected {@code Number}
+	 */
 	private Number getRandomNumber()
 	{
 		logger.logTrace("getRandomNumber: Getting random number");
@@ -297,6 +587,17 @@ public class SentenceGenerator implements AutoCloseable
 		return randomNumber;
 	}
 
+	/**
+	 * Gets a random verb tense.
+	 * <p>
+	 * Selection:
+	 * <ul>
+	 *	<li>Uniform distribution between options</li>
+	 *	<li>Logs the selection</li>
+	 * </ul>
+	 *
+	 * @return	A randomly selected {@code Tense}
+	 */
 	private Tense getRandomTense()
 	{
 		logger.logTrace("getRandomTense: Getting random tense");
@@ -307,6 +608,16 @@ public class SentenceGenerator implements AutoCloseable
 		return randomTense;
 	}
 
+	/**
+	 * Performs resource cleanup.
+	 * <p>
+	 * Implementation of {@code AutoCloseable} that:
+	 * <ul>
+	 *	<li>Cleans up all component generators</li>
+	 *	<li>Should be called when generator is no longer needed</li>
+	 *	<li>Prevents resource leaks</li>
+	 * </ul>
+	 */
 	@Override
 	public void close()
 	{

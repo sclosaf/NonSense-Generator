@@ -46,29 +46,134 @@ import org.jline.utils.InfoCmp;
 
 import java.net.InetAddress;
 
+/**
+ * A command-line interface for generating and analyzing nonsense sentences.
+ * <p>
+ * This class provides an interactive terminal interface with the following features:
+ * <ul>
+ *	<li>Sentence generation with customizable parameters</li>
+ *	<li>Multiple analysis options (syntax, sentiment, toxicity, entities)</li>
+ *	<li>Dictionary extension capabilities</li>
+ *	<li>Syntax tree visualization</li>
+ *	<li>Configuration options (tolerance, verbosity)</li>
+ * </ul>
+ * The interface supports:
+ * <ul>
+ *	<li>Command completion</li>
+ *	<li>Syntax highlighting</li>
+ *	<li>Command history</li>
+ *	<li>Color-coded output</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * CLI cli = new CLI();
+ * while(cli.inputCatcher())
+ * {
+ *     // Continue processing commands
+ * }
+ * }</pre>
+ * </p>
+ *
+ * @see CommandProcessor
+ */
 public class CLI
 {
+	/**
+	 * Enumeration of available commands.
+	 * <p>
+	 * Each command has:
+	 * <ul>
+	 *	<li>A primary name</li>
+	 *	<li>Optional aliases</li>
+	 *	<li>Associated handler method</li>
+	 * </ul>
+	 */
 	public static enum Command
 	{
-		DEFAULT, PERSONALIZED, GENERATE, ANALYZE, TREE, EXTEND, SETTOLERANCE, INFO, VERBOSE, HELP, CLEAR, QUIT
+		/** Default processing pipeline */		DEFAULT,
+		/** Personalized processing pipeline */	PERSONALIZED,
+		/** Sentence generation */				GENERATE,
+		/** Sentence analysis */				ANALYZE,
+		/** Syntax tree generation */			TREE,
+		/** Dictionary extension */				EXTEND,
+		/** Toxicity tolerance setting */		SETTOLERANCE,
+		/** Extended help */					INFO,
+		/** Verbosity toggle */					VERBOSE,
+		/** Basic help */						HELP,
+		/** Terminal clearing */				CLEAR,
+		/** Program exit */						QUIT
 	}
 
+	/**
+	 * Enumeration of generation options.
+	 * <p>
+	 * Controls how sentence generation parameters are selected:
+	 * <ul>
+	 *	<li>Random selection</li>
+	 *	<li>User-specified number</li>
+	 *	<li>User-specified tense</li>
+	 *	<li>Both number and tense specified</li>
+	 * </ul>
+	 */
 	public static enum GenerateOptions
 	{
-		RANDOM, NUMBER, TENSE, BOTH
+		/** Fully random generation */	RANDOM,
+		/** Specify number only */		NUMBER,
+		/** Specify tense only */		TENSE,
+		/** Specify both parameters */	BOTH
 	}
 
+	/**
+	 * Enumeration of analysis options.
+	 * <p>
+	 * Determines which analysis types are performed:
+	 * <ul>
+	 *	<li>Single random analysis</li>
+	 *	<li>All available analyses</li>
+	 *	<li>Specific analysis types</li>
+	 *	<li>Custom combinations</li>
+	 * </ul>
+	 */
 	public static enum AnalyzeOptions
 	{
-		RANDOM, ALL, SYNTAX, SENTIMENT, TOXICITY, ENTITY, COMBINED
+		/** Random single analysis */	RANDOM,
+		/** All analyses */				ALL,
+		/** Syntax analysis */			SYNTAX,
+		/** Sentiment analysis */		SENTIMENT,
+		/** Toxicity analysis */		TOXICITY,
+		/** Entity analysis */			ENTITY,
+		/** Custom combination */		COMBINED
 	}
 
+	/**
+	 * Represents a command option with metadata.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Main command name</li>
+	 *	<li>Description for help text</li>
+	 *	<li>Shortcut alias</li>
+	 *	<li>Input matching capability</li>
+	 * </ul>
+	 */
 	public static class Option
 	{
+		/** The canonical command name */
 		private final String mainCommand;
+		/** Detailed description of the option */
 		private final String description;
+		/** Shortcut alias for the command */
 		private final String alias;
 
+		/**
+		 * Constructs a new command option.
+		 *
+		 * @param mainCommand	The primary command name
+		 * @param description	Detailed description of the option
+		 * @param alias		Shortcut alias for the command
+		 */
 		public Option(String mainCommand, String description, String alias)
 		{
 			this.mainCommand = mainCommand;
@@ -76,21 +181,48 @@ public class CLI
 			this.alias = alias;
 		}
 
+		/**
+		 * Gets the primary command name.
+		 *
+		 * @return	The main command string
+		 */
 		public String getMainCommand()
 		{
 			return mainCommand;
 		}
 
+		/**
+		 * Gets the option description.
+		 *
+		 * @return	The description text
+		 */
 		public String getDescription()
 		{
 			return description;
 		}
 
+		/**
+		 * Gets the command alias.
+		 *
+		 * @return	The shortcut alias
+		 */
 		public String getAlias()
 		{
 			return alias;
 		}
 
+		/**
+		 * Checks if input matches this option.
+		 * <p>
+		 * Comparison is case-insensitive and matches against:
+		 * <ul>
+		 *	<li>Main command name</li>
+		 *	<li>Alias</li>
+		 * </ul>
+		 *
+		 * @param input	The user input to check
+		 * @return		{@code true} if input matches this option
+		 */
 		public boolean matches(String input)
 		{
 			if(input == null || input.trim().isEmpty())
@@ -99,26 +231,50 @@ public class CLI
 			return mainCommand.equals(input.toLowerCase()) || alias.equals(input.toLowerCase());
 		}
 
+		/**
+		 * Gets a formatted display name.
+		 * <p>
+		 * Formatting:
+		 * <ul>
+		 *	<li>First letter capitalized</li>
+		 *	<li>Rest in lowercase</li>
+		 * </ul>
+		 *
+		 * @return	Formatted display name
+		 */
 		public String getDisplayName()
 		{
 			return mainCommand.substring(0, 1).toUpperCase() + mainCommand.substring(1).toLowerCase();
 		}
 	}
 
+	/** ANSI color code for standard red */
 	private static final AttributedStyle RED_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.RED);
+	/** ANSI color code for standard blue */
 	private static final AttributedStyle BLUE_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.BLUE);
+	/** ANSI color code for standard green */
 	private static final AttributedStyle GREEN_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.GREEN);
+	/** ANSI color code for standard yellow */
 	private static final AttributedStyle YELLOW_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.YELLOW);
+	/** ANSI color code for standard magenta */
 	private static final AttributedStyle MAGENTA_STYLE = AttributedStyle.DEFAULT.foreground(AttributedStyle.MAGENTA);
+	/** ANSI color code for standard white */
 	private static final AttributedStyle WHITE_STYLE = AttributedStyle.DEFAULT;
 
+	/** ANSI color code for bold red */
 	private static final AttributedStyle BOLD_RED_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.RED);
+	/** ANSI color code for bold blue */
 	private static final AttributedStyle BOLD_BLUE_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.BLUE);
+	/** ANSI color code for bold green */
 	private static final AttributedStyle BOLD_GREEN_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.GREEN);
+	/** ANSI color code for bold yellow */
 	private static final AttributedStyle BOLD_YELLOW_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.YELLOW);
+	/** ANSI color code for bold magenta */
 	private static final AttributedStyle BOLD_MAGENTA_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.MAGENTA);
+	/** ANSI color code for bold white */
 	private static final AttributedStyle BOLD_WHITE_STYLE = AttributedStyle.DEFAULT.bold().foreground(AttributedStyle.WHITE);
 
+	/** Options list for input modes */
 	private static final List<Option> INPUT_MODE_OPTIONS = Arrays.asList
 		(
 			new Option("generate", "Generate a random sentence", "g"),
@@ -127,6 +283,7 @@ public class CLI
 			new Option("choose", "Choose among 5 given templates", "ch")
 	);
 
+	/** Options list for grammatical elements */
 	private static final List<Option> ELEMENT_OPTIONS = Arrays.asList
 		(
 			new Option("noun", "Enter a noun", "n"),
@@ -134,6 +291,7 @@ public class CLI
 			new Option("verb", "Enter a verb", "v")
 		);
 
+	/** Options list for generation modes */
 	private static final List<Option> GENERATION_MODE_OPTIONS = Arrays.asList
 		(
 			new Option("random", "Number and tense used in the generated sentence are selected randomly", "r"),
@@ -142,6 +300,7 @@ public class CLI
 			new Option("both", "User can choose both the tense and the number", "b")
 		);
 
+	/** Options list for analyze modes */
 	private static final List<Option> ANALYZE_MODE_OPTIONS = Arrays.asList
 		(
 			new Option("random", "Performs one random option", "r"),
@@ -153,6 +312,7 @@ public class CLI
 			new Option("combined", "Allows to choose a combination of options", "c")
 		);
 
+	/** Options list for combined analyze modes */
 	private static final List<Option> COMBINED_ANALYZE_MODE_OPTIONS = Arrays.asList
 		(
 			new Option("syntax", "Performs syntactic analysis", "sy"),
@@ -161,12 +321,14 @@ public class CLI
 			new Option("entity", "Performs entity analysis", "e")
 		);
 
+	/** Options list for numbers */
 	private static final List<Option> NUMBER_OPTIONS = Arrays.asList
 		(
 			new Option("singular", "Use singular nouns", "s"),
 			new Option("plural", "Use plural nouns", "p")
 		);
 
+	/** Options list for tenses */
 	private static final List<Option> TENSE_OPTIONS = Arrays.asList
 		(
 			new Option("past", "Use simple past tense", "pa"),
@@ -174,26 +336,56 @@ public class CLI
 			new Option("future", "Use will future tense", "f")
 		);
 
+	/** Commands mapping for user input */
 	private final Map<String, Command> commands = new HashMap<>();
+	/** Commands mapping for generation */
 	private final Map<String, GenerateOptions> generateOptions = new HashMap<>();
+	/** Commands mapping for analysis */
 	private final Map<String, AnalyzeOptions> analyzeOptions = new HashMap<>();
 
+	/** Maximum command history size */
 	private static final int HISTORY_SIZE = 10;
+	/** Maximum input attempts before cancellation */
 	private static final int MAX_ATTEMPTS = 4;
+	/** Maximum terminal width for formatting */
 	private static final int MAX_WIDTH = 106;
 
+	/** Program running state flag */
 	private boolean running;
+	/** Initial output cached for screen clearing */
 	private final String initialOutput;
 
+	/** Logger instance for this class */
 	private final LoggerManager logger = new LoggerManager(CLI.class);
+	/** Command processor for processing input commands */
 	private final CommandProcessor processor;
+	/** Terminal interface instance */
 	private final Terminal terminal;
 
+	/** Command reader with completion/highlighting */
 	private LineReader commandReader;
+	/** Basic line reader for general input */
 	private LineReader plainReader;
 
+	/**
+	 * Custom highlighter for command input.
+	 * <p>
+	 * Features:
+	 * <ul>
+	 *	<li>Valid commands highlighted in green</li>
+	 *	<li>Invalid commands highlighted in red</li>
+	 *	<li>Empty input in default color</li>
+	 * </ul>
+	 */
 	private class CommandHighlighter implements Highlighter
 	{
+		/**
+		 * Highlights input based on validity.
+		 *
+		 * @param reader	The line reader instance
+		 * @param buffer	The input buffer
+		 * @return		Attributed string with appropriate styling
+		 */
 		@Override
 		public AttributedString highlight(LineReader reader, String buffer)
 		{
@@ -220,6 +412,19 @@ public class CLI
 		{}
 	}
 
+	/**
+	 * Constructs and initializes the CLI environment.
+	 * <p>
+	 * Initialization sequence:
+	 * <ul>
+	 *	<li>Terminal setup</li>
+	 *	<li>Command mappings configuration</li>
+	 *	<li>Internet connectivity verification</li>
+	 *	<li>Welcome message display</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if terminal initialization fails
+	 */
 	public CLI() throws IOException
 	{
 		logger.logTrace("Initializing CLI");
@@ -337,6 +542,19 @@ public class CLI
 		}
 	}
 
+	/**
+	 * Displays the welcome message and ASCII art.
+	 * <p>
+	 * Layout:
+	 * <ul>
+	 *	<li>Top border with centered title</li>
+	 *	<li>ASCII art from resource file</li>
+	 *	<li>Bottom border</li>
+	 * </ul>
+	 *
+	 * @param writer	The output writer to use
+	 * @throws IOException	if ASCII art file cannot be read
+	 */
 	private synchronized void welcome(PrintWriter writer) throws IOException
 	{
 		logger.logTrace("welcome: Starting welcome message display");
@@ -389,6 +607,19 @@ public class CLI
 		logger.logTrace("welcome: ASCII art printed");
 	}
 
+	/**
+	 * Main command processing loop.
+	 * <p>
+	 * Operation flow:
+	 * <ul>
+	 *	<li>Displays command prompt</li>
+	 *	<li>Validates user input</li>
+	 *	<li>Handles interrupt signals</li>
+	 *	<li>Routes valid commands</li>
+	 * </ul>
+	 *
+	 * @return	{@code true} while program should continue running
+	 */
 	public synchronized boolean inputCatcher()
 	{
 		logger.logTrace("inputCatcher: Starting command input capture");
@@ -433,6 +664,20 @@ public class CLI
 		return running;
 	}
 
+	/**
+	 * Executes the specified command.
+	 * <p>
+	 * Command routing:
+	 * <ul>
+	 *	<li>Maps input to command enum</li>
+	 *	<li>Invokes corresponding handler</li>
+	 *	<li>Processes special commands</li>
+	 *	<li>Manages command separation</li>
+	 * </ul>
+	 *
+	 * @param cmd	The command string to execute
+	 * @throws IOException	if command processing fails
+	 */
 	private synchronized void commandExecuter(String cmd) throws IOException
 	{
 		logger.logTrace("commandExecuter: Starting command execution");
@@ -472,6 +717,19 @@ public class CLI
 		logger.logDebug("commandExecuter: Completed successfully for command: " + cmd);
 	}
 
+	/**
+	 * Handles the default processing pipeline.
+	 * <p>
+	 * Standard workflow:
+	 * <ul>
+	 *	<li>Optional user sentence input</li>
+	 *	<li>Automatic generation if no input</li>
+	 *	<li>Core linguistic analyses</li>
+	 *	<li>Syntax tree generation</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if analysis fails
+	 */
 	private synchronized void defaultHandler() throws IOException
 	{
 		logger.logTrace("defaultHandler: Starting default procedure");
@@ -537,6 +795,19 @@ public class CLI
 		logger.logTrace("defaultHandler: Completed default procedure successfully");
 	}
 
+	/**
+	 * Handles personalized processing pipeline.
+	 * <p>
+	 * Custom workflow:
+	 * <ul>
+	 *	<li>Dictionary extension</li>
+	 *	<li>Flexible sentence sourcing</li>
+	 *	<li>Custom analysis selection</li>
+	 *	<li>Syntax tree generation</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if processing fails
+	 */
 	private synchronized void personalizedHandler() throws IOException
 	{
 		logger.logTrace("personalizedHandler: Starting personalized procedure");
@@ -581,6 +852,19 @@ public class CLI
 		logger.logTrace("personalizedHandler: Completed personalized procedure successfully");
 	}
 
+	/**
+	 * Manages sentence generation process.
+	 * <p>
+	 * Generation options:
+	 * <ul>
+	 *	<li>Fully random generation</li>
+	 *	<li>Number-specified generation</li>
+	 *	<li>Tense-specified generation</li>
+	 *	<li>Fully-specified generation</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if generation fails
+	 */
 	private synchronized void generateHandler() throws IOException
 	{
 		logger.logTrace("generateHandler: Starting sentence generation procedure");
@@ -607,6 +891,17 @@ public class CLI
 		logger.logTrace("generateHandler: Completed sentence generation procedure successfully");
 	}
 
+	/**
+	 * Generates completely random sentence.
+	 * <p>
+	 * Characteristics:
+	 * <ul>
+	 *	<li>Random grammatical number</li>
+	 *	<li>Random verb tense</li>
+	 *	<li>Random lexical items</li>
+	 *	<li>Grammatically correct structure</li>
+	 * </ul>
+	 */
 	private synchronized void generateRandom()
 	{
 		logger.logTrace("generateRandom: Starting random sentence generation");
@@ -621,6 +916,19 @@ public class CLI
 		logger.logTrace("generateRandom: Completed random sentence generation successfully");
 	}
 
+	/**
+	 * Generates sentence with specified number.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Prompts for number selection</li>
+	 *	<li>Validates user input</li>
+	 *	<li>Generates with fixed number</li>
+	 *	<li>Uses random tense</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if input validation fails
+	 */
 	private synchronized void generateNumber() throws IOException
 	{
 		logger.logTrace("generateNumber: Starting sentence generation with specific number");
@@ -663,6 +971,19 @@ public class CLI
 		logger.logTrace("generateNumber: Completed sentence generation successfully");
 	}
 
+	/**
+	 * Generates sentence with specified tense.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Prompts for tense selection</li>
+	 *	<li>Validates user input</li>
+	 *	<li>Generates with fixed tense</li>
+	 *	<li>Uses random number</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if input validation fails
+	 */
 	private synchronized void generateTense() throws IOException
 	{
 		logger.logTrace("generateTense: Starting sentence generation with specific tense");
@@ -717,6 +1038,19 @@ public class CLI
 		logger.logTrace("generateTense: Completed sentence generation successfully");
 	}
 
+	/**
+	 * Generates sentence with specified parameters.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Prompts for number selection</li>
+	 *	<li>Prompts for tense selection</li>
+	 *	<li>Validates all inputs</li>
+	 *	<li>Generates with fixed parameters</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if input validation fails
+	 */
 	private synchronized void generateBoth() throws IOException
 	{
 		logger.logTrace("generateBoth: Starting sentence generation with specific number and tense");
@@ -789,6 +1123,19 @@ public class CLI
 		logger.logTrace("generateBoth: Completed sentence generation successfully");
 	}
 
+	/**
+	 * Manages sentence analysis process.
+	 * <p>
+	 * Analysis options:
+	 * <ul>
+	 *	<li>Random single analysis</li>
+	 *	<li>Complete analysis suite</li>
+	 *	<li>Specific analysis type</li>
+	 *	<li>Custom analysis combination</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if analysis fails
+	 */
 	private synchronized void analyzeHandler() throws IOException
 	{
 		logger.logTrace("analyzeHandler: Starting sentence analysis procedure");
@@ -947,6 +1294,18 @@ public class CLI
 		logger.logTrace("analyzeHandler: Completed sentence analysis procedure successfully");
 	}
 
+	/**
+	 * Performs random single analysis.
+	 * <p>
+	 * Selection:
+	 * <ul>
+	 *	<li>Randomly selects analysis type</li>
+	 *	<li>Executes selected analysis</li>
+	 *	<li>Supports all core analysis types</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeRandom(String input)
 	{
 		logger.logTrace("analyzeRandom: Starting random analysis procedure");
@@ -973,6 +1332,19 @@ public class CLI
 		logger.logTrace("analyzeRandom: Completed random analysis procedure successfully");
 	}
 
+	/**
+	 * Performs complete linguistic analysis.
+	 * <p>
+	 * Analysis sequence:
+	 * <ul>
+	 *	<li>Syntactic analysis</li>
+	 *	<li>Sentiment analysis</li>
+	 *	<li>Toxicity analysis</li>
+	 *	<li>Entity analysis</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeAll(String input)
 	{
 		logger.logTrace("analyzeAll: Starting complete analysis procedure");
@@ -999,6 +1371,18 @@ public class CLI
 		logger.logTrace("analyzeAll: Completed complete analysis procedure successfully");
 	}
 
+	/**
+	 * Performs syntactic analysis.
+	 * <p>
+	 * Output includes:
+	 * <ul>
+	 *	<li>Part-of-speech tagging</li>
+	 *	<li>Grammatical relationships</li>
+	 *	<li>Sentence structure</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeSyntax(String input)
 	{
 		logger.logTrace("analyzeSyntax: Starting syntax analysis procedure");
@@ -1015,6 +1399,18 @@ public class CLI
 		logger.logTrace("analyzeSyntax: Completed syntax analysis procedure successfully");
 	}
 
+	/**
+	 * Performs sentiment analysis.
+	 * <p>
+	 * Output includes:
+	 * <ul>
+	 *	<li>Sentiment polarity</li>
+	 *	<li>Emotional tone</li>
+	 *	<li>Confidence scores</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeSentiment(String input)
 	{
 		logger.logTrace("analyzeSentiment: Starting sentiment analysis procedure");
@@ -1031,6 +1427,18 @@ public class CLI
 		logger.logTrace("analyzeSentiment: Completed sentiment analysis procedure successfully");
 	}
 
+	/**
+	 * Performs toxicity analysis.
+	 * <p>
+	 * Output includes:
+	 * <ul>
+	 *	<li>Toxicity probability</li>
+	 *	<li>Threshold comparison</li>
+	 *	<li>Detailed toxicity attributes</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeToxicity(String input)
 	{
 		logger.logTrace("analyzeToxicity: Starting toxicity analysis procedure");
@@ -1047,6 +1455,18 @@ public class CLI
 		logger.logTrace("analyzeToxicity: Completed toxicity analysis procedure successfully");
 	}
 
+	/**
+	 * Performs entity analysis.
+	 * <p>
+	 * Output includes:
+	 * <ul>
+	 *	<li>Named entity recognition</li>
+	 *	<li>Entity classification</li>
+	 *	<li>Entity relationships</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 */
 	private synchronized void analyzeEntity(String input)
 	{
 		logger.logTrace("analyzeEntity: Starting entity analysis procedure");
@@ -1063,6 +1483,19 @@ public class CLI
 		logger.logTrace("analyzeEntity: Completed entity analysis procedure successfully");
 	}
 
+	/**
+	 * Performs custom analysis combination.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Interactive option selection</li>
+	 *	<li>Duplicate prevention</li>
+	 *	<li>Sequential execution</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to analyze
+	 * @throws IOException	if input validation fails
+	 */
 	private synchronized void analyzeCombined(String input) throws IOException
 	{
 		logger.logTrace("analyzeCombined: Starting combined analysis procedure");
@@ -1167,6 +1600,19 @@ public class CLI
 		logger.logTrace("analyzeCombined: Completed combined analysis procedure successfully");
 	}
 
+	/**
+	 * Manages syntax tree generation.
+	 * <p>
+	 * Generation options:
+	 * <ul>
+	 *	<li>From generated sentence</li>
+	 *	<li>From user input</li>
+	 *	<li>From cached sentence</li>
+	 *	<li>From selected template</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if generation fails
+	 */
 	private synchronized void treeHandler() throws IOException
 	{
 		logger.logTrace("treeHandler: Starting syntax tree generation procedure");
@@ -1303,6 +1749,20 @@ public class CLI
 		logger.logTrace("treeHandler: Completed syntax tree generation procedure successfully");
 	}
 
+
+	/**
+	 * Displays syntax tree visualization.
+	 * <p>
+	 * Tree characteristics:
+	 * <ul>
+	 *	<li>Hierarchical structure</li>
+	 *	<li>Grammatical relationships</li>
+	 *	<li>Indented formatting</li>
+	 * </ul>
+	 *
+	 * @param input	The sentence to visualize
+	 * @throws IOException	if display fails
+	 */
 	private synchronized void printTree(String input) throws IOException
 	{
 		logger.logTrace("printTree: Starting syntax tree printing procedure");
@@ -1316,6 +1776,19 @@ public class CLI
 		logger.logTrace("printTree: Completed syntax tree printing procedure successfully");
 	}
 
+	/**
+	 * Manages dictionaries extension.
+	 * <p>
+	 * Extension process:
+	 * <ul>
+	 *	<li>Interactive part-of-speech selection</li>
+	 *	<li>Grammatical parameter specification</li>
+	 *	<li>Input validation</li>
+	 *	<li>Batch addition</li>
+	 * </ul>
+	 *
+	 * @throws IOException	if input validation fails
+	 */
 	private synchronized void extendHandler() throws IOException
 	{
 		logger.logTrace("extendHandler: Starting sentence extension procedure");
@@ -1530,6 +2003,16 @@ public class CLI
 		logger.logTrace("extendHandler: Completed sentence extension procedure successfully");
 	}
 
+	/**
+	 * Manages toxicity threshold setting.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Displays current value</li>
+	 *	<li>Validates new value</li>
+	 *	<li>Updates configuration</li>
+	 * </ul>
+	 */
 	private synchronized void setToleranceHandler()
 	{
 		logger.logTrace("setToleranceHandler: Starting tolerance setting procedure");
@@ -1585,6 +2068,16 @@ public class CLI
 		logger.logTrace("setToleranceHandler: Completed tolerance setting procedure successfully");
 	}
 
+	/**
+	 * Displays extended command help information.
+	 * <p>
+	 * Content:
+	 * <ul>
+	 *	<li>Detailed command descriptions</li>
+	 *	<li>Usage examples</li>
+	 *	<li>Purpose explanations</li>
+	 * </ul>
+	 */
 	private synchronized void extendedUsage()
 	{
 		logger.logTrace("extendedUsage: Starting extended usage display procedure");
@@ -1704,6 +2197,15 @@ public class CLI
 		logger.logTrace("extendedUsage: Completed extended usage display procedure successfully");
 	}
 
+	/**
+	 * Toggles verbose output mode.
+	 * <p>
+	 * Effects:
+	 * <ul>
+	 *	<li>Enables/disables debug output</li>
+	 *	<li>Provides status feedback</li>
+	 * </ul>
+	 */
 	private synchronized void verboseHandler()
 	{
 		logger.logTrace("verboseHandler: Starting verbosity switching procedure");
@@ -1722,6 +2224,16 @@ public class CLI
 		logger.logTrace("verboseHandler: Completed verbosity switching procedure successfully");
 	}
 
+	/**
+	 * Clears terminal display.
+	 * <p>
+	 * Actions:
+	 * <ul>
+	 *	<li>Clears screen buffer</li>
+	 *	<li>Resets scrollback</li>
+	 *	<li>Redisplays initial content</li>
+	 * </ul>
+	 */
 	private synchronized void clearTerminal()
 	{
 		logger.logTrace("clearTerminal: Starting terminal clearing procedure");
@@ -1737,6 +2249,18 @@ public class CLI
 		logger.logTrace("clearTerminal: Completed terminal clearing procedure successfully");
 	}
 
+	/**
+	 * Displays basic command help.
+	 * <p>
+	 * Format:
+	 * <ul>
+	 *	<li>Command names in bold green</li>
+	 *	<li>Descriptions in bold white</li>
+	 *	<li>Consistent column alignment</li>
+	 * </ul>
+	 *
+	 * @param writer	The output writer to use
+	 */
 	private synchronized void usage(PrintWriter writer)
 	{
 		logger.logTrace("usage: Starting usage display procedure");
@@ -1780,6 +2304,16 @@ public class CLI
 		logger.logTrace("usage: Completed usage display procedure successfully");
 	}
 
+	/**
+	 * Initiates program termination.
+	 * <p>
+	 * Cleanup process:
+	 * <ul>
+	 *	<li>Sets termination flag</li>
+	 *	<li>Closes resources</li>
+	 *	<li>Provides exit feedback</li>
+	 * </ul>
+	 */
 	private synchronized void quit()
 	{
 		logger.logTrace("quit: Starting quit procedure");
@@ -1789,6 +2323,18 @@ public class CLI
 		logger.logTrace("quit: Completed quit procedure successfully");
 	}
 
+	/**
+	 * Checks internet connectivity.
+	 * <p>
+	 * Verification:
+	 * <ul>
+	 *	<li>Tries google.com first</li>
+	 *	<li>Falls back to cloudflare.com</li>
+	 *	<li>Displays status message</li>
+	 * </ul>
+	 *
+	 * @return	{@code true} if connection is available
+	 */
 	private synchronized boolean checkInternetConnection()
 	{
 		logger.logTrace("checkInternetConnection: Starting internet connection check");
@@ -1825,18 +2371,34 @@ public class CLI
 		}
 	}
 
+	/**
+	 * Prints unformatted text.
+	 *
+	 * @param text	The content to display
+	 */
 	private synchronized void print(String text)
 	{
 		terminal.writer().print(text);
 		terminal.flush();
 	}
 
+	/**
+	 * Prints text with newline.
+	 *
+	 * @param text	The text to print
+	 */
 	private synchronized void prinln(String text)
 	{
 		terminal.writer().println(text);
 		terminal.flush();
 	}
 
+	/**
+	 * Prints magenta-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printMagenta(String text, boolean bold)
 	{
 		if(bold)
@@ -1847,6 +2409,12 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Prints green-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printGreen(String text, boolean bold)
 	{
 		if(bold)
@@ -1857,6 +2425,12 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Prints white-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printWhite(String text, boolean bold)
 	{
 		if(bold)
@@ -1867,6 +2441,12 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Prints yellow-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printYellow(String text, boolean bold)
 	{
 		if(bold)
@@ -1877,6 +2457,12 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Prints red-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printRed(String text, boolean bold)
 	{
 		if(bold)
@@ -1886,6 +2472,12 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Prints blue-colored text.
+	 *
+	 * @param text	The content to display
+	 * @param bold	Whether to use bold styling
+	 */
 	private synchronized void printBlue(String text, boolean bold)
 	{
 		if(bold)
@@ -1896,6 +2488,18 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Reads input from the user.
+	 * <p>
+	 * Options:
+	 * <ul>
+	 *	<li>Demangled: lowercase, trimmed, whitespace normalized</li>
+	 *	<li>Regular: preserves original formatting</li>
+	 * </ul>
+	 *
+	 * @param demangled	Whether to normalize input
+	 * @return		The user input string
+	 */
 	private synchronized String read(boolean demangled)
 	{
 		if(demangled)
@@ -1904,6 +2508,23 @@ public class CLI
 			return plainReader.readLine(new AttributedString(">> ", BOLD_WHITE_STYLE).toAnsi(terminal)).trim().replaceAll("\\s+", " ");
 	}
 
+	/**
+	 * Validates user input against options.
+	 * <p>
+	 * Validation process:
+	 * <ul>
+	 *	<li>Displays available options</li>
+	 *	<li>Allows multiple attempts</li>
+	 *	<li>Handles empty input</li>
+	 *	<li>Provides feedback</li>
+	 * </ul>
+	 *
+	 * @param prompt	The input prompt
+	 * @param options	Valid input options
+	 * @param skippable	Whether empty input is allowed
+	 * @return		Validated input or empty string
+	 * @throws IOException	if input fails
+	 */
 	private synchronized String validateInput(String prompt, List<Option> options, boolean skippable) throws IOException
 	{
 		logger.logTrace("validateInput: Starting input validation");
@@ -1955,12 +2576,30 @@ public class CLI
 		return "";
 	}
 
+	/**
+	 * Prints a horizontal separator line.
+	 *
+	 * @param style	The text style to use
+	 */
 	private synchronized void printSeparator(AttributedStyle style)
 	{
 		terminal.writer().println(new AttributedString("=".repeat(MAX_WIDTH), style).toAnsi(terminal));
 		terminal.flush();
 	}
 
+	/**
+	 * Prints titled separator section.
+	 * <p>
+	 * Format:
+	 * <ul>
+	 *	<li>Centered title</li>
+	 *	<li>Balanced padding</li>
+	 *	<li>Consistent width</li>
+	 * </ul>
+	 *
+	 * @param title	The section title
+	 * @param style	The visual style to apply
+	 */
 	private synchronized void printTitleSeparator(String title, AttributedStyle style)
 	{
 		int availableSpace = MAX_WIDTH - title.length() - 4;
@@ -1974,6 +2613,16 @@ public class CLI
 		terminal.flush();
 	}
 
+	/**
+	 * Cleans up system resources.
+	 * <p>
+	 * Cleanup actions:
+	 * <ul>
+	 *	<li>Terminates execution loop</li>
+	 *	<li>Closes terminal interface</li>
+	 *	<li>Handles cleanup errors</li>
+	 * </ul>
+	 */
 	public synchronized void closeResources()
 	{
 		logger.logTrace("closeResources: Starting resource cleanup");

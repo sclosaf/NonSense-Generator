@@ -25,14 +25,84 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * A comprehensive toxicity analysis validator that detects and evaluates toxic content in text
+ * using Google Cloud Natural Language API's moderation features. This class implements
+ * {@code AutoCloseable} to ensure proper resource cleanup of API clients and thread pools.
+ *
+ * <p>The validator provides both synchronous and asynchronous methods for:
+ * <ul>
+ *	<li>Retrieving toxicity category scores</li>
+ *	<li>Generating detailed toxicity reports</li>
+ *	<li>Performing binary toxicity checks against configurable thresholds</li>
+ * </ul>
+ * </p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * try (ToxicityValidator validator = new ToxicityValidator())
+ * {
+ *		Map<String, Float> scores = validator.getToxicityScoresAsync("offensive text").get();
+ *		boolean isToxic = validator.isTextToxicAsync("hate speech", 0.8f).get();
+ * }
+ * }</pre>
+ * </p>
+ *
+ * @see com.google.cloud.language.v1.LanguageServiceClient
+ * @see com.google.cloud.language.v1.ModerateTextResponse
+ */
 public class ToxicityValidator implements AutoCloseable
 {
+	/**
+	 * Thread pool executor for handling asynchronous operations.
+	 * <p>Uses a cached thread pool that:
+	 * <ul>
+	 *	<li>Creates new threads as needed</li>
+	 *	<li>Reuses idle threads</li>
+	 *	<li>Terminates threads that remain idle for 60 seconds</li>
+	 * </ul>
+	 * </p>
+	 */
 	private final ExecutorService executor = Executors.newCachedThreadPool();
+
+
+	/**
+	 * The API client manager for Google Cloud services.
+	 * <p>Manages:
+	 * <ul>
+	 *	<li>Authentication credentials</li>
+	 *	<li>Client lifecycle</li>
+	 *	<li>Connection pooling</li>
+	 * </ul>
+	 * </p>
+	 */
 	private final GoogleApiClient apiClient;
+
+	/**
+	 * Logger instance for tracking operations and errors.
+	 * <p>Configured to log messages from {@code ToxicityValidator} class.</p>
+	 */
 	private final LoggerManager logger = new LoggerManager(ToxicityValidator.class);
+
+	/**
+	 * Default path to the Google Cloud credentials file.
+	 * <p>Located at {@code /credentials.json} in the classpath.</p>
+	 */
 	private static final String credentialsPath = "/credentials.json";
+
+	/**
+	 * Default threshold for toxicity classification.
+	 * <p>A text is considered toxic if any category confidence exceeds this value (0.7 = 70%).</p>
+	 */
 	private static final float DEFAULT_TOXICITY_THRESHOLD = 0.7f;
 
+
+	/**
+	 * Constructs a validator with a pre-configured API client.
+	 *
+	 * @param apiClient		Pre-initialized {@code GoogleApiClient} instance
+	 * @throws NullClientException	if {@code apiClient} is {@code null}
+	 */
 	public ToxicityValidator(GoogleApiClient apiClient)
 	{
 		logger.logTrace("Starting initialization with provided client and logger");
@@ -47,12 +117,29 @@ public class ToxicityValidator implements AutoCloseable
 		logger.logTrace("Successfully initialized with provided client and logger");
 	}
 
+	/**
+	 * Default constructor that initializes with default credentials.
+	 *
+	 * @throws IOException	if credential loading fails
+	 */
 	public ToxicityValidator() throws IOException
 	{
 		this(new GoogleApiClient(credentialsPath));
 		logger.logTrace("Completed default initialization");
 	}
 
+
+	/**
+	 * Asynchronously retrieves toxicity confidence scores for all moderation categories.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing a map of:
+	 *				<ul>
+	 *					<li>Keys: Toxicity category names</li>
+	 *					<li>Values: Confidence scores (0.0 to 1.0)</li>
+	 *				</ul>
+	 * @see #getToxicityScores(String)
+	 */
 	public CompletableFuture<Map<String, Float>> getToxicityScoresAsync(String text)
 	{
 		logger.logTrace("getToxicityScoresAsync: Starting async toxicity scores retrieval");
@@ -72,6 +159,14 @@ public class ToxicityValidator implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously calculates toxicity scores for all moderation categories.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		Map of category names to confidence scores
+	 * @throws InvalidTextException	if input validation fails
+	 * @throws ApiException			if API communication fails
+	 */
 	private Map<String, Float> getToxicityScores(String text)
 	{
 		logger.logTrace("getToxicityScores: Starting toxicity scores calculation");
@@ -100,6 +195,17 @@ public class ToxicityValidator implements AutoCloseable
 		return scores;
 	}
 
+	/**
+	 * Asynchronously generates a formatted toxicity analysis report.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing a multi-line report with:
+	 *				<ul>
+	 *					<li>All detected toxicity categories</li>
+	 *					<li>Formatted confidence percentages</li>
+	 *				</ul>
+	 * @see #getToxicityReport(String)
+	 */
 	public CompletableFuture<String> getToxicityReportAsync(String text)
 	{
 		logger.logTrace("getToxicityReportAsync: Starting async toxicity report generation");
@@ -119,6 +225,14 @@ public class ToxicityValidator implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously generates a human-readable toxicity report.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		Formatted string report with aligned columns
+	 * @throws InvalidTextException	if input validation fails
+	 * @throws ApiException			if API communication fails
+	 */
 	private String getToxicityReport(String text)
 	{
 		logger.logTrace("getToxicityReport: Starting toxicity report generation");
@@ -145,6 +259,13 @@ public class ToxicityValidator implements AutoCloseable
 		return report.toString();
 	}
 
+	/**
+	 * Asynchronously performs raw text moderation via Google API.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing the complete {@code ModerateTextResponse}
+	 * @see #moderateText(String)
+	 */
 	public CompletableFuture<ModerateTextResponse> moderateTextAsync(String text)
 	{
 		logger.logTrace("moderateTextAsync: Starting async text moderation");
@@ -164,6 +285,14 @@ public class ToxicityValidator implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously sends text to Google's moderation API.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		Raw API response with all moderation data
+	 * @throws InvalidTextException	if input validation fails
+	 * @throws ApiException			if API communication fails
+	 */
 	private ModerateTextResponse moderateText(String text)
 	{
 		logger.logTrace("moderateText: Starting text moderation");
@@ -187,6 +316,17 @@ public class ToxicityValidator implements AutoCloseable
 		return response;
 	}
 
+	/**
+	 * Asynchronously checks if text exceeds default toxicity threshold (0.7).
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing:
+	 *				<ul>
+	 *					<li>{@code true} if any category exceeds threshold</li>
+	 *					<li>{@code false} otherwise</li>
+	 *				</ul>
+	 * @see #isTextToxic(String)
+	 */
 	public CompletableFuture<Boolean> isTextToxicAsync(String text)
 	{
 		logger.logTrace("isTextToxicAsync: Starting async toxicity check with default threshold");
@@ -206,12 +346,28 @@ public class ToxicityValidator implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously checks toxicity against default threshold.
+	 *
+	 * @param text	Input text to analyze (1-1000 characters)
+	 * @return		Toxicity determination using {@code DEFAULT_TOXICITY_THRESHOLD}
+	 * @throws InvalidTextException	if input validation fails
+	 * @throws ApiException			if API communication fails
+	 */
 	private boolean isTextToxic(String text)
 	{
 		logger.logTrace("isTextToxic: Starting toxicity check with default threshold");
 		return isTextToxic(text, DEFAULT_TOXICITY_THRESHOLD);
 	}
 
+	/**
+	 * Asynchronously checks if text exceeds custom toxicity threshold.
+	 *
+	 * @param text		Input text to analyze (1-1000 characters)
+	 * @param threshold	Custom threshold (0.0 to 1.0)
+	 * @return			{@code CompletableFuture} containing the toxicity determination
+	 * @see #isTextToxic(String, float)
+	 */
 	public CompletableFuture<Boolean> isTextToxicAsync(String text, float threshold)
 	{
 		logger.logTrace("isTextToxicAsync: Starting async toxicity check with custom threshold");
@@ -231,6 +387,16 @@ public class ToxicityValidator implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously checks toxicity against custom threshold.
+	 *
+	 * @param text		Input text to analyze (1-1000 characters)
+	 * @param threshold	Custom threshold value between 0.0 and 1.0 inclusive
+	 * @return			Toxicity determination
+	 * @throws InvalidTextException		if input validation fails
+	 * @throws InvalidThresholdException	if threshold is invalid
+	 * @throws ApiException				if API communication fails
+	 */
 	private boolean isTextToxic(String text, float threshold)
 	{
 		logger.logDebug("isTextToxic: Starting toxicity check with threshold: " + threshold);
@@ -263,6 +429,17 @@ public class ToxicityValidator implements AutoCloseable
 		return false;
 	}
 
+	/**
+	 * Validates input text meets analysis requirements.
+	 *
+	 * @param text	Input text to validate
+	 * @throws InvalidTextException	if text is:
+	 *	<ul>
+	 *		<li>{@code null}</li>
+	 *		<li>Empty/whitespace</li>
+	 *		<li>Exceeds 1000 characters</li>
+	 *	</ul>
+	 */
 	private void validateInput(String text)
 	{
 		logger.logTrace("validateInput: Validating input text");
@@ -286,12 +463,33 @@ public class ToxicityValidator implements AutoCloseable
 		}
 	}
 
+	/**
+	 * Constructs a Google Cloud Language API document.
+	 *
+	 * @param text	Input text to wrap
+	 * @return		Configured {@code Document} instance with:
+	 *				<ul>
+	 *					<li>PLAIN_TEXT type</li>
+	 *					<li>UTF-8 encoding</li>
+	 *				</ul>
+	 */
 	private Document buildDocument(String text)
 	{
 		logger.logTrace("buildDocument: Building document for analysis");
 		return Document.newBuilder().setContent(text).setType(Type.PLAIN_TEXT).build();
 	}
 
+	/**
+	 * Cleans up resources including:
+	 * <ul>
+	 *	<li>API client connections</li>
+	 *	<li>Thread pool executor</li>
+	 * </ul>
+	 *
+	 * <p>Automatically called in try-with-resources blocks.</p>
+	 *
+	 * @throws Exception	if resource cleanup fails
+	 */
 	@Override
 	public void close()
 	{
@@ -317,4 +515,3 @@ public class ToxicityValidator implements AutoCloseable
 		}
 	}
 }
-

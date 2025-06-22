@@ -17,15 +17,69 @@ import unipd.nonsense.util.LoggerManager;
 
 import com.google.cloud.language.v1.DependencyEdge;
 
+/**
+ * A utility class for building visual syntax trees from linguistic tokens.
+ * <p>
+ * This class analyzes syntactic dependencies between tokens and constructs a
+ * human-readable tree representation showing the grammatical structure.
+ * It handles both single sentences and multi-sentence inputs, with special
+ * processing for punctuation tokens.
+ * </p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * List<SyntaxToken> tokens = analyzer.analyzeSyntax("The quick brown fox jumps.");
+ * String tree = SyntaxTreeBuilder.getSyntaxTree(tokens);
+ *
+ * System.out.println(tree);
+ * }</pre>
+ * </p>
+ *
+ * @see SyntaxToken
+ */
 public class SyntaxTreeBuilder
 {
+	/**
+	 * Inner class representing node information for tree construction.
+	 * <p>
+	 * Contains:
+	 * <ul>
+	 *	<li>Token index in the original list</li>
+	 *	<li>Indentation string for visual hierarchy</li>
+	 *	<li>Flag indicating if this is the last child of its parent</li>
+	 *	<li>Depth in the tree structure</li>
+	 * </ul>
+	 */
 	private static class TreeNodeInfo
 	{
+		/**
+		 * The index of the token in the original tokens list.
+		 */
 		int tokenIndex;
+
+		/**
+		 * The indentation string to use when displaying this node.
+		 */
 		String indent;
+
+		/**
+		 * Flag indicating if this is the last child of its parent node.
+		 */
 		boolean isLast;
+
+		/**
+		 * The depth of this node in the tree hierarchy (root = 0).
+		 */
 		int depth;
 
+		/**
+		 * Constructs a new TreeNodeInfo instance.
+		 *
+		 * @param tokenIndex	The index of the token in the original list
+		 * @param indent		The indentation string for visual hierarchy
+		 * @param isLast		Whether this is the last child of its parent
+		 * @param depth			The depth in the tree structure
+		 */
 		TreeNodeInfo(int tokenIndex, String indent, boolean isLast, int depth)
 		{
 			this.tokenIndex = tokenIndex;
@@ -35,8 +89,31 @@ public class SyntaxTreeBuilder
 		}
 	}
 
+	/**
+	 * Logger instance for tracking operations.
+	 * <p>
+	 * Configured to log messages from {@code SyntaxTreeBuilder} class.
+	 */
 	private static final LoggerManager logger = new LoggerManager(SyntaxTreeBuilder.class);
 
+	/**
+	 * Generates a visual syntax tree from a list of linguistic tokens.
+	 * <p>
+	 * Process:
+	 * <ul>
+	 *	<li>Identifies root tokens of sentences</li>
+	 *	<li>Builds dependency relationships between tokens</li>
+	 *	<li>Handles punctuation tokens specially</li>
+	 *	<li>Constructs a formatted tree string showing relationships</li>
+	 * </ul>
+	 *
+	 * @param <T>		The type of syntax tokens, must extend {@code SyntaxToken}
+	 * @param tokens	The list of tokens to analyze
+	 * @return			A formatted string representing the syntax tree,
+	 *					or an error message if processing fails
+	 *
+	 * @throws NullPointerException	if tokens list is null
+	 */
 	public static <T extends SyntaxToken> String getSyntaxTree(List<T> tokens)
 	{
 		logger.logTrace("getSyntaxTree: Starting syntax tree generation");
@@ -147,6 +224,22 @@ public class SyntaxTreeBuilder
 		}
 	}
 
+	/**
+	 * Identifies root tokens in a token list.
+	 * <p>
+	 * Root tokens are determined by:
+	 * <ul>
+	 *	<li>Having {@code DependencyEdge.Label.ROOT} label</li>
+	 *	<li>Or having head token index of -1 (for root nodes)</li>
+	 *	<li>Or having invalid head indices (error recovery)</li>
+	 * </ul>
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param tokens	The list of tokens to search
+	 * @return			A list of identified root tokens, may be empty
+	 *
+	 * @throws NullPointerException	if tokens list is null
+	 */
 	private static <T extends SyntaxToken> List<T> findRootTokens(List<T> tokens)
 	{
 		logger.logDebug("findRootTokens: Searching for root tokens among " + tokens.size() + " tokens");
@@ -197,6 +290,18 @@ public class SyntaxTreeBuilder
 		return rootTokens;
 	}
 
+
+	/**
+	 * Locates all punctuation tokens in the token list.
+	 * <p>
+	 * Punctuation tokens are identified by having POS tag "PUNCT".
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param tokens	The list of tokens to search
+	 * @return			List of indices where punctuation tokens occur
+	 *
+	 * @throws NullPointerException	if tokens list is null
+	 */
 	private static <T extends SyntaxToken> List<Integer> findPunctuationTokens(List<T> tokens)
 	{
 		logger.logDebug("findPunctuationTokens: Searching for punctuation tokens");
@@ -216,6 +321,15 @@ public class SyntaxTreeBuilder
 		return punctuationIndices;
 	}
 
+	/**
+	 * Creates a mapping from token indices to token objects.
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param tokens	The list of tokens to map
+	 * @return			A map from integer indices to token objects
+	 *
+	 * @throws NullPointerException	if tokens list is null
+	 */
 	private static <T extends SyntaxToken> Map<Integer, T> createIndexTokenMap(List<T> tokens)
 	{
 		logger.logDebug("createIndexTokenMap: Creating token index map for " + tokens.size() + " tokens");
@@ -231,6 +345,17 @@ public class SyntaxTreeBuilder
 		return map;
 	}
 
+	/**
+	 * Checks if a token is connected to the syntax tree.
+	 * <p>
+	 * Performs a breadth-first search from the root to determine connectivity.
+	 *
+	 * @param tokenIndex		The index of the token to check
+	 * @param rootIndex		The index of the root token
+	 * @param dependencyMap	The dependency relationships between tokens
+	 * @return				{@code true} if the token is connected to the tree,
+	 *						{@code false} otherwise
+	 */
 	private static boolean isConnectedToTree(int tokenIndex, int rootIndex, Map<Integer, List<Integer>> dependencyMap)
 	{
 		logger.logDebug("isConnectedToTree: Checking if token " + tokenIndex + " is connected to root " + rootIndex);
@@ -270,6 +395,25 @@ public class SyntaxTreeBuilder
 		return false;
 	}
 
+	/**
+	 * Finds an appropriate head token for disconnected punctuation.
+	 * <p>
+	 * Strategy:
+	 * <ul>
+	 *	<li>For leading punctuation, attaches to root</li>
+	 *	<li>Otherwise finds nearest preceding non-punctuation token</li>
+	 *	<li>Falls back to root if no better candidate found</li>
+	 * </ul>
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param punctIndex	The index of the punctuation token
+	 * @param rootIndex		The index of the root token
+	 * @param tokens		The complete token list
+	 * @return			The index of the selected head token
+	 *
+	 * @throws NullPointerException		if tokens list is null
+	 * @throws IndexOutOfBoundsException	if indices are invalid
+	 */
 	private static <T extends SyntaxToken> int findAppropriateHeadForPunctuation(int punctIndex, int rootIndex, List<T> tokens)
 	{
 		logger.logDebug("findAppropriateHeadForPunctuation: Finding head for punctuation at index " + punctIndex);
@@ -293,6 +437,21 @@ public class SyntaxTreeBuilder
 		return rootIndex;
 	}
 
+	/**
+	 * Builds a map of dependency relationships between tokens.
+	 * <p>
+	 * The map represents head → children relationships where:
+	 * <ul>
+	 *	<li>Key is the head token index</li>
+	 *	<li>Value is list of dependent token indices</li>
+	 * </ul>
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param tokens	The list of tokens to analyze
+	 * @return			A map of dependency relationships
+	 *
+	 * @throws NullPointerException	if tokens list is null
+	 */
 	private static <T extends SyntaxToken> Map<Integer, List<Integer>> buildDependencyMap(List<T> tokens)
 	{
 		logger.logDebug("buildDependencyMap: Preparing dependency map for " + tokens.size() + " tokens");
@@ -323,6 +482,27 @@ public class SyntaxTreeBuilder
 		return dependencyMap;
 	}
 
+	/**
+	 * Recursively builds the visual tree string representation.
+	 * <p>
+	 * Uses box-drawing characters to create a hierarchical tree structure.
+	 * Format includes:
+	 * <ul>
+	 *	<li>Token text content</li>
+	 *	<li>Part-of-speech tag</li>
+	 *	<li>Proper indentation for child nodes</li>
+	 * </ul>
+	 *
+	 * @param <T>		The type of syntax tokens
+	 * @param rootIndex		The index of the current root token
+	 * @param indexToToken	Mapping from indices to token objects
+	 * @param dependencyMap	The dependency relationships
+	 * @param indent		Current indentation string
+	 * @param isLast		Whether this is the last child of its parent
+	 * @param builder		The {@code StringBuilder} accumulating the result
+	 *
+	 * @throws NullPointerException	if any parameter is null
+	 */
 	private static <T extends SyntaxToken> void buildTreeString(int rootIndex, Map<Integer, T> indexToToken, Map<Integer, List<Integer>> dependencyMap, String indent, boolean isLast, StringBuilder builder)
 	{
 		logger.logDebug("buildTreeString: Building tree string for token index: " + rootIndex);
