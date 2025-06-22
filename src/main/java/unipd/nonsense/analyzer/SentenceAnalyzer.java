@@ -37,15 +37,72 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
+/**
+ * A comprehensive natural language processing analyzer that provides syntactic,
+ * sentiment, and entity analysis capabilities using Google Cloud Natural Language API.
+ * This class implements {@code AutoCloseable} to ensure proper resource cleanup.
+ *
+ * <p>The analyzer supports both synchronous and asynchronous operations through
+ * {@code CompletableFuture} for better performance in concurrent environments.</p>
+ *
+ * <p>Example usage:
+ * <pre>{@code
+ * try (SentenceAnalyzer analyzer = new SentenceAnalyzer())
+ * {
+ *     String result = analyzer.analyzeSyntaxAsync("Sample text").get();
+ *     System.out.println(result);
+ * }
+ * }</pre>
+ * </p>
+ *
+ * @see com.google.cloud.language.v1.LanguageServiceClient
+ * @see unipd.nonsense.util.GoogleApiClient
+ */
 public class SentenceAnalyzer implements AutoCloseable
 {
+	/**
+	 * The API client manager for Google Cloud services.
+	 * <p>This field holds the reference to the {@code GoogleApiClient} instance
+	 * that manages authentication and client creation.</p>
+	 */
 	private final GoogleApiClient apiClient;
+
+	/**
+	 * The Language Service client instance for making API calls.
+	 * <p>This is the primary client used for all natural language processing operations.</p>
+	 */
 	private final LanguageServiceClient languageClient;
+
+	/**
+	 * Thread pool executor for handling asynchronous operations.
+	 * <p>Uses a cached thread pool that creates new threads as needed and reuses previously
+	 * constructed threads when available.</p>
+	 */
 	private final ExecutorService executor = Executors.newCachedThreadPool();
+
+	/**
+	 * Logger instance for tracking operations and debugging.
+	 */
 	private final LoggerManager logger = new LoggerManager(SentenceAnalyzer.class);
+
+	/**
+	 * Path to the credentials file required for Google Cloud API authentication.
+	 * <p>The default path is {@code /credentials.json} in the classpath.</p>
+	 */
 	private static final String credentialsPath = "/credentials.json";
 
-
+	/**
+	 * Default constructor that initializes the Google Cloud Language client.
+	 * <p>This constructor:
+	 * <ul>
+	 *	<li>Creates a new {@code GoogleApiClient} instance</li>
+	 *	<li>Initializes the {@code LanguageServiceClient}</li>
+	 *	<li>Handles authentication using the default credentials file</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @throws FailedClientInitializationException if client creation fails
+	 */
 	public SentenceAnalyzer()
 	{
 		logger.logTrace("Starting initialization");
@@ -65,12 +122,33 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 	}
 
+	/**
+	 * Dependency injection constructor for testing or custom client configuration.
+	 *
+	 * @param apiClient			 Pre-configured {@code GoogleApiClient} instance
+	 * @param languageClient	 Pre-configured {@code LanguageServiceClient} instance
+	 */
 	public SentenceAnalyzer(GoogleApiClient apiClient, LanguageServiceClient languageClient)
 	{
-        this.apiClient = apiClient;
-        this.languageClient = languageClient;
-    }
+		this.apiClient = apiClient;
+		this.languageClient = languageClient;
+	}
 
+	/**
+	 * Asynchronously analyzes the syntactic structure of the input text.
+	 * <p>Returns a {@code CompletableFuture} that will contain a detailed report including:
+	 * <ul>
+	 *	<li>Token text and lemma</li>
+	 *	<li>Part-of-speech tags</li>
+	 *	<li>Morphological features (case, gender, number, etc.)</li>
+	 *	<li>Dependency tree relationships</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing the analysis report
+	 * @see #analyzeSyntax(String)
+	 */
 	public CompletableFuture<String> analyzeSyntaxAsync(String text)
 	{
 		logger.logTrace("analyzeSyntaxAsync: Starting async syntax analysis");
@@ -89,6 +167,15 @@ public class SentenceAnalyzer implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Performs synchronous syntactic analysis of the input text.
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		Detailed syntactic analysis report
+	 * @throws IOException						if API communication fails
+	 * @throws InvalidTextException			if input validation fails
+	 * @throws FailedAnalysisException		if analysis fails
+	 */
 	private String analyzeSyntax(String text) throws IOException
 	{
 		logger.logTrace("analyzeSyntax: Starting syntax analysis");
@@ -139,12 +226,34 @@ public class SentenceAnalyzer implements AutoCloseable
 		return report.toString().trim();
 	}
 
+	/**
+	 * Helper method to conditionally append values to a string builder.
+	 * <p>Only appends the value if it differs from the specified default.</p>
+	 *
+	 * @param sb			StringBuilder to append to
+	 * @param prefix		Line prefix to add
+	 * @param value			Value to potentially append
+	 * @param defaultValue	Value to compare against
+	 */
 	private void addIfNotDefault(StringBuilder sb, String prefix, Object value, Object defaultValue)
 	{
 		if(!value.equals(defaultValue))
 			sb.append(prefix).append(value).append("\n");
 	}
 
+	/**
+	 * Asynchronously analyzes the sentiment of the input text.
+	 * <p>Returns a {@code CompletableFuture} that will contain:
+	 * <ul>
+	 *	<li>Sentiment score (-1.0 to 1.0)</li>
+	 *	<li>Sentiment magnitude (0.0 to infinity)</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing the sentiment analysis
+	 * @see #analyzeSentiment(String)
+	 */
 	public CompletableFuture<String> analyzeSentimentAsync(String text)
 	{
 		logger.logTrace("analyzeSentimentAsync: Starting async sentiment analysis");
@@ -164,6 +273,15 @@ public class SentenceAnalyzer implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Performs synchronous sentiment analysis of the input text.
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		Sentiment analysis results
+	 * @throws IOException						if API communication fails
+	 * @throws InvalidTextException			if input validation fails
+	 * @throws FailedAnalysisException		if analysis fails
+	 */
 	private String analyzeSentiment(String text) throws IOException
 	{
 		logger.logTrace("analyzeSentiment: Starting sentiment analysis");
@@ -186,6 +304,21 @@ public class SentenceAnalyzer implements AutoCloseable
 		return String.format("Sentiment Score: %.2f (Magnitude: %.2f)", sentiment.getScore(), sentiment.getMagnitude());
 	}
 
+	/**
+	 * Asynchronously identifies and analyzes entities in the input text.
+	 * <p>Returns a {@code CompletableFuture} that will contain a report with:
+	 * <ul>
+	 *	<li>Entity names and types</li>
+	 *	<li>Salience scores (0.0 to 1.0)</li>
+	 *	<li>Metadata (when available)</li>
+	 *	<li>All mentions in the text</li>
+	 * </ul>
+	 * </p>
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing the entity analysis
+	 * @see #analyzeEntities(String)
+	 */
 	public CompletableFuture<String> analyzeEntitiesAsync(String text)
 	{
 		logger.logTrace("analyzeEntitiesAsync: Starting async entities analysis");
@@ -205,6 +338,15 @@ public class SentenceAnalyzer implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Performs synchronous entity analysis of the input text.
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		Entity analysis report
+	 * @throws IOException						if API communication fails
+	 * @throws InvalidTextException			if input validation fails
+	 * @throws FailedAnalysisException		if analysis fails
+	 */
 	private String analyzeEntities(String text) throws IOException
 	{
 		logger.logTrace("analyzeEntities: Starting entities analysis");
@@ -268,6 +410,16 @@ public class SentenceAnalyzer implements AutoCloseable
 		return report.toString().trim();
 	}
 
+	/**
+	 * Asynchronously retrieves syntactic tokens from the input text.
+	 * <p>Returns a {@code CompletableFuture} that will contain a list of
+	 * {@code SyntaxToken} objects with detailed linguistic information.</p>
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		{@code CompletableFuture} containing the list of tokens
+	 * @see SyntaxToken
+	 * @see #getSyntaxTokens(String)
+	 */
 	public CompletableFuture<List<SyntaxToken>> getSyntaxTokensAsync(String text)
 	{
 		logger.logTrace("getSyntaxTokensAsync: Starting async syntax tokens retrieval");
@@ -286,6 +438,15 @@ public class SentenceAnalyzer implements AutoCloseable
 			}, executor);
 	}
 
+	/**
+	 * Synchronously extracts syntactic tokens from the input text.
+	 *
+	 * @param text	The text to analyze (1-1000 characters)
+	 * @return		List of {@code SyntaxToken} objects
+	 * @throws IOException						if API communication fails
+	 * @throws InvalidTextException			if input validation fails
+	 * @throws FailedAnalysisException		if analysis fails
+	 */
 	private List<SyntaxToken> getSyntaxTokens(String text) throws IOException
 	{
 		logger.logTrace("getSyntaxTokens: Starting syntax tokens extraction");
@@ -319,6 +480,17 @@ public class SentenceAnalyzer implements AutoCloseable
 		return tokens;
 	}
 
+	/**
+	 * Validates input text according to analysis requirements.
+	 *
+	 * @param text	The text to validate
+	 * @throws InvalidTextException if text is:
+	 *	<ul>
+	 *		<li>{@code null}</li>
+	 *		<li>Empty or whitespace-only</li>
+	 *		<li>Longer than 1000 characters</li>
+	 *	</ul>
+	 */
 	private void validateInput(String text)
 	{
 		logger.logTrace("validateInput: Validating input text");
@@ -342,12 +514,29 @@ public class SentenceAnalyzer implements AutoCloseable
 		}
 	}
 
+	/**
+	 * Creates a Google Cloud Language API document from input text.
+	 *
+	 * @param text	The text to convert
+	 * @return		Configured {@code Document} instance
+	 */
 	private Document buildDocument(String text)
 	{
 		logger.logTrace("buildDocument: Building document for analysis");
 		return Document.newBuilder().setContent(text).setType(Type.PLAIN_TEXT).build();
 	}
 
+	/**
+	 * Cleans up resources including:
+	 * <ul>
+	 *	<li>Closing the language client</li>
+	 *	<li>Shutting down the executor service</li>
+	 * </ul>
+	 *
+	 * <p>This method is automatically called when used in try-with-resources blocks.</p>
+	 *
+	 * @throws Exception if resource cleanup fails
+	 */
 	@Override
 	public void close()
 	{
