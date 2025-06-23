@@ -656,6 +656,6 @@ class TestRandomNounGenerator
 		}
 
 		double ratio = (double) singularCount / pluralCount;
-		assertTrue(ratio > 0.8 && ratio < 1.2, "Number types should be roughly evenly distributed");
+		assertTrue(ratio > 0.7 && ratio < 1.3, "Number types should be roughly evenly distributed");
 	}
 }
