@@ -52,6 +52,7 @@ cd scripts
 .\mvn.bat all # Performs the whole compilation and execution process
 ```
 Anyway the two scripts can perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
+
 **WARNING** The first installation process performed on a new environment may produce verbose output in
 the terminal due to dependency downloads and initialization processes, every dependency is installed in 
 the newly created lib folder, leaving clean the global directory that Maven generally uses, this is a 
@@ -75,11 +76,16 @@ Once the application is executed, a menu with the following options will be disp
 - **Quit**
 
 ### HOW THE CODE WORKS
-The application provides a basic CLI for the user, into which execute the selected command (or its shortcut), once the command is chosen and typed press Enter (the following informations will be available with the command info, once into the application):
+The application provides a basic CLI for the user, into which execute the selected command (or its
+shortcut), once the command is chosen and typed press Enter (the following informations will be available 
+with the command info, once into the application):
 
 - **Default** 
-  Performs a basic but complete procedure of the functionalities offered, this procedure offers the possibility to generate and/or analyze a sentence and ends with the syntactic tree of the sentence being displayed.
-  This is a default combination of commands, for a more specific combination use 'personalized'; the other entries perform singular functionalities.
+  Performs a basic but complete procedure of the functionalities offered, this procedure offers the
+  possibility to generate and/or analyze a sentence and ends with the syntactic tree of the sentence being
+  displayed.
+  This is a default combination of commands, for a more specific combination use 'personalized'; the other
+  entries perform singular functionalities.
 
 - **Personalized**
   Performs, in a specific order, all the functionalities offered by the program.
@@ -106,7 +112,8 @@ The application provides a basic CLI for the user, into which execute the select
   This update is immediately applied to the program, but doesn't last among different sessions.
 
 - **Set tolerance**
-  Allows the user to change the program's tolerance when considering an analyzed sentence via toxicity analysis, setting the upper bound over which a sentence is considered to be toxic by the program.
+  Allows the user to change the program's tolerance when considering an analyzed sentence via toxicity analysis, setting the upper bound over which a sentence
+  is considered to be toxic by the program.
   The default value is setted to 0.7 (it ranges from 0.0 to 1.0, inclusive).
 
 - **Help**
