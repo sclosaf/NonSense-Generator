@@ -2,39 +2,64 @@
 
 ## INTRODUCTION
 
-**Nonsense Generator** is a Java application that uses the Google Cloud Natural Language API to analyze the grammatical structure of sentences entered by the user. The goal is to create and analyze syntactically correct but nonsensical sentences, with nouns, verbs, and adjectives randomly selected from a dedicated set and inserted into randomly chosen templates.
+**Nonsense Generator** is a Java application that uses the Google Cloud Natural Language API to analyze the grammatical structure of sentences entered by the user. The goal is to generate and analyze syntactically correct but nonsensical sentences, with nouns, verbs, and adjectives randomly selected from a dedicated set and inserted into randomly chosen templates.
 
 ## REQUIREMENTS
 
 ### SOFTWARE
 
 - Java Development Kit (JDK) 21
-- Google Cloud SDK (including the authentication JSON file to be placed in the **config** folder)
+- Google Cloud SDK (including the authentication JSON file to be placed in the [config](/config) folder,
+  it's importanto to rename the .json file as follows: "credentials.json", otherwise the connection won't work)
 - Internet connection for using the Google API
-- **Apache Maven** for dependency management and project compilation
+- **Apache Maven ≥ 3.9** for dependency management and project compilation (see [pom](pom.xml))
 
 ## STARTING THE APPLICATION
-
-1. Open the **NonSense-Generator** folder
-2. Open the script folder
-3. Open a terminal
-
-On Windows:  
-4. Enter ".\mvn.bat clean" and press enter  
-5. Enter ".\mvn.bat package" and press enter  
-6. Enter ".\mvn.bat execute" and press enter to run the program  
-
-On Linux:  
-4. Enter "./mvn.sh clean" and press enter  
-5. Enter "./mvn.sh package" and press enter  
-6. Enter "./mvn.sh execute" and press enter to run the program  
+Open a terminal and type:
+```
+git clone https://github.com/sclosaf/NonSense-Generator.git
+cd NonSense-Generator
+```
+Otherwise download the .zip from the repo home and unzip it locally.
+To streamline the development and usage process, a series of scripts have been provided, see [script](/scripts), these script are available to the user and perform the same actions: 
+- [mvn.sh](/scripts/mvn.sh): UNIX/LINUX
+- [mvn.bat](/scripts/mvn.bat): Windows
+These provide the basic compilation and execution functionalities, in order to compile and start the application the following instructions.
+On Unix-like environment use:
+```
+cd scripts
+./mvn.sh clean # In order to clean the development environment
+./mvn.sh package # In order to perform a combination of compilation, testing and documentation
+./mvn.sh execute # In order to execute the .jar application
+```
+Otherwise, it'e equivalent:
+```
+cd scripts
+./mvn.sh all # Performs the whole compilation and execution process
+```
+On Windows environment use:
+```
+cd scripts
+.\mvn.bat clean # In order to clean the development environment
+.\mvn.bat package # In order to perform a combination of compilation, testing and documentation
+.\mvn.bat execute # In order to execute the .jar application
+```
+Otherwise, it'e equivalent:
+```
+cd scripts
+.\mvn.bat all # Performs the whole compilation and execution process
+```
+Anyway the two scripts can perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
+**WARNING** The first installation process performed on a new environment may produce verbose output in
+the terminal due to dependency downloads and initialization processes, every dependency is installed in 
+the newly created lib folder, leaving clean the global directory that Maven generally uses, this is a 
+choice to make the project self contained and autonomous.
 
 ## INTERFACE
 
 ### MAIN MENU OPTIONS
 
-Once the application is started, a menu with the following options will be displayed:
-
+Once the application is executed, a menu with the following options will be displayed:
 - **Default**
 - **Personalized**
 - **Generate**
@@ -48,8 +73,7 @@ Once the application is started, a menu with the following options will be displ
 - **Quit**
 
 ### HOW THE CODE WORKS
-
-To select the desired option, type its name or initial and press enter.
+The application provides a basic CLI for the user, into which execute the selected command (or its shortcut), once the command is chosen and typed press Enter (the following informations will be available with the command info, once into the application):
 
 - **Default** 
   Performs a basic but complete procedure of the functionalities offered, this procedure offers the possibility to generate and/or analyze a sentence and ends with the syntactic tree of the sentence being displayed.
@@ -212,36 +236,32 @@ To select the desired option, type its name or initial and press enter.
 ### EXTERNAL LIBRARIES
 
 - **JUnit Jupiter** (org.junit.jupiter:junit-jupiter-api, org.junit.jupiter:junit-jupiter-engine):  
-  for unit testing.
+  Used for unit testing, in the (src/test)[src] section all the testing classes can be found.
+  There is a Maven PlugIn related: **Surefire**, which automaticaly produces the tests repors, visualizing
+  successfull tests and time spent for each test
 
 - **Google Cloud Language** (com.google.cloud:google-cloud-language):  
-  for natural language analysis.
+  Used for natural language analysis, through which the chosen sentences can be analysed, requires API
+  key, it's important to remember to insert the owned service account key, in .json format.
 
 - **Gson** (com.google.code.gson:gson):  
-  for JSON handling.
+  Used for JSON handling through a dedicated interface class, can be found in [util](src/main/unipd/nonsense/util) folder.
 
 - **Log4j** (org.apache.logging.log4j:log4j-core, org.apache.logging.log4j:log4j-api):  
-  for logging.
+  Used for logging through a dedicated interface class, can be found in [util](src/main/unipd/nonsense/util) folder.
 
 - **Disruptor** (com.lmax:disruptor):  
-  for high-performance concurrent data structures.
+  Used for high-performance and async logging (with Log4j), there is no direct code that uses it, but it's a basic support for the logger.
 
 - **Mockito** (org.mockito:mockito-core, org.mockito:mockito-junit-jupiter):  
-  for mocking in tests.
+  Used for mocking classes and instances in tests through reflections, mainly, in order to test a wider set of instances that may occur in the code.
 
 - **JLine** (org.jline:jline):  
-  for advanced console/CLI management.
-
+  Used for advanced console/CLI management to grant a user-friendly interface and commands management, similar to a classical shell.
+ 
 ### '.json' FILES
-
+These files are used by the programm as dictionaries, for read and write operations:
 - adjective.json
 - nouns.json
 - templates.json
 - verbs.json
-
-## MEMBERS
-
-- **Surname and Name**: Baldo Francesco, Ceretti Fabio, Lamparelli Davide, Sclosa Fabrizio
-- **Course**: Elementi di Ingegneria del Software  
-- **Academic year**: 2024/2025  
-- **Professor**: Prof. Luca Boldrin
