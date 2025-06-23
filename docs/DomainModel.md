@@ -58,7 +58,7 @@ U"1" --> "1"TB: Uses
 TB"1" --> "*"SynT: Builds
 
 Tgen "1"--> "2"Tlist: Picks-from
-Vgen "1"--> "4"Vlist: Picks-from
+Vgen "1"--> "6"Vlist: Picks-from
 Ngen "1"--> "2"Nlist: Picks-from
 Agen "1"--> "1"Alist: Picks-from
 
