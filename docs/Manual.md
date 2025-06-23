@@ -254,10 +254,10 @@ with the command info, once into the application):
   key, it's important to remember to insert the owned service account key, in .json format.
 
 - **Gson** (com.google.code.gson:gson):  
-  Used for JSON handling through a dedicated interface class, can be found in [util](src/main/unipd/nonsense/util) folder.
+  Used for JSON handling through a dedicated interface class, can be found in [util](/src/main/unipd/nonsense/util) folder.
 
 - **Log4j** (org.apache.logging.log4j:log4j-core, org.apache.logging.log4j:log4j-api):  
-  Used for logging through a dedicated interface class, can be found in [util](src/main/unipd/nonsense/util) folder.
+  Used for logging through a dedicated interface class, can be found in [util](/src/main/unipd/nonsense/util) folder.
 
 - **Disruptor** (com.lmax:disruptor):  
   Used for high-performance and async logging (with Log4j), there is no direct code that uses it, but it's a basic support for the logger.
