@@ -60,6 +60,8 @@ the terminal due to dependency downloads and initialization processes, every dep
 the newly created lib folder, leaving the global directory that Maven generally uses clean , this is a 
 choice to make the project self contained and autonomous.
 
+**WARNING** These scripts if macOS is used, can be seen as dangerous, we advice (if needed) to execute them in quarantine 
+with commands such as `xattr -d com.apple.quarantine mvn.sh`, anyway this does not compromise the building process
 ## INTERFACE
 
 ### MAIN MENU OPTIONS
