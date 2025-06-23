@@ -138,6 +138,9 @@ with the command info, once into the application):
   Exits the program.
   Terminates the application safely.
 
+During Runtime the code produces a folder too, called logs, which contains the most recent logs for the project
+reporting its activity
+
 ## PROJECT STRUCTURE
 
 - **src/**
