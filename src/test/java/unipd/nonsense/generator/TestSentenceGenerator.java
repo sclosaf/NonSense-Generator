@@ -112,7 +112,7 @@ class TestSentenceGenerator
 				break;
 			}
 		}
-System.out.println(sentence);
+
 		assertTrue(hasCustomWords, "Sentence should contain at least one of the custom words");
 	}
 
@@ -172,7 +172,7 @@ System.out.println(sentence);
 
 				assertNotNull(sentence);
 				assertFalse(sentence.isEmpty());
-				System.out.println(sentence);
+
 				assertTrue(sentence.matches(".*[.!?]\\s*$"), "Sentence should end with proper punctuation");
 			}
 		}
@@ -210,7 +210,7 @@ System.out.println(sentence);
 		String sentence = result.getPattern();
 
 		assertTrue(sentence.contains("satellite") || sentence.contains("metallic") || sentence.contains("orbit"), "Sentence should contain at least one of our custom words");
-System.out.println(sentence);
+
 		assertFalse(sentence.contains("[noun]"));
 		assertFalse(sentence.contains("[adjective]"));
 		assertFalse(sentence.contains("[verb]"));
