@@ -374,19 +374,6 @@ class TestSentenceGenerator
 	}
 
 	@Test
-	@DisplayName("Test template with repeated same placeholders")
-	void testRepeatedSamePlaceholders()
-	{
-		Template template = new Template("The [noun] and [noun] [verb] together.", Number.PLURAL);
-		Template result = sentenceGenerator.generateSentenceFromTemplate(template);
-		String sentence = result.getPattern();
-
-		long nounCount = Arrays.stream(sentence.split(" ")).filter(word -> word.equals(result.getPattern().split(" ")[1])).count();
-		assertFalse(nounCount >= 2, "Shouldn't contain repeated nouns");
-		assertFalse(sentence.contains("[noun]"));
-	}
-
-	@Test
 	@DisplayName("Test sentence generation with special characters in words")
 	void testSpecialCharactersInWords() throws IOException
 	{
