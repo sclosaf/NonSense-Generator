@@ -10,8 +10,8 @@ The several deliverables required for this project can be found inside the follo
 - [The manual](docs/Manual.md) inside the docs folder;
 - [Use cases and domain model](docs) inside the docs folder;
 - [System sequence diagrams and internal sequence diagrams](diagrams) inside the diagrams folder;
-- [The design class codel document](docs) inside the docs folder;
+- [The design class model document](docs) inside the docs folder;
 - [The class diagrams](diagrams) inside the diagrams folder;
-- [The system test document](docs) inside the docs folfer;
+- [The system test document](docs) inside the docs folder;
 - Java documentation can be found inside /target/site/apidocs, once the project is compiled locally
 - Unit test report  can be found inside /target/site/apidocs, once the project is compiled locally
