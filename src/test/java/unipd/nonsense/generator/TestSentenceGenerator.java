@@ -356,6 +356,8 @@ class TestSentenceGenerator
 		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
 		String sentence = result.getPattern();
 
+System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    "+ sentence);
+
 		assertTrue(sentence.contains("cat") || sentence.contains("dogs"), "Sentence should contain at least one of the provided nouns");
 		assertTrue(sentence.contains("sleepy"));
 		assertTrue(sentence.contains("run"));
@@ -438,6 +440,8 @@ class TestSentenceGenerator
 
 		Template result = sentenceGenerator.generateSentenceWith(nouns, null, verbs);
 		String sentence = result.getPattern();
+
+System.out.println("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!    "+ sentence);
 
 		assertTrue(sentence.contains("child") || sentence.contains("children"));
 		assertTrue(sentence.contains("plays") || sentence.contains("play"));

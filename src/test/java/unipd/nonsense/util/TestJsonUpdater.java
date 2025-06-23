@@ -96,11 +96,11 @@ class TestJsonUpdater
 	@DisplayName("Test template loading with valid number")
 	void testLoadTemplateWithValidNumber() throws IOException
 	{
-		JsonUpdater.loadTemplate("template", Number.SINGULAR);
+		JsonUpdater.loadTemplate("[adjective] [noun] and [noun] [verb].", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 
 		observerNotified = false;
-		JsonUpdater.loadTemplate("template", Number.PLURAL);
+		JsonUpdater.loadTemplate("[adjective] [noun] [verb].", Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after template loading");
 	}
 
@@ -109,7 +109,7 @@ class TestJsonUpdater
 	void testLoadTemplateWithInvalidNumber()
 	{
 		assertThrows(InvalidNumberException.class, () -> {
-			JsonUpdater.loadTemplate("template", null);
+			JsonUpdater.loadTemplate("this is a [adjective] [noun], [verb]!", null);
 		});
 	}
 
@@ -117,10 +117,10 @@ class TestJsonUpdater
 	@DisplayName("Test object-based loading methods")
 	void testObjectBasedLoading() throws IOException
 	{
-		Noun noun = new Noun("template", Number.SINGULAR);
-		Verb verb = new Verb("template", Number.SINGULAR, Tense.PRESENT);
-		Adjective adjective = new Adjective("adjective");
-		Template template = new Template("template", Number.SINGULAR);
+		Noun noun = new Noun("Car", Number.SINGULAR);
+		Verb verb = new Verb("eats", Number.SINGULAR, Tense.PRESENT);
+		Adjective adjective = new Adjective("quick");
+		Template template = new Template("[noun] [adjective] [verb]?", Number.SINGULAR);
 
 		JsonUpdater.loadNoun(noun);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
