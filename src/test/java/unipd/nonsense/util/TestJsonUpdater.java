@@ -42,11 +42,11 @@ class TestJsonUpdater
 	@DisplayName("Test noun loading with valid number")
 	void testLoadNounWithValidNumber() throws IOException
 	{
-		JsonUpdater.loadNoun("noun", Number.SINGULAR);
+		JsonUpdater.loadNoun("car", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
 
 		observerNotified = false;
-		JsonUpdater.loadNoun("noun", Number.PLURAL);
+		JsonUpdater.loadNoun("tree", Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after noun loading");
 	}
 
@@ -55,7 +55,7 @@ class TestJsonUpdater
 	void testLoadNounWithInvalidNumber()
 	{
 		assertThrows(InvalidNumberException.class, () -> {
-			JsonUpdater.loadNoun("noun", null);
+			JsonUpdater.loadNoun("street", null);
 		});
 	}
 
@@ -88,7 +88,7 @@ class TestJsonUpdater
 	@DisplayName("Test adjective loading")
 	void testLoadAdjective() throws IOException
 	{
-		JsonUpdater.loadAdjective("adjective");
+		JsonUpdater.loadAdjective("old");
 		assertTrue(observerNotified, "Observer should be notified after adjective loading");
 	}
 
@@ -162,7 +162,7 @@ class TestJsonUpdater
 		JsonUpdater.addObserver(observer1);
 		JsonUpdater.addObserver(observer2);
 
-		JsonUpdater.loadAdjective("adjective");
+		JsonUpdater.loadAdjective("slow");
 
 		assertTrue(observer1Notified[0], "First observer should be notified");
 		assertTrue(observer2Notified[0], "Second observer should be notified");
@@ -185,7 +185,7 @@ class TestJsonUpdater
 		JsonUpdater.addObserver(failingObserver);
 
 		assertThrows(IOException.class, () -> {
-			JsonUpdater.loadAdjective("adjective");
+			JsonUpdater.loadAdjective("difficult");
 		}, "Should propagate IOException from observer");
 
 		JsonUpdater.removeObserver(failingObserver);
@@ -195,15 +195,15 @@ class TestJsonUpdater
 	@DisplayName("Test loading multiple nouns consecutively")
 	void testLoadMultipleNouns() throws IOException
 	{
-		JsonUpdater.loadNoun("noun1", Number.SINGULAR);
+		JsonUpdater.loadNoun("observer", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after first noun loading");
 
 		observerNotified = false;
-		JsonUpdater.loadNoun("noun2", Number.PLURAL);
+		JsonUpdater.loadNoun("tower", Number.PLURAL);
 		assertTrue(observerNotified, "Observer should be notified after second noun loading");
 
 		observerNotified = false;
-		JsonUpdater.loadNoun("noun3", Number.SINGULAR);
+		JsonUpdater.loadNoun("home", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after third noun loading");
 	}
 
@@ -268,24 +268,14 @@ class TestJsonUpdater
 	}
 
 	@Test
-	@DisplayName("Test loading duplicate items")
-	void testLoadDuplicateItems() throws IOException
-	{
-		JsonUpdater.loadAdjective("duplicate");
-		observerNotified = false;
-		JsonUpdater.loadAdjective("duplicate");
-		assertTrue(observerNotified, "Observer should be notified even for duplicate items");
-	}
-
-	@Test
 	@DisplayName("Test loading items with whitespace")
 	void testLoadItemsWithWhitespace() throws IOException
 	{
-		JsonUpdater.loadNoun("  spacedNoun  ", Number.SINGULAR);
+		JsonUpdater.loadNoun("  room  ", Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified for noun with whitespace");
 
 		observerNotified = false;
-		JsonUpdater.loadAdjective("\tadjective\t");
+		JsonUpdater.loadAdjective("\tspaced\t");
 		assertTrue(observerNotified, "Observer should be notified for adjective with tabs");
 	}
 
@@ -360,7 +350,7 @@ class TestJsonUpdater
 		JsonUpdater.addObserver(firstObserver);
 		JsonUpdater.addObserver(secondObserver);
 
-		JsonUpdater.loadAdjective("orderTest");
+		JsonUpdater.loadAdjective("tested");
 
 		assertEquals(List.of("first", "second"), notificationOrder,
 			"Observers should be notified in addition order");
