@@ -21,12 +21,12 @@ git clone https://github.com/sclosaf/NonSense-Generator.git
 cd NonSense-Generator
 ```
 Otherwise download the .zip from the repo home and unzip it locally.
-To streamline the development and usage process, a series of scripts have been provided, see [script](../scripts), these script are available to the user and perform the same actions: 
+To streamline the development and usage process, a series of scripts have been provided (see [scripts](../scripts)) these scripts are available to the user and perform the same actions: 
 - [mvn.sh](../scripts/mvn.sh): UNIX/LINUX
 - [mvn.bat](../scripts/mvn.bat): Windows
 
-These provide the basic compilation and execution functionalities, in order to compile and start the
-application the following instructions.
+These provide the basic compilation and execution functionalities. In order to compile and start the
+application use the flollowing instructions.
 On Unix-like environment use:
 ```
 cd scripts
@@ -53,11 +53,11 @@ cd scripts
 ```
 The two scripts can also perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
 
-As an alternative compilation and execution commands can be performed in autonomy directly from the root of the project.
+As an alternative, compilation and execution commands can be performed in autonomy directly from the root of the project.
 
 **WARNING** The first installation process performed on a new environment may produce verbose output in
 the terminal due to dependency downloads and initialization processes, every dependency is installed in 
-the newly created lib folder, leaving clean the global directory that Maven generally uses, this is a 
+the newly created lib folder, leaving the global directory that Maven generally uses clean , this is a 
 choice to make the project self contained and autonomous.
 
 ## INTERFACE
@@ -78,8 +78,8 @@ Once the application is executed, a menu with the following options will be disp
 - **Quit**
 
 ### HOW THE CODE WORKS
-The application provides a basic CLI for the user, into which execute the selected command (or its
-shortcut), once the command is chosen and typed press Enter (the following informations will be available 
+The application provides a basic CLI for the user, in which the selected command (or its shortcut) can be 
+executed; once the command is chosen and typed press Enter (the following informations will be available 
 with the command info, once into the application):
 
 - **Default** 
@@ -235,6 +235,7 @@ reporting its activity
         - TestJsonFileHandler.java
         - TestJsonUpdater.java
         - TestLoggerManager.java
+        - TestCommandProcessor.java
     - **resources/**
       - testAdjective.json
       - testConfig.json
@@ -255,7 +256,7 @@ reporting its activity
   successfull tests and time spent for each test
 
 - **Google Cloud Language** (com.google.cloud:google-cloud-language):  
-  Used for natural language analysis, through which the chosen sentences can be analysed, requires API
+  Used for natural language analysis, through which the chosen sentences can be analyzed, requires API
   key, it's important to remember to insert the owned service account key, in .json format.
 
 - **Gson** (com.google.code.gson:gson):  
@@ -274,7 +275,7 @@ reporting its activity
   Used for advanced console/CLI management to grant a user-friendly interface and commands management, similar to a classical shell.
  
 ### '.json' FILES
-These files are used by the programm as dictionaries, for read and write operations:
+These files are used by the program as dictionaries, for read and write operations:
 - adjective.json
 - nouns.json
 - templates.json
