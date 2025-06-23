@@ -737,7 +737,7 @@ public class CLI
 		printTitleSeparator("Default procedure", BOLD_BLUE_STYLE);
 
 		printWhite("Proceeding with the default process.", true);
-		printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elabotation):", true);
+		printWhite("Enter a sentence to analyze (or press Enter to generate one automatically and skip the input elaboration):", true);
 
 		logger.logTrace("defaultHandler: Prompt for sentence input displayed");
 		String userInput = read(false);
