@@ -9,10 +9,10 @@
 ### SOFTWARE
 
 - Java Development Kit (JDK) 21
-- Google Cloud SDK (including the authentication JSON file to be placed in the [config](/config) folder,
+- Google Cloud SDK (including the authentication JSON file to be placed in the [config](../config) folder,
   it's importanto to rename the .json file as follows: "credentials.json", otherwise the connection won't work)
 - Internet connection for using the Google API
-- **Apache Maven ≥ 3.9** for dependency management and project compilation (see [pom](pom.xml))
+- **Apache Maven ≥ 3.9** for dependency management and project compilation (see [pom](../pom.xml))
 
 ## STARTING THE APPLICATION
 Open a terminal and type:
@@ -21,9 +21,9 @@ git clone https://github.com/sclosaf/NonSense-Generator.git
 cd NonSense-Generator
 ```
 Otherwise download the .zip from the repo home and unzip it locally.
-To streamline the development and usage process, a series of scripts have been provided, see [script](/scripts), these script are available to the user and perform the same actions: 
-- [mvn.sh](/scripts/mvn.sh): UNIX/LINUX
-- [mvn.bat](/scripts/mvn.bat): Windows
+To streamline the development and usage process, a series of scripts have been provided, see [script](../scripts), these script are available to the user and perform the same actions: 
+- [mvn.sh](../scripts/mvn.sh): UNIX/LINUX
+- [mvn.bat](../scripts/mvn.bat): Windows
 These provide the basic compilation and execution functionalities, in order to compile and start the application the following instructions.
 On Unix-like environment use:
 ```
