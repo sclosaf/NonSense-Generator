@@ -24,7 +24,8 @@ Otherwise download the .zip from the repo home and unzip it locally.
 To streamline the development and usage process, a series of scripts have been provided, see [script](../scripts), these script are available to the user and perform the same actions: 
 - [mvn.sh](../scripts/mvn.sh): UNIX/LINUX
 - [mvn.bat](../scripts/mvn.bat): Windows
-These provide the basic compilation and execution functionalities, in order to compile and start the application the following instructions.
+These provide the basic compilation and execution functionalities, in order to compile and start the
+application the following instructions.
 On Unix-like environment use:
 ```
 cd scripts
