@@ -1,49 +1,14 @@
-# NonSense-Generator
+## Welcome to the NonSense-Generator
 
-Il prof nel powerpoint di introduzione al progetto consigliava di usare maven
-per gestire le librerie, altrimenti bisogna gestire i pacchetti a mano, gli
-script che ci sono nella cartella li ho preparati per compilare, fare testing e
-documentazione in modo automatico, così da evitare di memorizzare troppe righe di comandi
+This project was created in the academic year 2024/2025 for the course 'Ingegneria del software' by the following members:
+- **aasterr**: Baldo Francesco, 2109936;
+- **FabsMacina** : Ceretti Fabio, 2103039;
+- **Gianfrancisckio** : Lamparelli Davide, 2101806;
+- **sclosaf** : Sclosa Fabrizio, 2101826;
 
-EDIT:
-Per l'accesso alle api google serve fare l'autenticazione presso il sito
-di tali api, successivamente vi serve una chiave per il "LanguageServiceClient"
-che dovete scaricate in formato .json e una volta scaricato questo file,
-rinominatelo credentials.json e lo copiate e incollate dentro a /config nella
-root di progetto, il .gitignore lo esclude a priori come file, quindi vi resta
-presente solo a voi in locale, ognuno così usa le proprie credenziali e dati di
-accesso, in modo che possa fare l'accesso in autonomia.
-
-Per usare le api potete importare la classe
-unipd.nonsense.util.GoogleApiClient,
-la quale gestisce autonomamente l'autenticazione anche tra più classi che
-creiamo all'interno del progetto, così anche se due classi distinte invocano le
-api possono comunque usare lo stesso client, quando volete fare delle chiamate
-con funzioni del natural language basta che creiate un oggetto
-GoogleApiClient manager = new GoogleApiClient("/credentials.json");
-
-successivamente una volta creato l'oggetto le chiamate le potete effettuare
-tramite la funzione manager.getClient()
-
-Classi:
-    Main,
-
-    1logging, - Fabio
-
-    2interfaccia per terminale, - Davide
-
-    3Sentence analyzer, - Davide
-
-    4elaboratore File JSON, - Fabrizio
-
-    5compositore di frasi, - Fabrizio
-
-    6valutatore di tossicità, - Francesco
-
-    7elementi grammaticali atomici, - Fabio
-
-    8generatore di template, - Francesco
-
-    eccezioni,
-
-    testing (Ognuno il suo)
+The several deliverables required for this project can be found inside the following folders:
+- [The manual](docs/Manual.md) inside the docs folder;
+- [Use cases and models](docs) inside the docs folder;
+- [Design and class diagrams](diagrams) inside the diagrams folder
+- Java documentation can be found inside /target/site/apidocs, once the project is compiled locally
+- Unit test report  can be found inside /target/site/apidocs, once the project is compiled locally
