@@ -53,6 +53,8 @@ cd scripts
 ```
 Anyway the two scripts can perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
 
+As an alternative compilation and execution commands can be performed autonomously directly from the root of the project.
+
 **WARNING** The first installation process performed on a new environment may produce verbose output in
 the terminal due to dependency downloads and initialization processes, every dependency is installed in 
 the newly created lib folder, leaving clean the global directory that Maven generally uses, this is a 
