@@ -63,15 +63,15 @@ class TestJsonUpdater
 	@DisplayName("Test verb loading with valid tense")
 	void testLoadVerbWithValidTense() throws IOException
 	{
-		JsonUpdater.loadVerb("verb", Tense.PAST, Number.SINGULAR);
+		JsonUpdater.loadVerb("wrote", Tense.PAST, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb("verb", Tense.PRESENT, Number.SINGULAR);
+		JsonUpdater.loadVerb("writes", Tense.PRESENT, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 
 		observerNotified = false;
-		JsonUpdater.loadVerb("verb", Tense.FUTURE, Number.SINGULAR);
+		JsonUpdater.loadVerb("will write", Tense.FUTURE, Number.SINGULAR);
 		assertTrue(observerNotified, "Observer should be notified after verb loading");
 	}
 
@@ -80,7 +80,7 @@ class TestJsonUpdater
 	void testLoadVerbWithInvalidTense()
 	{
 		assertThrows(InvalidTenseException.class, () -> {
-			JsonUpdater.loadVerb("verb", null, null);
+			JsonUpdater.loadVerb("invalids", null, null);
 		});
 	}
 
@@ -226,7 +226,7 @@ class TestJsonUpdater
 			for(Tense tense : Tense.values())
 			{
 				observerNotified = false;
-				JsonUpdater.loadVerb("comboVerb", tense, number);
+				JsonUpdater.loadVerb("combined", tense, number);
 				assertTrue(observerNotified, "Observer should be notified for " + number + "-" + tense + " combination");
 			}
 		}
