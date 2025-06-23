@@ -34,7 +34,7 @@ cd scripts
 ./mvn.sh package # In order to perform a combination of compilation, testing and documentation
 ./mvn.sh execute # In order to execute the .jar application
 ```
-Otherwise, it'e equivalent:
+Otherwise, it is equivalent to use:
 ```
 cd scripts
 ./mvn.sh all # Performs the whole compilation and execution process
@@ -46,14 +46,14 @@ cd scripts
 .\mvn.bat package # In order to perform a combination of compilation, testing and documentation
 .\mvn.bat execute # In order to execute the .jar application
 ```
-Otherwise, it'e equivalent:
+Otherwise, it is equivalent to use:
 ```
 cd scripts
 .\mvn.bat all # Performs the whole compilation and execution process
 ```
-Anyway the two scripts can perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
+The two scripts can also perform the individual operations, type `./mvn.sh` or `.\mvn.bat` to see the available options.
 
-As an alternative compilation and execution commands can be performed autonomously directly from the root of the project.
+As an alternative compilation and execution commands can be performed in autonomy directly from the root of the project.
 
 **WARNING** The first installation process performed on a new environment may produce verbose output in
 the terminal due to dependency downloads and initialization processes, every dependency is installed in 
