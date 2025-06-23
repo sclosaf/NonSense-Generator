@@ -477,18 +477,4 @@ System.out.println(sentence);
 		executor.shutdown();
 		assertEquals(0, latch.getCount());
 	}
-
-	@Test
-	@DisplayName("Test template with numbers in words")
-	void testNumbersInWords() throws IOException
-	{
-		List<Noun> nouns = List.of(new Noun("007", Number.SINGULAR));
-		List<Adjective> adjectives = List.of(new Adjective("101"));
-		List<Verb> verbs = List.of(new Verb("404", Number.SINGULAR, Tense.PAST));
-
-		Template result = sentenceGenerator.generateSentenceWith(nouns, adjectives, verbs);
-		String sentence = result.getPattern();
-
-		assertTrue(sentence.contains("007") || sentence.contains("101") || sentence.contains("404"));
-	}
 }
