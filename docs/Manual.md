@@ -8,11 +8,11 @@
 
 ### SOFTWARE
 
-- Java Development Kit (JDK) 21
-- Google Cloud SDK (including the authentication JSON file to be placed in the [config](../config) folder,
+- **Java Development Kit ≥ 21** (JDK)
+- **Google Cloud SDK** (including the authentication JSON file to be placed in the [config](../config) folder,
   it's importanto to rename the .json file as follows: "credentials.json", otherwise the connection won't work)
-- Internet connection for using the Google API
 - **Apache Maven ≥ 3.9** for dependency management and project compilation (see [pom](../pom.xml))
+- **Internet connection** for using the Google API
 
 ## STARTING THE APPLICATION
 Open a terminal and type:
