@@ -15,4 +15,4 @@ The several deliverables required for this project can be found inside the follo
 - [The system test document](docs) inside the docs folder;
 - [The user stories cards](https://francescobaaldo.atlassian.net/jira/software/projects/NON/list) on the Jira website;  
 - Java documentation can be found inside /target/site/apidocs, once the project is compiled locally;
-- Unit test report  can be found inside /target/site/apidocs, once the project is compiled locally.
+- JUnit test report  can be found inside /target/site, once the project is compiled locally.
